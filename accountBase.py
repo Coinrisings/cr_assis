@@ -4,19 +4,13 @@ import datetime, time, os, yaml
 from pymongo import MongoClient
 from connectData import ConnectData
 
-class AccountData(object):
-    def __init__(self, username, client, parameter_name, master, slave, principal_currency, strategy, deploy_id):
+class AccountBase(object):
+    def __init__(self,  deploy_id: str, strategy = "funding") -> None:
         # 要求同一个账户里单一币种的master和slave是唯一的
-        self.username = username
-        self.client = client
-        self.parameter_name = parameter_name
-        self.master = master
-        self.slave = slave
-        self.principal_currency = principal_currency
         self.deploy_id = deploy_id
         self.strategy = strategy
         self.mongon_url = self.load_mongo_url()
-        self.initilize()
+        self.init_account(self.deploy_id)
     
     def load_mongo_url(self):
         user_path = os.path.expanduser('~')
@@ -28,6 +22,45 @@ class AccountData(object):
             for item in ret:
                 if item["name"] == "mongo":
                     return item["url"]
+    
+    def get_strategy_info(self, strategy: str):
+        #解析deployd_id的信息
+        words = strategy.split("_")
+        master = (words[1] + "_" + words[2]).replace("okex", "okx")
+        master = master.replace("uswap", "usdt_swap")
+        master = master.replace("cswap", "usd_swap")
+        slave = (words[3] + "_" + words[4]).replace("okex", "okx")
+        slave = slave.replace("uswap", "usdt_swap")
+        slave = slave.replace("cswap", "usd_swap")
+        ccy = words[-1].upper()
+        if ccy == "U":
+            ccy = "USDT"
+        elif ccy == "C":
+            ccy = "BTC"
+        else:
+            pass
+        return master, slave, ccy
+    
+    def get_bbu_info(self, strategy: str):
+        #解析bbu线的deploy_id信息
+        master = "binance_busd_swap"
+        slave = "binance_usdt_swap"
+        ccy = strategy.split("_")[-1].upper()
+        if ccy in ["U", "BUSD"]:
+            ccy = "USDT"
+        else:
+            pass
+        return master, slave, ccy
+    
+    def init_account(self, deploy_id: str) -> None:
+        #initilize account's info by deploy_id
+        self.parameter_name, strategy = deploy_id.split("@")
+        self.client, self.username = self.parameter_name.split("_")
+        if "h3f_binance_uswap_binance_uswap" not in strategy:
+            self.master, self.slave, self.principal_currency = self.get_strategy_info(strategy)
+        else:
+            self.master, self.slave, self.principal_currency = self.get_bbu_info(strategy)
+        self.initilize()
     
     def initilize(self):
         self.database = ConnectData()
@@ -43,12 +76,19 @@ class AccountData(object):
         self.kind_master = self.exchange_master + self.contract_master
         self.kind_slave = self.exchange_slave + self.contract_slave
         self.get_folder()
-        self.contractsize = pd.read_csv(f"/Users/ssh/Documents/GitHub/Hello-World-/data/contractsize.csv", index_col = 0)
+        self.contractsize = pd.read_csv(f"{os.environ['HOME']}/parameters/config_buffet/dt/contractsize.csv", index_col = 0)
         self.balance_id = self.deploy_id.replace("@", "-") + "@sum"
         data = self.get_now_parameter()
         secret_slave = data.loc[0, "secret_slave"]
         slave = secret_slave.split("@")[0].split("/")[-1]
         self.slave_client, self.slave_username = slave.split("_")
+        path1 = data.loc[0, "secret_master"].replace("/", "__")
+        path1 = path1.replace(":", "_")
+        path2 = data.loc[0, "secret_slave"].replace("/", "__")
+        path2 = path2.replace(":", "_")
+        paths = [path1, path2]
+        self.path_orders = paths
+        self.path_ledgers = paths
     
     def get_folder(self):
         # parameter folder in GitHub
@@ -121,8 +161,9 @@ class AccountData(object):
 #             data.drop(location, axis = 0, inplace = True)
         data.index = range(len(data))
         self.position = data.copy()
-    def get_coin_price(self, coin, kind = ""):
-        #kind: exchange + contract type, for example "okex_spot", "okex_usdt_swap"
+        
+    def get_coin_price(self, coin, kind = "") -> float:
+        """kind: exchange + contract type, for example "okex_spot", "okex_usdt_swap" """
         
         if kind == "":
             kind = self.exchange_master + "_spot"
@@ -149,16 +190,17 @@ class AccountData(object):
             exchange = "hbg"
         else:
             print("get_coin_price: coin price exchange error")
-            return
+            return np.nan
         key = f"{exchange}/{coin}{suffix}"
         self.database.load_redis()
         data = self.database.get_redis_data(key)
         self.database.redis_clt.close()
         if b'bid0_price' in data.keys():
-            price = eval(data[b'bid0_price'])
+            price = float(data[b'bid0_price'])
         else:
             price = np.nan
         return price
+    
     def get_equity(self):
         data = pd.DataFrame()
         num = 0
@@ -186,6 +228,7 @@ class AccountData(object):
                 print(f"give up getting {self.parameter_name} equity at {datetime.datetime.now()}")
                 return 
         self.adjEq = data.usdt.values[0]
+        
     def get_capital(self, time = "None"):
         if self.exchange_master in ["okex", "okx", "okex5", "okexv5"] and self.exchange_slave in ["okex", "okx", "okex5", "okexv5"]:
             dataname = "equity_snapshot"
@@ -228,6 +271,7 @@ class AccountData(object):
             self.capital = capital
             self.capital_price = capital_price
         return capital, capital_price
+    
     def get_upnl(self, time = "None"):
         if self.exchange_master in ["okex", "okx", "okex5", "okexv5"] and self.exchange_slave in ["okex", "okx", "okex5", "okexv5"]:
             dataname = "equity_snapshot"
@@ -265,6 +309,7 @@ class AccountData(object):
         self.upnl = upnl
         self.upnlUsd = upnlUsd
         return upnl, upnlUsd
+    
     def get_mgnRatio(self):
         exchanges = set([self.exchange_master, self.exchange_slave])
         mr = {}
@@ -299,6 +344,7 @@ class AccountData(object):
                         break
             mr[exchange] = data.mr.values[0]
         self.mr = mr.copy()
+        
     def get_now_parameter(self):
         mongo_clt = MongoClient(self.mongon_url)
         a = mongo_clt["Strategy_deploy"][self.client].find({"_id": self.deploy_id})
@@ -307,6 +353,7 @@ class AccountData(object):
         data.index = range(len(data))
         self.now_parameter = data.copy()
         return data
+    
     def get_all_deploys(self):
         mongo_clt = MongoClient(self.mongon_url)
         collections = mongo_clt["Strategy_orch"].list_collection_names()

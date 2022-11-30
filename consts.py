@@ -1,6 +1,5 @@
 import configparser, os
-# path = research.__path__.__dict__["_path"][0]
-from accountData import AccountData
+from accountBase import AccountData
 config = configparser.ConfigParser()
 config.read(f"{os.environ['HOME']}/config_buffet/accountdata.ini")
 accounts = []
