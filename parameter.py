@@ -4,9 +4,9 @@ import datetime, os
 from github import Github
 
 otest8 = AccountBase(deploy_id = "test_otest8@h3f_okex_uswap_okex_uswap_u")
-ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
-# file_path = "/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/2022-12-05-1"
-file_path = "/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/2022-12-06-1"
+ch009 = AccountBase(deploy_id = "ch_ch009@dt_okex_cswap_okex_uswap_btc")
+# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}-1"
+file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
 account = otest8
@@ -15,22 +15,23 @@ cols = ["account", "contract", "portfolio_level", "open", "closemaker", "positio
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
 parameter = pd.DataFrame(columns = cols)
 account.get_account_position()
-coin = "btc"
-folder = "h3f"
-master_pair = "-usdc-swap"
-slave_pair = "-usdt-swap"
-git_file = "parameter_buo"
-level = 1
 
-uplimit = 1
-open1 = 0.9993
+coin = "btc"
+folder = account.folder
+master_pair = account.contract_master
+slave_pair = account.contract_slave
+git_file = "parameter_buo"
+level = -2
+
+uplimit = 3
+open1 = 2
 cm = 1.005
 ct = cm + 0.002
 open2 = open1 + 1
 cm2 = cm - 0.0005
 ct2 = ct - 0.0005
 is_long = 1
-fragment = 1000
+fragment = 6000
 fragment_min = 10
 if master_pair != "-usd-swap":
     price = account.get_coin_price(coin)

@@ -42,9 +42,14 @@ class AccountBase(object):
         return master, slave, ccy
     
     def get_bbu_info(self, strategy: str):
-        #解析bbu线的deploy_id信息
-        master = "binance_busd_swap"
-        slave = "binance_usdt_swap"
+        """解析bbu线的deploy_id信息"""
+        words = strategy.split("_")
+        exchange = words[1].replace("okex", "okx")
+        if exchange == "binance":
+            master = "binance_busd_swap"
+        else:
+            master = f"{exchange}_usdc_swap"
+        slave = f"{exchange}_usdt_swap"
         ccy = strategy.split("_")[-1].upper()
         if ccy in ["U", "BUSD"]:
             ccy = "USDT"
@@ -56,10 +61,14 @@ class AccountBase(object):
         #initilize account's info by deploy_id
         self.parameter_name, strategy = deploy_id.split("@")
         self.client, self.username = self.parameter_name.split("_")
-        if "h3f_binance_uswap_binance_uswap" not in strategy:
-            self.master, self.slave, self.principal_currency = self.get_strategy_info(strategy)
+        words = strategy.split("_")
+        if words[1] != words[3] or words[2] != words[4]:
+            self.master, self.slave, self.ccy = self.get_strategy_info(strategy)
+        elif words[2] == "uswap" and words[0] == "h3f":
+            self.master, self.slave, self.ccy = self.get_bbu_info(strategy)
         else:
-            self.master, self.slave, self.principal_currency = self.get_bbu_info(strategy)
+            print(f"This deploy id cannot be analyzed: {deploy_id}")
+            return 
         self.initilize()
     
     def initilize(self):
@@ -92,15 +101,7 @@ class AccountBase(object):
     
     def get_folder(self):
         # parameter folder in GitHub
-        if "-usdt" in [self.contract_master, self.contract_slave]:
-            self.folder = "ssf"
-        elif set([self.contract_master, self.contract_slave]) == {"-usdt-swap", "-usd-swap"}:
-            self.folder = "dt"
-        elif self.exchange_master != self.exchange_slave or self.combo == 'binance_busd_swap-binance_usdt_swap':
-            self.folder = "h3f"
-        else:
-            print(f"{self.parameter_name} folder NA")
-            self.folder = ""
+        self.folder = self.deploy_id.split("@")[-1].split("_")[0]
         
     def get_spreads(self, coin, hours = 24):
         coin = coin.lower()
@@ -395,12 +396,16 @@ class AccountBase(object):
             suffix = "-busd-swap"
         elif suffix in ["-usdt-swap", "_usdt_swap", "usdt-swap", "usdt_swap"]:
             suffix = "-usdt-swap"
+        elif suffix in ["-usdc-swap", "_usdc_swap", "usdc-swap", "usdc_swap"]:
+            suffix = "-usdc-swap"
         elif suffix in ["-usd-swap", "_usd_swap", "usd-swap", "usd_swap"]:
             suffix = "-usd-swap"
         elif suffix in ["-usdt", "_usdt", "usdt", "spot", "-spot", "_spot"]:
             suffix = "-usdt"
         elif suffix in ["-busd", "_busd"]:
             suffix = '-busd'
+        elif suffix in ["-usdc", "_usdc"]:
+            suffix = '-usdc'
         else:
             print(f"{self.parameter_name} suffix is not supported: {suffix}")
         return suffix
