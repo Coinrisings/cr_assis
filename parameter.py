@@ -21,9 +21,9 @@ folder = account.folder
 master_pair = account.contract_master
 slave_pair = account.contract_slave
 git_file = "parameter_buo"
-level = -2
+level = 1
 
-uplimit = 3
+uplimit = 4
 open1 = 2
 cm = 1.005
 ct = cm + 0.002
@@ -31,7 +31,7 @@ open2 = open1 + 1
 cm2 = cm - 0.0005
 ct2 = ct - 0.0005
 is_long = 1
-fragment = 6000
+fragment = 500
 fragment_min = 10
 if master_pair != "-usd-swap":
     price = account.get_coin_price(coin)
@@ -43,7 +43,7 @@ else:
 position = account.adjEq * uplimit / price
 holding_position = float(account.position[account.position["coin"] == "btc"].position.values[-1]) if hasattr(account, "position") and "btc" in account.position.coin.values else 0
 position2 = max(position, holding_position) * 2
-parameter.loc[0] = [account.parameter_name, coin + master_pair, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, 0.0002, 0.005, 1, datetime.datetime.now() + datetime.timedelta(minutes=5), is_long ,1, coin+master_pair, coin+slave_pair]
+parameter.loc[0] = [account.parameter_name, coin + master_pair, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, 0.002, 0.005, 1, datetime.datetime.now() + datetime.timedelta(minutes=5), is_long ,1, coin+master_pair, coin+slave_pair]
 parameter = parameter.set_index("account")
 parameter.to_excel(f"{file_path}/parameter.xlsx", sheet_name=account.parameter_name)
 
