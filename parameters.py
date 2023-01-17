@@ -19,7 +19,7 @@ ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
 ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cswap_okex_uswap_btc")
 ljw002 = AccountBase(deploy_id = "ljw_002@dt_okex_cswap_okex_uswap_btc")
 wz001 = AccountBase(deploy_id = "wz_001@dt_okex_cswap_okex_uswap_usdt")
-accounts = [anta001, bg001, bg003, ch002, ch003, ch004, ch005, ch006, ch007, ch008, ch009, cr001, ht001, ljw001, ljw002, wz001]
+accounts = [ch004, ch005, ch006, ch008, ch009, cr001, ljw001, ljw002]
 # for account in accounts:
 #     account.get_account_position()
 #     print(account.parameter_name)
@@ -45,12 +45,12 @@ for account in accounts:
     level = 0
     uplimit = 2.5
     open1 = 2
-    cm = 2
+    cm = 1.0003
     ct = 1.003
     open2 = open1 + 1
-    cm2 = cm - 0.0003
-    ct2 = ct - 0.0003
-    is_long = 1
+    cm2 = cm - 0.0005
+    ct2 = ct - 0.0005
+    is_long = 0
     fragment = 6000
     fragment_min = 10
     if master_pair != "-usd-swap":
@@ -64,7 +64,7 @@ for account in accounts:
     holding_position = float(account.position[account.position["coin"] == "btc"].position.values[-1]) if hasattr(account, "position") and "btc" in account.position.coin.values else 0
     position2 = max(position, holding_position) * 2
     position = position2 / 2
-    parameter.loc[0] = [account.parameter_name, coin + master_pair, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, 0.0002, 0.05, 1, datetime.datetime.now() + datetime.timedelta(minutes=5), is_long ,1, coin+master_pair, coin+slave_pair]
+    parameter.loc[0] = [account.parameter_name, coin + master_pair, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, 0.0002, 0.005, 1, datetime.datetime.now() + datetime.timedelta(minutes=5), is_long ,1, coin+master_pair, coin+slave_pair]
     parameter = parameter.set_index("account")
     parameter.to_excel(excel_writer=writer, sheet_name=account.parameter_name, encoding="GBK")
 writer.save()

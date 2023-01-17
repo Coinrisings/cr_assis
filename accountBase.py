@@ -24,14 +24,18 @@ class AccountBase(object):
                     return item["url"]
     
     def get_strategy_info(self, strategy: str):
-        #解析deployd_id的信息
+        """解析deployd_id的信息"""
         words = strategy.split("_")
         master = (words[1] + "_" + words[2]).replace("okex", "okx")
         master = master.replace("uswap", "usdt_swap")
         master = master.replace("cswap", "usd_swap")
+        master = master.replace("ufuture", "usdt_future")
+        master = master.replace("cfuture", "usd_future")
         slave = (words[3] + "_" + words[4]).replace("okex", "okx")
         slave = slave.replace("uswap", "usdt_swap")
         slave = slave.replace("cswap", "usd_swap")
+        slave = slave.replace("ufuture", "usdt_future")
+        slave = slave.replace("cfuture", "usd_future")
         ccy = words[-1].upper()
         if ccy == "U":
             ccy = "USDT"
@@ -40,7 +44,7 @@ class AccountBase(object):
         else:
             pass
         return master, slave, ccy
-    
+
     def get_bbu_info(self, strategy: str):
         """解析bbu线的deploy_id信息"""
         words = strategy.split("_")
@@ -400,6 +404,14 @@ class AccountBase(object):
             suffix = "-usdc-swap"
         elif suffix in ["-usd-swap", "_usd_swap", "usd-swap", "usd_swap"]:
             suffix = "-usd-swap"
+        elif suffix in ["-busd-future", "_busd_future", "busd-future", "busd_future"]:
+            suffix = "-busd-future"
+        elif suffix in ["-usdt-future", "_usdt_future", "usdt-future", "usdt_future"]:
+            suffix = "-usdt-future"
+        elif suffix in ["-usdc-future", "_usdc_future", "usdc-future", "usdc_future"]:
+            suffix = "-usdc-future"
+        elif suffix in ["-usd-future", "_usd_future", "usd-future", "usd_future"]:
+            suffix = "-usd-future"
         elif suffix in ["-usdt", "_usdt", "usdt", "spot", "-spot", "_spot"]:
             suffix = "-usdt"
         elif suffix in ["-busd", "_busd"]:

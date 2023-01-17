@@ -1,8 +1,8 @@
-import requests, datetime
+import requests, datetime, copy, pytz
 import pandas as pd
 
-def req_okex_index(instId: str, end_ts: int, start_tx = None) -> list:
-    if start_tx != None:
+def req_okex_index(instId: str, end_ts: int, start_ts = None) -> list:
+    if start_ts != None:
         url = f"https://www.okx.com/api/v5/market/history-index-candles?instId={instId}&after={end_ts}&before={start_ts}"
     else:
         url = f"https://www.okx.com/api/v5/market/history-index-candles?instId={instId}&after={end_ts}"
@@ -52,3 +52,5 @@ def get_okex_index(coin: str, start: datetime.datetime, end: datetime.datetime, 
     klines.drop_duplicates(subset = ["timestamp"], inplace = True)
     klines.index = range(len(klines))
     return klines
+
+klines = get_okex_index(coin = "btc", start=datetime.datetime(2022,12,13,0,0,0), end = datetime.datetime.utcnow(), is_usdt=False)
