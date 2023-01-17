@@ -396,6 +396,9 @@ class AccountBase(object):
             print(f"{self.parameter_name} exchange name is not supported")
         return exchange
     def unified_suffix(self, suffix):
+        suffix = suffix.replace("_", "-")
+        if suffix.split("-")[-1].isnumeric():
+            suffix = suffix.replace(suffix.split("-")[-1], "future")
         if suffix in ["-busd-swap", "_busd_swap", "busd-swap", "busd_swap"]:
             suffix = "-busd-swap"
         elif suffix in ["-usdt-swap", "_usdt_swap", "usdt-swap", "usdt_swap"]:
@@ -423,15 +426,13 @@ class AccountBase(object):
         return suffix
     def get_now_position(self, timestamp = "10m"):
         #master, slave : "usdt-swap", "usd-swap", "spot"
-        self.database.load_redis()
+        self.redis_data = readData.read_redis()
         data = pd.DataFrame()
         if self.client == self.slave_client and self.username == self.slave_username:
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            self.database.load_influxdb(database = "account_data")
-            result = self.database.influx_clt.query(a)
-            self.database.influx_clt.close()
+            result = readData.read_influx(a, df = False)
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
@@ -440,18 +441,14 @@ class AccountBase(object):
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            self.database.load_influxdb(database = "account_data")
-            result = self.database.influx_clt.query(a)
-            self.database.influx_clt.close()
+            result = readData.read_influx(a, df = False)
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            self.database.load_influxdb(database = "account_data")
-            result = self.database.influx_clt.query(a)
-            self.database.influx_clt.close()
+            result = readData.read_influx(a, df = False)
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
@@ -461,7 +458,7 @@ class AccountBase(object):
             data["dt"] = data["time"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
         else:
             result = pd.DataFrame(columns = ["dt", "side", "master_ex",
-                                        "master_open_price", "master_number","master_MV","slave_ex",
+                                         "master_open_price", "master_number","master_MV","slave_ex",
                                         "slave_open_price", "slave_number","slave_MV"])
             self.now_position = result.copy()
             return result
@@ -480,6 +477,8 @@ class AccountBase(object):
             d = data[data["symbol"] == symbol].copy()
             if "swap" in symbol:
                 d = d[d["ex_field"] == "swap"].copy()
+            elif "future" in symbol:
+                d = d[d["ex_field"] == "futures"].copy()
             else:
                 d = d[d["ex_field"] == "spot"].copy()
             n = len(df)
@@ -493,7 +492,7 @@ class AccountBase(object):
             data.drop(location, axis = 0 ,inplace = True)
         self.origin_position = data.copy()
         result = pd.DataFrame(columns = ["dt", "side", "master_ex",
-                                        "master_open_price", "master_number","master_MV","slave_ex",
+                                         "master_open_price", "master_number","master_MV","slave_ex",
                                         "slave_open_price", "slave_number","slave_MV"], index = coins)
         for i in data.index:
             if data.loc[i, "long"] >0 or data.loc[i, "short"] > 0:
@@ -516,8 +515,8 @@ class AccountBase(object):
                     result.loc[coin, name + "_ex"] = exchange
                     result.loc[coin ,name + "_open_price"] = data.loc[i, "long_open_price"]
                     result.loc[coin ,name + "_number"] = data.loc[i, "long"]
-                if "usd-swap" in data.loc[i, "kind"] and "busd-swap" not in data.loc[i, "kind"]:
-                    result.loc[coin, name + "_MV"] = result.loc[coin, name + "_number"] * self.contractsize.loc[coin.upper(), exchange + "-usd-swap"]
+                if ("usd-swap" in data.loc[i, "kind"] or "usd-future" in data.loc[i, "kind"]) and "busd-swap" not in data.loc[i, "kind"]:
+                    result.loc[coin, name + "_MV"] = result.loc[coin, name + "_number"] * self.contractsize.loc[coin.upper(), exchange + data.loc[i, "kind"].replace(exchange, "")]
                 else:
                     try:
                         if self.folder == "dt":

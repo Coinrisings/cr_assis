@@ -1,14 +1,12 @@
-import sys, os
-# path = os.path.dirname(os.getcwd())
-# sys.path.append(f"{path}/buffet")
-# sys.path.append(f"{path}/eva")
-# sys.path.append(f"{path}/utils")
-from research.eva import eva
-import datetime, os, configparser
+import  os
 import pandas as pd
 import ccxt, requests
 
 class UpdateData(object):
+    def __init__(self):
+        self.path = os.environ["HOME"] + "/parameters/config_buffet/dt"
+        self.contractsize = pd.read_csv(f"{self.path}/contractsize.csv", index_col = 0)
+    
     def get_okex_contractsize(self):
         contractsize = self.contractsize
         exchange = ccxt.okex()
@@ -20,6 +18,25 @@ class UpdateData(object):
                     col = "okex-usdt-swap"
                 elif "/USD:" in symbol and symbol.split("/")[0] == symbol.split(":")[-1]:
                     col = "okex-usd-swap"
+                else:
+                    print(symbol)
+                    continue
+                coin = symbol.split("/")[0]
+                info = markets[symbol]
+                contractsize.loc[coin, col] = float(info["contractSize"])
+        return contractsize
+    
+    def get_okexFuture_contractsize(self, suffix: str):
+        contractsize = self.contractsize
+        exchange = ccxt.okex()
+        markets = exchange.load_markets()
+        symbols = markets.keys()
+        for symbol in symbols:
+            if ":" in symbol and "-" in symbol and suffix == symbol.split("-")[-1]:
+                if "USDT:USDT" == symbol.split("-")[0].split("/")[-1]:
+                    col = "okex-usdt-future"
+                elif "/USD:" in symbol and "USD" == symbol.split("-")[0].split("/")[-1].split(":")[0]:
+                    col = "okex-usd-future"
                 else:
                     print(symbol)
                     continue
@@ -59,17 +76,19 @@ class UpdateData(object):
         headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
 
         for kind in ["usdt", "usd"]:
-            url = f'/futures/{kind}/contracts'
             if kind == "usd":
-                col = f"gate-btc-swap"
+                url = f'/futures/btc/contracts'
             else:
-                col = f"gate-{kind}-swap"
+                url = f'/futures/{kind}/contracts'
+            col = f"gate-{kind}-swap"
             r = requests.request('GET', host + prefix + url, headers=headers)
             data = r.json()
             for i in range(len(data)):
                 info = data[i]
                 coin = info["name"].split("_")[0].upper()
                 contractsize.loc[coin, col] = float(info["quanto_multiplier"])
+                if coin == "BTC":
+                    contractsize.loc[coin, col] = 1
         return contractsize
 
     def get_kucoin_contractsize(self):
@@ -91,10 +110,9 @@ class UpdateData(object):
                 contractsize.loc[coin, col] = float(info["contractSize"])
         return contractsize
 
-    def update_contractsize(self):
-        path = os.environ["HOME"] + "/config_buffet"
-        contractsize = pd.read_csv(f"{path}/contractsize.csv", index_col = 0)
-        self.contractsize = contractsize.copy()
+    def update_contractsize(self, path = None):
+        if path == None:
+            path = self.path
         contractsize = self.get_okex_contractsize()
         contractsize = self.get_binance_contractsize()
         contractsize = self.get_gate_contractsize()

@@ -1,0 +1,38 @@
+{
+    "okx_usd_future-okx_usdt_swap":{
+        "accounts":{
+	"test_otest4":[150,7.5]
+},
+        "add":{
+            "btc":1,
+            "eth":0
+        },
+        "reduce":{
+        },
+        "funding_stop_open":0.0001,
+        "funding_stop_close":0.0001,
+        "chase_tick":1,
+        "fragment_min_u":10,
+        "fragment_u":5000,
+        "position_multiple":1,
+        "max_mv_multiple":1.15,
+        "reduce_mv_multiple":1.1,
+        "open":[1],
+        "closemaker":[1.01],
+        "closemaker2":[1],
+        "closetaker":[1.01],
+        "closetaker2":[1.01],
+        "close_thresh":50,
+        "open_thresh":50,
+        "future_date":["20230322"],
+        "is_long":{
+            "btc":1,
+            "eth":1
+        },
+        "cm2_chg":0.0003,
+        "open_add":0,
+        "close_add":0,
+        "min_select_u":10,
+        "min_select_ratio":0.001
+    }
+}
