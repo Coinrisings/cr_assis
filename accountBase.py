@@ -426,13 +426,12 @@ class AccountBase(object):
         return suffix
     def get_now_position(self, timestamp = "10m"):
         #master, slave : "usdt-swap", "usd-swap", "spot"
-        self.redis_data = readData.read_redis()
         data = pd.DataFrame()
         if self.client == self.slave_client and self.username == self.slave_username:
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            result = readData.read_influx(a, df = False)
+            result = self.database._send_influx_query(a, database = "account_data")
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
@@ -441,14 +440,14 @@ class AccountBase(object):
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            result = readData.read_influx(a, df = False)
+            result = self.database._send_influx_query(a, database = "account_data")
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
             a = f"""
             select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
-            result = readData.read_influx(a, df = False)
+            result = self.database._send_influx_query(a, database = "account_data")
             for key in result.keys():
                 df = pd.DataFrame(result[key])
                 data = pd.concat([data, df])
@@ -458,7 +457,7 @@ class AccountBase(object):
             data["dt"] = data["time"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
         else:
             result = pd.DataFrame(columns = ["dt", "side", "master_ex",
-                                         "master_open_price", "master_number","master_MV","slave_ex",
+                                        "master_open_price", "master_number","master_MV","slave_ex",
                                         "slave_open_price", "slave_number","slave_MV"])
             self.now_position = result.copy()
             return result

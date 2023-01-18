@@ -93,7 +93,7 @@ class Get_Parameter():
             with open(e, "rb") as f:
                 data = f.read()
                 name = "excel/" + e.split('/')[-2] + '/' + e.split('/')[-1]
-                repo.create_file(name, f"uploaded by scq at {datetime.datetime.now()}", data)  # 显示上传字段
+                repo.create_file(name, f"uploaded by ssh at {datetime.datetime.now()}", data)  # 显示上传字段
                 print(f"{name} uploaded")
                 print(datetime.datetime.now())
         return True
@@ -257,7 +257,7 @@ class Get_Parameter():
                     logger.info(f"{acc.parameter_name}:非新账户，初始化目前已经持有币的parameter参数。")
                     # print(acc,'老账户,将目前持有的币初始化参数')
                     now_pos['side'] = now_pos[['side']].applymap(lambda x: 1 if x == 'long' else 0)
-                    parameter.loc[coins, 'account'] = acc
+                    parameter.loc[coins, 'account'] = acc.parameter_name
                     parameter.loc[coins, 'portfolio'] = 0
                     parameter.loc[coins, 'open'] = 2
                     parameter.loc[coins, 'closemaker'] = config['closemaker'][0]
@@ -348,12 +348,7 @@ class Get_Parameter():
                                     coin_price = acc.get_coin_price(coin=coin, kind=acc.kind_master)
                                     spread = acc.get_spreads(coin)
 
-                                    if acc.master.split('_')[1] == 'usd' and acc.exchange_master in ["okx",
-                                                                                                                 "okex",
-                                                                                                                 "okex5",
-                                                                                                                 "ok",
-                                                                                                                 "o",
-                                                                                                                 "okexv5"]:
+                                    if acc.master.split('_')[1] == 'usd' and acc.exchange_master in ["okx", "okex", "okex5", "ok", "o", "okexv5"]:
                                         master = 'okex-' + acc.master.split('_')[1] + '-' + \
                                                  acc.master.split('_')[2]
                                         coin_price = contractsize.loc[coin.upper(), master]
@@ -554,7 +549,7 @@ class Get_Parameter():
 
                 parameter['funding_stop_open'] = config['funding_stop_open']
                 parameter['funding_stop_close'] = config['funding_stop_close']
-                parameter['timestamp'] = datetime.datetime.now() + pd.Timedelta('8h') + pd.Timedelta('5m')
+                parameter['timestamp'] = datetime.datetime.utcnow() + pd.Timedelta('8h') + pd.Timedelta('5m')
                 parameter.set_index('account', inplace=True)
                 parameter.dropna(how='all', axis=1, inplace=True)
                 if len(parameter) > 0:

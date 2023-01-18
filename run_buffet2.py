@@ -18,7 +18,6 @@ test_otest4 = AccountData(username = account.username,
                         principal_currency="BTC",
                         strategy=account.strategy,
                         deploy_id=account.deploy_id)
-
+# spreads = test_otest4.get_spreads(coin = "btc", suffix = "230331")
 buffet2_=buffet(accounts = [test_otest4])
-all_parameter=buffet2_.get_parameter(com='okx_usd_future-okx_usdt_swap',accounts=[],ingore_account=[],upload=False)
-1111111
+all_parameter=buffet2_.get_parameter(com='okx_usd_future-okx_usdt_swap',accounts=[],ingore_account=[],upload=True)
