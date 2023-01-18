@@ -13,15 +13,12 @@ class AccountBase(object):
         self.init_account(self.deploy_id)
     
     def load_mongo_url(self):
-        user_path = os.path.expanduser('~')
-        cfg_path = os.path.join(user_path, '.cr_assis')
-        if not os.path.exists(cfg_path):
-            os.mkdir(cfg_path)
-        with open(os.path.join(cfg_path, 'mongo_url.yml')) as f:
-            ret = yaml.load(f, Loader = yaml.SafeLoader)
-            for item in ret:
-                if item["name"] == "mongo":
-                    return item["url"]
+        with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml") as f:
+            data = yaml.load(f, Loader= yaml.SafeLoader)
+        for info in data:
+            if "mongo" in info:
+                mongo_uri = info["mongo"]
+                return mongo_uri
     
     def get_strategy_info(self, strategy: str):
         """解析deployd_id的信息"""

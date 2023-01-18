@@ -21,7 +21,7 @@ class Get_Parameter():
         print('start!')
         self.accounts = accounts
 
-    def save_excel(self, all_parameter, p="/Documents/MEGA/SSH/coinrising/DT/buffet2_result"):
+    def save_excel(self, all_parameter, p="/jupyter/data/buffet/buffet2_result"):
 
         today = str(datetime.date.today())
         path = os.environ['HOME'] + p
@@ -143,7 +143,7 @@ class Get_Parameter():
     def get_parameter(self, com='binance_busd_swap-binance_usdt_swap', accounts=[], ingore_account=['lxy_003'],
                       upload=False):
 
-        logger = self.print_log(p="/Documents/MEGA/SSH/coinrising/DT/buffet2_result")
+        logger = self.print_log(p="/jupyter/data/buffet/buffet2_result")
 
        # 获取config
     
@@ -159,7 +159,7 @@ class Get_Parameter():
                     
 #         logger.info(f"获取到的config为:{account_config}！")
 
-        with open('/Users/ssh/Documents/GitHub/cr_assis/buffet2.0_config.json') as f:
+        with open('/home/ssh/jupyter/cr_assis/buffet2.0_config.json') as f:
             account_config = json.loads(f.read())
 
         # 获取contract_size 
@@ -559,7 +559,7 @@ class Get_Parameter():
 
             if len(all_parameter) > 0:
                 logger.info(f"开始保存到本地！")
-                excel_name = self.save_excel(all_parameter=all_parameter, p="/Documents/MEGA/SSH/coinrising/DT/buffet2_result")
+                excel_name = self.save_excel(all_parameter=all_parameter, p="/jupyter/data/buffet/buffet2_result")
                 logger.info(f"parameter保存本地成功！")
                 if upload == True:
                     logger.info(f"开始上传到github!")
