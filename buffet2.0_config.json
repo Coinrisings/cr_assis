@@ -1,11 +1,11 @@
 {
     "okx_usd_future-okx_usdt_swap":{
         "accounts":{
-	"test_otest4":[100, 9]
+	"test_otest4":[200, 100]
 },
         "add":{
-            "btc":1,
-            "eth":0
+            "btc":0,
+            "eth":1
         },
         "reduce":{
         },
@@ -27,7 +27,7 @@
         "future_date":["230331"],
         "is_long":{
             "btc":0,
-            "eth":0
+            "eth":1
         },
         "cm2_chg":0.0003,
         "open_add":0,
