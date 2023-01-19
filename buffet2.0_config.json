@@ -1,7 +1,7 @@
 {
     "okx_usd_future-okx_usdt_swap":{
         "accounts":{
-	"test_otest4":[250, 9]
+	"test_otest4":[100, 9]
 },
         "add":{
             "btc":1,
