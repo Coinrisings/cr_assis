@@ -392,7 +392,7 @@ class Get_Parameter():
                                         if add[coin] != 0:
                                             parameter.loc[coin, 'position'] = res_mv * add[coin] / sum(
                                                 list(add.values())) * equity / coin_price / 100
-                                            parameter.loc[coin, 'account'] = acc
+                                            parameter.loc[coin, 'account'] = acc.parameter_name
                                             parameter.loc[coin, 'portfolio'] = 1
                                             parameter.loc[coin, 'closemaker'] = config['closemaker'][0]
                                             parameter.loc[coin, 'position_multiple'] = config['position_multiple']
