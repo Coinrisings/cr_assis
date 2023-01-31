@@ -5,13 +5,13 @@ from github import Github
 
 otest8 = AccountBase(deploy_id = "test_otest8@h3f_okex_uswap_okex_uswap_btc")
 otest4 = AccountBase(deploy_id = "test_otest4@dt_okex_cfuture_okex_uswap_btc")
-bg001 = AccountBase(deploy_id= "bg_001@dt_okex_cfuture_okex_uswap_btc")
+bg003 = AccountBase(deploy_id= "bg_bg003@dt_okex_cfuture_okex_uswap_btc")
 ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_cfuture_okex_uswap_btc")
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-account = ch003
+account = bg003
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
