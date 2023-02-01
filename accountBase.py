@@ -607,16 +607,41 @@ class AccountBase(object):
                                         deploy_id= self.deploy_id)
         self.AccountData.path_orders = self.path_orders
         self.AccountData.path_ledgers = self.path_orders
+    
+    def get_third_pnl(self):
+        cash = {}
+        price = np.nan
+        for timestamp in [self.start, self.end]:
+            start = readData.transfer_time(timestamp + datetime.timedelta(minutes = -10))
+            end = readData.transfer_time(timestamp)
+            a = f"""
+            select origin from equity_snapshot where client = '{self.client}' and username = '{self.username}' 
+            and symbol = '{self.principal_currency.lower()}' and time <= '{end}' and time >= '{start}' LIMIT 100
+            """
+            df = readData.read_influx(a)
+            if len(df) > 0:
+                raw = eval(df.origin.values[-1])
+                cash[timestamp] = eval(raw["eq"]) - eval(raw["upl"])
+                if timestamp == self.end:
+                    price = eval(raw["eqUsd"]) / eval(raw["eq"])
+            else:
+                cash[timestamp] = np.nan
+        profit = cash[self.end] - cash[self.start]
+        third_pnl = {f"{self.principal_currency}":profit, "USDT":profit * price}
+        self.cash = cash.copy()
+        self.third_pnl = third_pnl.copy()
+        return third_pnl
+    
     def run_pnl(self, start, end, play = False, log_time = False):
+        # self.third_pnl = self.get_third_pnl() if "okx_usd_swap-okx_usdt_swap" in self.combo else None
         self.get_account_data() if not hasattr(self, "AccountData") else None
         self.AccountData.run_pnl(start, end, play = play, log_time= log_time)
-        self.orders = self.AccountData.orders
-        self.trade_data = self.AccountData.trade_data
-        self.tpnl = self.AccountData.tpnl
-        self.ledgers = self.AccountData.ledgers
-        self.ledgers_fpnl = self.AccountData.ledgers_fpnl
-        self.fpnl = self.AccountData.fpnl
-        self.second_pnl = self.AccountData.second_pnl
-        self.third_pnl = self.AccountData.third_pnl
-        self.pnl = self.AccountData.adjEq
-        self.total_pnl = self.AccountData.total_pnl
+        self.orders = self.AccountData.orders if hasattr(self.AccountData, "orders") else None
+        self.trade_data = self.AccountData.trade_data if hasattr(self.AccountData, "trade_data") else None
+        self.tpnl = self.AccountData.tpnl if hasattr(self.AccountData, "tpbl") else None
+        self.ledgers = self.AccountData.ledgers if hasattr(self.AccountData, "ledgers") else None
+        self.ledgers_fpnl = self.AccountData.ledgers_fpnl if hasattr(self.AccountData, "ledgers_fpnl") else None
+        self.third_pnl = self.AccountData.third_pnl if hasattr(self.AccountData, "third_pnl") else None
+        self.fpnl = self.AccountData.fpnl if hasattr(self.AccountData, "fpnl") else None
+        self.pnl = self.AccountData.pnl if hasattr(self.AccountData, "pnl") else None
+        self.total_pnl = self.AccountData.total_pnl if hasattr(self.AccountData, "total_pnl") else None
