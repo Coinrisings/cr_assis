@@ -9,12 +9,12 @@ bg003 = AccountBase(deploy_id= "bg_bg003@dt_okex_uswap_okex_cfuture_btc")
 ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_cfuture_okex_uswap_btc")
 otest5 = AccountBase(deploy_id= "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
 bm001 = AccountBase(deploy_id="bm_bm001@dt_okex_uswap_okex_cfuture_btc")
-file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
+# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
-# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}-1"
+file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}-1"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-account = bm001
+account = otest5
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -26,19 +26,19 @@ suffix = "230331"
 folder = account.folder
 master_pair = account.contract_master.replace("future", suffix)
 slave_pair = account.contract_slave.replace("future", suffix)
-git_file = "parameter_dt_future"
-# git_file = "parameter_ssfo"
+# git_file = "parameter_dt_future"
+git_file = "parameter_ssfo"
 local_file = f"parameter_{datetime.datetime.now()}"
 level = 1
-uplimit = 2.5
-open1 = 1.0085
+uplimit = 2
+open1 = 0.9993
 cm = 1.005
 ct = cm + 0.002
 open2 = open1 + 1
 cm2 = cm - 0.0005
 ct2 = ct - 0.0005
 is_long = 1
-fragment = 6000
+fragment = 1000
 fragment_min = 100
 loss_open = 0.001
 profit_close = 0.005

@@ -76,6 +76,7 @@ class AccountBase(object):
     
     def initilize(self):
         self.database = ConnectData()
+        self.principal_currency = self.ccy
         self.combo = self.master + "-" + self.slave
         self.exchange_master = self.master.split("_")[0]
         self.exchange_slave = self.slave.split("_")[0]
