@@ -606,9 +606,9 @@ class AccountBase(object):
                                         strategy= self.strategy,
                                         deploy_id= self.deploy_id)
     
-    def run_pnl(self, start, end):
+    def run_pnl(self, start, end, play = False, log_time = False):
         self.get_account_data() if not hasattr(self, "AccountData") else None
-        self.AccountData.run_pnl(start, end)
+        self.AccountData.run_pnl(start, end, play = play, log_time= log_time)
         self.orders = self.AccountData.orders
         self.trade_data = self.AccountData.trade_data
         self.tpnl = self.AccountData.tpnl
