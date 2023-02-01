@@ -10,7 +10,7 @@ class AccountBase(object):
         # 要求同一个账户里单一币种的master和slave是唯一的
         self.deploy_id = deploy_id
         self.strategy = strategy
-        self.script_path = os.path.dirname(str(Path( __file__ ).absolute()))
+        self.script_path = str(Path( __file__ ).parent.absolute())
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
     
@@ -106,28 +106,96 @@ class AccountBase(object):
         # parameter folder in GitHub
         self.folder = self.deploy_id.split("@")[-1].split("_")[0]
         
-    def get_spreads(self, coin, hours = 24):
+    def get_quarter(self):
+        today = datetime.date.today()
+        quarter = str(today.year)[-2:]
+        last_day = ""
+        month = today.month
+        if month <= 3:
+            last_day = "0331"
+        elif month <= 6:
+            last_day = "0630"
+        elif month <= 9:
+            last_day = "0930"
+        else:
+            last_day = "1231"
+        quarter = quarter + last_day
+        return quarter
+    
+    def get_all_database(self, db = "spreads") -> set:
+        """get list all measurements in INFLUXDB
+
+        Args:
+            db (str, optional): database name. Defaults to "spreads".
+
+        Returns:
+            set: list of name, {'spread_orderbook_binance_spot_audio_usdt__orderbook_binance_swap_audio_usdt_swap__reverse',
+            'spread_orderbook_hbg_futures_bch_usd_220819__orderbook_hbg_spot_bch_usdt'}
+        """
+        self.database.load_influxdb(database = db)
+        influx_client = self.database.influx_clt
+        measurements = influx_client.get_list_measurements()
+        database = set()
+        for info in measurements:
+            name = info["name"]
+            database.add(name)
+        return database
+    
+    def get_spreads(self, coin: str, hours = 24, suffix = "", time_unit = "h") -> pd.DataFrame: 
+        """get spreads data in last serveral hours
+
+        Args:
+            coin (str): the coin name
+            hours (int, optional): spreads time. Defaults to 24.
+            suffix (str, optional): delivery data, only for future. Defaults to "".
+            time_unit (str, optional): spreads time unit, Defaults to h.
+
+        Returns:
+            pd.DataFrame: spreads data, columns = ["time", "ask0_spread", "bid0_spread", "dt"]
+        """
         coin = coin.lower()
+        if suffix == "":
+            suffix = self.get_quarter()
         exchange_master = self.exchange_master
         exchange_slave = self.exchange_slave
-        contract_master = self.contract_master.replace("-", "_")
-        contract_slave = self.contract_slave.replace("-", "_")
-        kind_master = self.master.split("_")[-1]
-        kind_slave = self.slave.split("_")[-1]
+        contract_master = self.contract_master.replace("-", "_").replace("future", suffix)
+        contract_slave = self.contract_slave.replace("-", "_").replace("future", suffix)
+        kind_master = self.master.split("_")[-1].replace("future", "futures")
+        kind_slave = self.slave.split("_")[-1].replace("future", "futures")
         if exchange_master in ["okx", "okexv5"]:
             exchange_master = "okex"
         if exchange_slave in ["okx", "okexv5"]:
             exchange_slave = "okex"
-        if self.combo != "okx_usd_swap-okx_usdt_swap" and self.combo != "binance_usd_swap-binance_usdt_swap" and self.combo != "gate_usd_swap-gate_usdt_swap":
-            dataname = f'''spread_orderbook_{exchange_master}_{kind_master}_{coin}{contract_master}__orderbook_{exchange_slave}_{kind_slave}_{coin}{contract_slave}'''
-            a = f"select time, ask0_spread, bid0_spread from {dataname} where time >= now() - {hours}h"
+        database = self.get_all_database()
+        dataname = f'''spread_orderbook_{exchange_master}_{kind_master}_{coin}{contract_master}__orderbook_{exchange_slave}_{kind_slave}_{coin}{contract_slave}'''
+        dataname_reverse = f'''spread_orderbook_{exchange_slave}_{kind_slave}_{coin}{contract_slave}__orderbook_{exchange_master}_{kind_master}_{coin}{contract_master}'''
+        is_exist = True
+        if dataname in database:
+            a = f"select time, ask0_spread, bid0_spread from {dataname} where time >= now() - {hours}{time_unit}"
+        elif dataname_reverse in database:
+            a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= now() - {hours}{time_unit}"
+        elif "future" in self.combo:
+            if suffix in contract_master:
+                dataname = f'''spread_orderbook_{exchange_master}_{kind_master}_{coin}{contract_master}__orderbook_{exchange_slave}_spot_{coin}_usdt'''
+                if dataname in database:
+                    a = f"select time, ask0_spread, bid0_spread from {dataname} where time >= now() - {hours}{time_unit}"
+                else:
+                    is_exist = False
+            else:
+                dataname_reverse = f'''spread_orderbook_{exchange_slave}_{kind_slave}_{coin}{contract_slave}__orderbook_{exchange_master}_spot_{coin}_usdt'''
+                if dataname_reverse in database:
+                    a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= now() - {hours}{time_unit}"
+                else:
+                    is_exist = False
         else:
-            dataname = f'''spread_orderbook_{exchange_slave}_{kind_slave}_{coin}{contract_slave}__orderbook_{exchange_master}_{kind_master}_{coin}{contract_master}'''
-            a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname} where time >= now() - {hours}h"
-        self.database.load_influxdb(database = "spreads")
-        ret = self.database.influx_clt.query(a)
-        self.database.influx_clt.close()
-        spreads_data = pd.DataFrame(ret.get_points())
+            is_exist = False
+        spreads_data = pd.DataFrame(columns = ["time", "ask0_spread", "bid0_spread", "dt"])
+        if not is_exist:
+            print(f"{self.parameter_name} spreads database doesn't exist")
+        else:
+            return_data = self.database._send_influx_query(sql = a, database = "spreads", is_dataFrame= True)
+            if len(return_data) > 0:
+                spreads_data = return_data
         return spreads_data
     
     def get_account_position(self):
