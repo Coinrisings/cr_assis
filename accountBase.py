@@ -3,6 +3,7 @@ import numpy as np
 import datetime, time, os, yaml, json
 from pymongo import MongoClient
 from connectData import ConnectData
+from research.utils.ObjectDataType import AccountData
 from pathlib import Path
 
 class AccountBase(object):
@@ -13,6 +14,7 @@ class AccountBase(object):
         self.script_path = str(Path( __file__ ).parent.absolute())
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
+    
     
     def load_mongo_url(self):
         with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml") as f:
@@ -593,3 +595,27 @@ class AccountBase(object):
             dates.append(str(i))
             i = i + datetime.timedelta(days = 1)
         return dates
+    
+    def get_account_data(self):
+        self.AccountData = AccountData(username = self.username,
+                                        client = self.client,
+                                        parameter_name= self.parameter_name,
+                                        master = self.master,
+                                        slave = self.slave,
+                                        principal_currency= self.principal_currency,
+                                        strategy= self.strategy,
+                                        deploy_id= self.deploy_id)
+    
+    def run_pnl(self, start, end):
+        self.get_account_data() if not hasattr(self, "AccountData") else None
+        self.AccountData.run_pnl(start, end)
+        self.orders = self.AccountData.orders
+        self.trade_data = self.AccountData.trade_data
+        self.tpnl = self.AccountData.tpnl
+        self.ledgers = self.AccountData.ledgers
+        self.ledgers_fpnl = self.AccountData.ledgers_fpnl
+        self.fpnl = self.AccountData.fpnl
+        self.second_pnl = self.AccountData.second_pnl
+        self.third_pnl = self.AccountData.third_pnl
+        self.pnl = self.AccountData.adjEq
+        self.total_pnl = self.AccountData.total_pnl
