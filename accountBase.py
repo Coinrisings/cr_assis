@@ -1,14 +1,16 @@
 import pandas as pd
 import numpy as np
-import datetime, time, os, yaml
+import datetime, time, os, yaml, json
 from pymongo import MongoClient
 from connectData import ConnectData
+from pathlib import Path
 
 class AccountBase(object):
     def __init__(self,  deploy_id: str, strategy = "funding") -> None:
         # 要求同一个账户里单一币种的master和slave是唯一的
         self.deploy_id = deploy_id
         self.strategy = strategy
+        self.script_path = os.path.dirname(str(Path( __file__ ).absolute()))
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
     
@@ -23,12 +25,12 @@ class AccountBase(object):
     def get_strategy_info(self, strategy: str):
         """解析deployd_id的信息"""
         words = strategy.split("_")
-        master = (words[1] + "_" + words[2]).replace("okex", "okx")
+        master = (words[1] + "_" + words[2]).replace("okexv5", "okx").replace("okex", "okx")
         master = master.replace("uswap", "usdt_swap")
         master = master.replace("cswap", "usd_swap")
         master = master.replace("ufuture", "usdt_future")
         master = master.replace("cfuture", "usd_future")
-        slave = (words[3] + "_" + words[4]).replace("okex", "okx")
+        slave = (words[3] + "_" + words[4]).replace("okexv5", "okx").replace("okex", "okx")
         slave = slave.replace("uswap", "usdt_swap")
         slave = slave.replace("cswap", "usd_swap")
         slave = slave.replace("ufuture", "usdt_future")
@@ -138,15 +140,8 @@ class AccountBase(object):
             
             if len(data) > 0:
                 num = 0
-                while len(now_position) == 0:
-                    now_position = self.get_now_position().copy()
-                    now_position = now_position.dropna()
-                    num += 1
-                    if num > 10:
-                        print(f"buffet ignores {self.parameter_name} at {datetime.datetime.now()}")
-                        return   
-                    print(f"buffet failed to have {self.parameter_name} position at {datetime.datetime.now()}: {num}")
-                    time.sleep(3)
+                print(f"Failed to get {self.parameter_name} position at {datetime.datetime.now()}")
+                return 
         data = pd.DataFrame(columns =["coin", "side", "position", "MV", "MV%"], index = range(len(now_position)))
         for i in data.index:
             coin = now_position.index.values[i]
@@ -158,9 +153,6 @@ class AccountBase(object):
         if "MV" in data.columns:
             data = data.sort_values(by = "MV", ascending = False) 
         data = data.dropna(axis = 0, how = "all")
-#         if self.principal_currency.lower() in data.coin.values:
-#             location = int(data[data["coin"] == self.principal_currency.lower()].index.values)
-#             data.drop(location, axis = 0, inplace = True)
         data.index = range(len(data))
         self.position = data.copy()
         
@@ -392,35 +384,24 @@ class AccountBase(object):
         else:
             print(f"{self.parameter_name} exchange name is not supported")
         return exchange
+    
+    def load_suffix_json(self):
+        path = self.script_path + "/config"
+        with open(f"{path}/unified_suffix.json", "r") as f:
+            suffix_json = json.load(f)
+        self.suffix_json = suffix_json
+    
     def unified_suffix(self, suffix):
         suffix = suffix.replace("_", "-")
+        self.load_suffix_json() if not hasattr(self, "suffix_json") else None
         if suffix.split("-")[-1].isnumeric():
             suffix = suffix.replace(suffix.split("-")[-1], "future")
-        if suffix in ["-busd-swap", "_busd_swap", "busd-swap", "busd_swap"]:
-            suffix = "-busd-swap"
-        elif suffix in ["-usdt-swap", "_usdt_swap", "usdt-swap", "usdt_swap"]:
-            suffix = "-usdt-swap"
-        elif suffix in ["-usdc-swap", "_usdc_swap", "usdc-swap", "usdc_swap"]:
-            suffix = "-usdc-swap"
-        elif suffix in ["-usd-swap", "_usd_swap", "usd-swap", "usd_swap"]:
-            suffix = "-usd-swap"
-        elif suffix in ["-busd-future", "_busd_future", "busd-future", "busd_future"]:
-            suffix = "-busd-future"
-        elif suffix in ["-usdt-future", "_usdt_future", "usdt-future", "usdt_future"]:
-            suffix = "-usdt-future"
-        elif suffix in ["-usdc-future", "_usdc_future", "usdc-future", "usdc_future"]:
-            suffix = "-usdc-future"
-        elif suffix in ["-usd-future", "_usd_future", "usd-future", "usd_future"]:
-            suffix = "-usd-future"
-        elif suffix in ["-usdt", "_usdt", "usdt", "spot", "-spot", "_spot"]:
-            suffix = "-usdt"
-        elif suffix in ["-busd", "_busd"]:
-            suffix = '-busd'
-        elif suffix in ["-usdc", "_usdc"]:
-            suffix = '-usdc'
-        else:
-            print(f"{self.parameter_name} suffix is not supported: {suffix}")
+        for key, value in self.suffix_json.items():
+            if suffix in value:
+                suffix = key
+                break
         return suffix
+    
     def get_now_position(self, timestamp = "10m"):
         #master, slave : "usdt-swap", "usd-swap", "spot"
         data = pd.DataFrame()
