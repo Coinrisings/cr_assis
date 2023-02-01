@@ -8,7 +8,7 @@ bg001 = AccountBase(deploy_id = "bg_001@dt_okex_cswap_okex_uswap_btc")
 bg003 = AccountBase(deploy_id = "bg_bg003@dt_okex_cswap_okex_uswap_btc")
 ch002 = AccountBase(deploy_id = "ch_ch002@dt_okex_cfuture_okex_uswap_btc")
 ch003 = AccountBase(deploy_id = "ch_ch003@dt_okex_cswap_okex_uswap_btc")
-ch004 = AccountBase(deploy_id = "ch_ch004@dt_okex_cswap_okex_uswap_btc")
+ch004 = AccountBase(deploy_id = "ch_ch004@dt_okex_cfuture_okex_uswap_btc")
 ch005 = AccountBase(deploy_id = "ch_ch005@dt_okex_cswap_okex_uswap_btc")
 ch006 = AccountBase(deploy_id = "ch_ch006@dt_okex_cswap_okex_uswap_btc")
 ch007 = AccountBase(deploy_id = "ch_ch007@dt_okex_cswap_okex_uswap_btc")
@@ -16,10 +16,10 @@ ch008 = AccountBase(deploy_id = "ch_ch008@dt_okex_cswap_okex_uswap_btc")
 ch009 = AccountBase(deploy_id = "ch_ch009@dt_okex_cfuture_okex_uswap_btc")
 cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
 ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
-ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cswap_okex_uswap_btc")
+ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cfuture_okex_uswap_btc")
 ljw002 = AccountBase(deploy_id = "ljw_002@dt_okex_cfuture_okex_uswap_btc")
 wz001 = AccountBase(deploy_id = "wz_001@dt_okex_cswap_okex_uswap_usdt")
-accounts = [ch002, ch009, ljw002]
+accounts = [ch004, ljw001]
 # for account in accounts:
 #     account.get_account_position()
 #     print(account.parameter_name)
@@ -46,8 +46,8 @@ for account in accounts:
     master_pair = account.contract_master.replace("future", suffix)
     slave_pair = account.contract_slave.replace("future", suffix)
     level = 1
-    uplimit = 2
-    open1 = 1.009
+    uplimit = 2.5
+    open1 = 1.0085
     cm = 1.005
     ct = cm + 0.002
     open2 = open1 + 1
