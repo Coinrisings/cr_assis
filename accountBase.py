@@ -605,7 +605,8 @@ class AccountBase(object):
                                         principal_currency= self.principal_currency,
                                         strategy= self.strategy,
                                         deploy_id= self.deploy_id)
-    
+        self.AccountData.path_orders = self.path_orders
+        self.AccountData.path_ledgers = self.path_orders
     def run_pnl(self, start, end, play = False, log_time = False):
         self.get_account_data() if not hasattr(self, "AccountData") else None
         self.AccountData.run_pnl(start, end, play = play, log_time= log_time)
