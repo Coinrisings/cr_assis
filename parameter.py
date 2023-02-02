@@ -3,12 +3,10 @@ import pandas as pd
 import datetime, os
 from github import Github
 
-otest8 = AccountBase(deploy_id = "test_otest8@h3f_okex_uswap_okex_uswap_btc")
-otest4 = AccountBase(deploy_id = "test_otest4@dt_okex_uswap_okex_cfuture_btc")
-bg003 = AccountBase(deploy_id= "bg_bg003@dt_okex_uswap_okex_cfuture_btc")
-ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_cfuture_okex_uswap_btc")
+otest4 = AccountBase(deploy_id = "test_otest4@dt_okex_cfuture_okex_uswap_btc")
+ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_uswap_okex_cfuture_btc")
+ch004 = AccountBase(deploy_id= "ch_ch004@dt_okex_uswap_okex_cfuture_btc")
 otest5 = AccountBase(deploy_id= "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
-bm001 = AccountBase(deploy_id="bm_bm001@dt_okex_uswap_okex_cfuture_btc")
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}-1"
@@ -31,7 +29,7 @@ git_file = "parameter_ssfo"
 local_file = f"parameter_{datetime.datetime.now()}"
 level = 1
 uplimit = 2
-open1 = 0.9993
+open1 = 1
 cm = 1.005
 ct = cm + 0.002
 open2 = open1 + 1
@@ -53,7 +51,7 @@ position = account.adjEq * uplimit / price
 holding_position = float(account.position[account.position["coin"] == "btc"].position.values[-1]) if hasattr(account, "position") and "btc" in account.position.coin.values else 0
 position2 = max(position, holding_position) * 2
 contract = coin + master_pair
-parameter.loc[0] = [account.parameter_name, contract, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, loss_open, profit_close, 1, datetime.datetime.now() + datetime.timedelta(minutes=5), is_long ,1, coin+master_pair, coin+slave_pair]
+parameter.loc[0] = [account.parameter_name, contract, level, open1, cm, position, ct, open2, cm2,position2, ct2, fragment / price, fragment_min / price, loss_open, profit_close, 1, datetime.datetime.now() + datetime.timedelta(minutes=3), is_long ,1, coin+master_pair, coin+slave_pair]
 parameter = parameter.set_index("account")
 parameter.to_excel(f"{file_path}/{local_file}.xlsx", sheet_name=account.parameter_name)
 
@@ -73,4 +71,3 @@ with open(f"{file_path}/{local_file}.xlsx", "rb") as f:
 	name = f"excel/{folder}/{git_file}"+".xlsx"
 	repo.create_file(name, f"uploaded by ssh at {datetime.datetime.now()}", data)
 	print(f"{name} uploaded")
-	print(datetime.datetime.now())
