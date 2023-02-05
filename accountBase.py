@@ -768,7 +768,7 @@ class AccountBase(object):
         raw = raw.drop_duplicates(subset = ["market_oid"])
         raw.index = range(len(raw))
         data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base",
-                                           "side","turnover","status","exchange", "field", "market_oid"])
+                                        "side","turnover","status","exchange", "field", "market_oid"])
         if len(raw) != 0:
             for i in raw.index:
                 data.loc[i, "UTC"] = raw.loc[i, "update_iso"]
