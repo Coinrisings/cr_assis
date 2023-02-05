@@ -46,7 +46,7 @@ class ConnectData(object):
         data = self.redis_clt.hgetall(key)
         return data
 
-    def _send_influx_query(self, sql: str, database: str, is_dataFrame = False):
+    def _send_influx_query(self, sql: str, database: str, is_dataFrame = True):
         self.load_influxdb(database)
         resp = self.influx_clt.query(sql)
         self.influx_clt.close()

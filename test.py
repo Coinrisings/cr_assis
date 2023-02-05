@@ -1,6 +1,12 @@
 import datetime, requests, zipfile, io
 import pandas as pd
+from fsoPnl import FsoPnl
+from accountBase import AccountBase
 
+bg003 = AccountBase(deploy_id="bg_bg003@dt_okex_uswap_okex_cfuture_btc")
+fso = FsoPnl(accounts = [bg003])
+fso.get_open_time(bg003)
+print(bg003.start)
 # 溢价指数
 dic={'ETHUSDT':'prem_ethusdt',
     'ETHBUSD':'prem_ethbusd',
