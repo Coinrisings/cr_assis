@@ -3,17 +3,17 @@ import pandas as pd
 import datetime, os
 from github import Github
 
-otest4 = AccountBase(deploy_id = "test_otest4@dt_okex_cfuture_okex_uswap_btc")
-ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_uswap_okex_cfuture_btc")
-ch004 = AccountBase(deploy_id= "ch_ch004@dt_okex_uswap_okex_cfuture_btc")
-otest5 = AccountBase(deploy_id= "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
-otest6 = AccountBase(deploy_id= "test_otest6@dt_okex_ufuture_okex_cswap_btc")
+# otest4 = AccountBase(deploy_id = "test_otest4@dt_okex_cfuture_okex_uswap_btc")
+# ch003 = AccountBase(deploy_id= "ch_ch003@dt_okex_uswap_okex_cfuture_btc")
+# ch004 = AccountBase(deploy_id= "ch_ch004@dt_okex_uswap_okex_cfuture_btc")
+# otest5 = AccountBase(deploy_id= "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
+otest8 = AccountBase(deploy_id= "test_otest8@dt_okex_cfuture_okex_cswap_btc")
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}-1"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-account = otest6
+account = otest8
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
