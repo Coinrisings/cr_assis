@@ -41,10 +41,12 @@ class FsoPnl(object):
         if len(position) > 0:
             pair = position["pair"].unique()[0]
             sql = f"""
-            select long, short, pair from "position" where pair = '{pair}' and (long >0 or short >0) order by time LIMIT 1
+            select long, short, pair from "position" where pair = '{pair}' and (long >0 or short >0)
+            and username = '{account.username}' and client = '{account.client}'
+            order by time LIMIT 1
             """
             df = self.database._send_influx_query(sql, database = "account_data", is_dataFrame= True)
-            open_time = datetime.datetime.strptime(df["time"].values[0][:19].replace("T", " "), "%Y-%m-%d %H:%M:%S")
+            open_time = datetime.datetime.strptime(df["time"].values[0][:19].replace("T", " "), "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours = 8)
         else:
             open_time = self.end_time
         account.start = open_time
