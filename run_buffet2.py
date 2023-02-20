@@ -85,6 +85,15 @@ ch_ch004 = AccountData(username = "ch004",
                         principal_currency="BTC",
                         strategy="funding",
                         deploy_id="ch_ch004@dt_okex_uswap_okex_cfuture_btc")
+
+otest8 = AccountData(username = "otest8",
+                        client = "test",
+                        parameter_name= "test_otest8",
+                        master = "okx_usd_future",
+                        slave= "okx_usd_swap",
+                        principal_currency="BTC",
+                        strategy= "funding",
+                        deploy_id= "test_otest8@dt_okex_cfuture_okex_cswap_btc")
 # spreads = test_otest4.get_spreads(coin = "btc", suffix = "230331")
 buffet2_=buffet(accounts = [bg_001, ch_ch009, ljw_002])
 all_parameter=buffet2_.get_parameter(com='okx_usd_future-okx_usdt_swap',accounts=[],ingore_account=[],upload= True)
