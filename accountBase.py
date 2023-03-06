@@ -267,6 +267,53 @@ class AccountBase(object):
             price = np.nan
         return price
     
+    def get_coins_price(self, coins: list, kind = "", delivery = "") -> dict:
+        """get coins price from redis
+
+        Args:
+            coin (str): the list of coins name, like ["btc", "eth"]
+            kind (str, optional): exchange + contract type, for example "okex_spot", "okex_usdt_swap". Defaults to "".
+            delivery (str, optional):delivery data, only for future. Defaults to "".
+        """
+        if kind == "":
+            kind = self.exchange_master + "_spot"
+        kind = kind.replace("-", "_")
+        exchange = kind.split("_")[0]
+        x = kind.split("_")[-1]
+        if x == "swap":
+            suffix = "-" + kind.split("_")[-2] + "-" + kind.split("_")[-1]
+        elif x in ["spot", "usdt"]:
+            suffix = "-usdt"
+        elif x == "future":
+            if delivery == "":
+                delivery = self.get_quarter()
+            suffix = "-" + kind.split("_")[-2] + "-" + delivery
+        else:
+            return np.nan
+        if exchange in ["okx", "okex", "okex5", "ok", "o", "okexv5"]:
+            exchange = "okexv5"
+        elif exchange in ["binance", "b"]:
+            exchange = "binance"
+        elif exchange in ["gateio", "g", "gate"]:
+            exchange = "gate"
+        elif exchange in ["hbg", "h"]:
+            exchange = "hbg"
+        else:
+            pass
+        self.database.load_redis()
+        r = self.database.redis_clt
+        coin_price = {}
+        for coin in coins:
+            key = f"{exchange}/{coin}{suffix}"
+            key = bytes(key, encoding = "utf8")
+            data = r.hgetall(key)
+            if b'bid0_price' in data.keys():
+                price = eval(data[b'bid0_price'])
+            else:
+                price = np.nan
+            coin_price[coin] = price
+        return coin_price
+    
     def get_equity(self):
         data = pd.DataFrame()
         num = 0

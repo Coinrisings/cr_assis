@@ -4,7 +4,7 @@ from dtfPnl import DtfPnl
 from accountBase import AccountBase
 anta001 = AccountBase(deploy_id="anta_anta001@dt_okex_uswap_okex_cfuture_btc")
 pnl_daily = DtfPnl([anta001])
-pnl_daily.get_pnl()
+pnl_daily.get_pnl(5)
 
 def get_future_date(timestamp: datetime.datetime) -> datetime.datetime:
     month = timestamp.month
