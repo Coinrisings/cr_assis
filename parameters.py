@@ -3,30 +3,31 @@ import pandas as pd
 import datetime, os
 from github import Github
 from IPython.display import display
-anta001 = AccountBase(deploy_id = "anta_anta001@dt_okex_cswap_okex_uswap_btc")
-# bg001 = AccountBase(deploy_id = "bg_001@dt_okex_cswap_okex_uswap_btc")
+# anta001 = AccountBase(deploy_id = "anta_anta001@dt_okex_cswap_okex_uswap_btc")
+# bg001 = AccountBase(deploy_id = "bg_001@dt_okex_cfuture_okex_uswap_btc")
 # bg003 = AccountBase(deploy_id = "bg_bg003@dt_okex_cswap_okex_uswap_btc")
 # ch002 = AccountBase(deploy_id = "ch_ch002@dt_okex_cfuture_okex_uswap_btc")
 # ch003 = AccountBase(deploy_id = "ch_ch003@dt_okex_cswap_okex_uswap_btc")
 # ch004 = AccountBase(deploy_id = "ch_ch004@dt_okex_cfuture_okex_uswap_btc")
-ch005 = AccountBase(deploy_id = "ch_ch005@dt_okex_cswap_okex_uswap_btc")
-ch006 = AccountBase(deploy_id = "ch_ch006@dt_okex_cswap_okex_uswap_btc")
-ch007 = AccountBase(deploy_id = "ch_ch007@dt_okex_cswap_okex_uswap_btc")
-ch008 = AccountBase(deploy_id = "ch_ch008@dt_okex_cswap_okex_uswap_btc")
-ch010 = AccountBase(deploy_id = "ch_ch010@dt_okex_cswap_okex_uswap_btc")
+# ch005 = AccountBase(deploy_id = "ch_ch005@dt_okex_cswap_okex_uswap_btc")
+# ch006 = AccountBase(deploy_id = "ch_ch006@dt_okex_cswap_okex_uswap_btc")
+# ch007 = AccountBase(deploy_id = "ch_ch007@dt_okex_cswap_okex_uswap_btc")
+ch008 = AccountBase(deploy_id = "ch_ch008@ssf_okexv5_spot_okexv5_uswap_btc")
+ch010 = AccountBase(deploy_id = "ch_ch010@ssf_okexv5_spot_okexv5_uswap_btc")
 # ch009 = AccountBase(deploy_id = "ch_ch009@dt_okex_cfuture_okex_uswap_btc")
-cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
-ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
+# cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
+# ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
 # ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cfuture_okex_uswap_btc")
 # ljw002 = AccountBase(deploy_id = "ljw_002@dt_okex_cfuture_okex_uswap_btc")
-wz001 = AccountBase(deploy_id = "wz_001@dt_okex_cswap_okex_uswap_usdt")
-accounts = [anta001, ch005, ch006, ch007, ch008, ch010, cr001, ht001, wz001]
+# wz001 = AccountBase(deploy_id = "wz_001@dt_okex_cswap_okex_uswap_usdt")
+accounts = [ch008, ch010]
 # for account in accounts:
 #     account.get_account_position()
 #     print(account.parameter_name)
 #     display(account.position)
-# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}-1"
-file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
+# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
+file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
+# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}-1"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
@@ -47,9 +48,9 @@ for account in accounts:
     master_pair = account.contract_master.replace("future", suffix)
     slave_pair = account.contract_slave.replace("future", suffix)
     level = 0
-    uplimit = 2.5
+    uplimit = 0.1
     open1 = 2
-    cm = 1.005
+    cm = 0.9945
     ct = cm + 0.002
     open2 = open1 + 1
     cm2 = cm - 0.0005

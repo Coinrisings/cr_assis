@@ -1,0 +1,38 @@
+{
+    "cel": {
+        "level": 0,
+        "side": "long",
+        "uplimit": 0.13,
+        "accounts": ["bg_001", "ljw_002"]
+    },
+    "people": {
+        "level": 1,
+        "side": "long",
+        "uplimit": 0.13,
+        "accounts": ["bg_001", "ljw_002"]
+    },
+    "blur": {
+        "level": 1,
+        "side": "long",
+        "uplimit": 0.3,
+        "accounts": ["bg_001", "ljw_002", "ht_ht001", "cr_cr001"]
+    },
+    "ar": {
+        "level": 1,
+        "side": "long",
+        "uplimit": 0.13,
+        "accounts": ["bg_001", "ljw_002"]
+    },
+    "cvc": {
+        "level": 1,
+        "side": "long",
+        "uplimit": 0.13,
+        "accounts": ["bg_001", "ljw_002"]
+    },
+    "gft": {
+        "level": 0,
+        "side": "long",
+        "uplimit": 0.13,
+        "accounts": ["bg_001", "ljw_002"]
+    }
+}

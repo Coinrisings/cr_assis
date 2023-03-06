@@ -28,10 +28,11 @@ class FsoPnl(object):
     
     def get_locked_tpnl(self, account: AccountBase) -> dict:
         account.get_now_position(timestamp = "5m") if not hasattr(account, "now_position") else None
+        account.get_equity()if not hasattr(account, "adjEq") else None
         now_position = account.now_position
         locked_tpnl = {}
         for coin in now_position.index:
-            locked_tpnl[coin] = self.get_coin_tpnl(account, coin)
+            locked_tpnl[coin] = self.get_coin_tpnl(account, coin) * account.get_coin_price(coin)
         account.locked_tpnl = locked_tpnl
         return locked_tpnl
     
