@@ -524,43 +524,51 @@ class AccountBase(object):
                 break
         return suffix
     
+    def _send_complex_query(self, sql: str, db = "account_data", en = "INFLUX_URI") -> pd.DataFrame:
+        """send complex query to influx, convert dict to pd.DataFrame
+
+        Args:
+            sql (str): sql query
+            db (str, optional): database name. Defaults to "account_data".
+            en (str, optional): os.environ. Defaults to "INFLUX_URI".
+
+        Returns:
+            pd.DataFrame: raw position data in influx
+        """
+        data = pd.DataFrame()
+        result = self.database._send_influx_query(sql, database = db)
+        for key in result.keys():
+            df = pd.DataFrame(result[key])
+            data = pd.concat([data, df])
+        return data
+    
+    def get_influx_position(self, timestamp: str, the_time: str) -> pd.DataFrame:
+        a = f"""
+            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
+            """
+        data = self._send_complex_query(sql = a)
+        if self.client != self.slave_client or self.username != self.slave_username:
+            a = f"""
+            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
+            """
+            df = self._send_complex_query(sql = a)
+            data = pd.concat([data, df])
+        data.index = range(len(data))
+        return data
+    
     def get_now_position(self, timestamp = "10m"):
         """ master, slave : "usdt-swap", "usd-swap", "spot" """
-        data = pd.DataFrame(columns = ['time', 'ex_field', 'exchange', 'long', 'long_open_price', 'settlement',
-                                    'short', 'short_open_price', 'pair'])
-        if self.client == self.slave_client and self.username == self.slave_username:
-            a = f"""
-            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
-            """
-            result = self.database._send_influx_query(a, database = "account_data", is_dataFrame = False)
-            for key in result.keys():
-                df = pd.DataFrame(result[key])
-                data = pd.concat([data, df])
-        else:
-            a = f"""
-            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
-            """
-            result = self.database._send_influx_query(a, database = "account_data", is_dataFrame = False)
-            for key in result.keys():
-                df = pd.DataFrame(result[key])
-                data = pd.concat([data, df])
-            a = f"""
-            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > now() - {timestamp} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
-            """
-            result = self.database._send_influx_query(a, database = "account_data", is_dataFrame = False)
-            for key in result.keys():
-                df = pd.DataFrame(result[key])
-                data = pd.concat([data, df])
-        data.dropna(subset = ["time"], inplace = True)
-        data.dropna(subset = ["pair"], inplace = True)
-        data = data[(data["long"] >0) | (data["short"] >0) ].copy()
-        data.index = range(len(data))
-        result = pd.DataFrame(columns = ["dt", "side", "master_ex",
-                                        "master_open_price", "master_number","master_MV","slave_ex",
-                                        "slave_open_price", "slave_number","slave_MV"])
-        if len(data) > 0:
+        #master, slave : "usdt-swap", "usd-swap", "spot"
+        if the_time != "now()" and "'" not in the_time:
+            the_time = f"'{the_time}'"
+        data = self.get_influx_position(timestamp = timestamp, the_time=the_time)
+        if len(data.columns) > 0:
+            data = data[(data["long"] >0) | (data["short"] >0) ].copy()
             data["dt"] = data["time"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
         else:
+            result = pd.DataFrame(columns = ["dt", "side", "master_ex",
+                                        "master_open_price", "master_number","master_MV","slave_ex",
+                                        "slave_open_price", "slave_number","slave_MV"])
             self.now_position = result.copy()
             return result
         for i in data.index:
@@ -591,47 +599,52 @@ class AccountBase(object):
             coins.remove("")
             location = int(data[data["coin"] == ""].index.values)
             data.drop(location, axis = 0 ,inplace = True)
+        data.sort_values(by = "time", inplace = True)
+        data.drop_duplicates(subset = ["symbol"], keep = "last", ignore_index= True)
+        data["name"] = data["kind"].apply(lambda x: "master" if x == self.kind_master else "slave")
+        data["number"] = data["long"] - data["short"]
+        data["side"] = data["number"].apply(lambda x: "long" if x >=0 else "short")
+        data["open_price"] = data["long_open_price"] + data["short_open_price"]
+        
+        if self.contract_master in ["-usd-swap", "-usd-future"]:
+            data["master_contractsize"] = data["coin"].apply(lambda x: self.contractsize.loc[x.upper(), self.kind_master])
+        if self.contract_slave in ["-usd-swap", "-usd-future"]:
+            data["slave_contractsize"] = data["coin"].apply(lambda x: self.contractsize.loc[x.upper(), self.kind_slave])
+        if self.folder != "dt":
+            coin_price = self.get_coins_price(coins = list(data["coin"].unique()))
+            data["coin_price"] = data["coin"].apply(lambda x: self.get_coin_price(coin = x.lower()) if x not in coin_price.keys() else coin_price[x])
         self.origin_position = data.copy()
-        result = pd.DataFrame(columns = ["dt", "side", "master_ex",
-                                        "master_open_price", "master_number","master_MV","slave_ex",
-                                        "slave_open_price", "slave_number","slave_MV"], index = coins)
-        for i in data.index:
-            coin = data.loc[i, "coin"]
-            exchange = self.unified_exchange_name(data.loc[i, "exchange"])
-            if data.loc[i, "kind"] == self.kind_master:
-                result.loc[coin, "dt"] = data.loc[i, "dt"]
-                name = "master"
-                if data.loc[i, "short"] >0 :
-                    result.loc[coin, "side"] = "short"
-                elif data.loc[i, "long"] >0 :
-                    result.loc[coin, "side"] = "long"
-            elif data.loc[i, "kind"] == self.kind_slave:
-                name = "slave"
-            if data.loc[i, "short"] > 0:
-                result.loc[coin, name + "_ex"] = exchange
-                result.loc[coin ,name + "_open_price"] = data.loc[i, "short_open_price"]
-                result.loc[coin ,name + "_number"] = data.loc[i, "short"]
-            else:
-                result.loc[coin, name + "_ex"] = exchange
-                result.loc[coin ,name + "_open_price"] = data.loc[i, "long_open_price"]
-                result.loc[coin ,name + "_number"] = data.loc[i, "long"]
-            if ("usd-swap" in data.loc[i, "kind"] or "usd-future" in data.loc[i, "kind"]) and "busd-swap" not in data.loc[i, "kind"]:
-                result.loc[coin, name + "_MV"] = result.loc[coin, name + "_number"] * self.contractsize.loc[coin.upper(), exchange + data.loc[i, "kind"].replace(exchange, "")]
-            else:
-                try:
-                    if self.folder == "dt":
-                        price = result.loc[coin ,name + "_open_price"]
-                    else:
-                        price = self.get_coin_price(coin = coin.lower(), kind = self.master)
-                except:
-                    price = np.nan
-                    pass
-                if result.loc[coin, name + "_number"] == 0:
-                    result.loc[coin, name + "_MV"] = 0
-                else:
-                    result.loc[coin, name + "_MV"] = result.loc[coin, name + "_number"] * price
-        if len(result) > 30:
-            result = result.dropna()
+        master = pd.DataFrame(columns = ["dt", "side", "master_ex",
+                                        "master_open_price", "master_number","master_MV"])
+        origin_master = data[data["kind"] == self.kind_master].copy()
+        master["dt"] = origin_master["dt"]
+        master["coin"] = origin_master["coin"]
+        master["side"] = origin_master["side"]
+        master["master_ex"] = origin_master["exchange"].apply(lambda x: self.unified_exchange_name(x))
+        master["master_open_price"] = origin_master["open_price"]
+        master["master_number"] = abs(origin_master["number"])
+        if self.contract_master in ["-usd-swap", "-usd-future"]:
+            master["master_MV"] = abs(origin_master["number"] * origin_master["master_contractsize"])
+        elif self.folder == "dt":
+            master["master_MV"] = master["master_open_price"] * master["master_number"]
+        else:
+            master["master_MV"] = master["master_number"] * origin_master["coin_price"]
+        
+        slave = pd.DataFrame(columns = ["slave_ex", "slave_open_price", "slave_number","slave_MV"])
+        origin_slave = data[data["kind"] == self.kind_slave].copy()
+        slave["coin"] = origin_slave["coin"]
+        slave["slave_ex"] = origin_slave["exchange"].apply(lambda x: self.unified_exchange_name(x))
+        slave["slave_open_price"] = origin_slave["open_price"]
+        slave["slave_number"] = abs(origin_slave["number"])
+        if self.contract_slave in ["-usd-swap", "-usd-future"]:
+            slave["slave_MV"] = abs(origin_slave["number"] * origin_slave["slave_contractsize"])
+        elif self.folder == "dt":
+            slave["slave_MV"] = slave["slave_open_price"] * slave["slave_number"]
+        else:
+            slave["slave_MV"] = slave["slave_number"] * origin_slave["coin_price"]
+        
+        result = pd.merge(master, slave, on = "coin")
+        result.set_index("coin", inplace = True)
         result["diff"] = result["master_MV"] - result["slave_MV"]
         self.now_position = result.copy()
         return result
