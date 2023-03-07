@@ -524,7 +524,7 @@ class AccountBase(object):
                 break
         return suffix
     
-    def _send_complex_query(self, sql: str, db = "account_data", en = "INFLUX_URI") -> pd.DataFrame:
+    def _send_complex_query(self, sql: str, db = "account_data") -> pd.DataFrame:
         """send complex query to influx, convert dict to pd.DataFrame
 
         Args:
@@ -536,7 +536,7 @@ class AccountBase(object):
             pd.DataFrame: raw position data in influx
         """
         data = pd.DataFrame()
-        result = self.database._send_influx_query(sql, database = db)
+        result = self.database._send_influx_query(sql, database = db, is_dataFrame= False)
         for key in result.keys():
             df = pd.DataFrame(result[key])
             data = pd.concat([data, df])
@@ -556,7 +556,7 @@ class AccountBase(object):
         data.index = range(len(data))
         return data
     
-    def get_now_position(self, timestamp = "10m"):
+    def get_now_position(self, timestamp = "10m", the_time = "now()"):
         """ master, slave : "usdt-swap", "usd-swap", "spot" """
         #master, slave : "usdt-swap", "usd-swap", "spot"
         if the_time != "now()" and "'" not in the_time:

@@ -4,6 +4,7 @@ from dtfPnl import DtfPnl
 from accountBase import AccountBase
 # anta001 = AccountBase(deploy_id="anta_anta001@dt_okex_uswap_okex_cfuture_btc")
 ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
+ht001.get_account_position()
 account = ht001
 account.start = datetime.datetime(2023,3,6,0,0,0)
 account.end = datetime.datetime(2023,3,7,0,0,0)
