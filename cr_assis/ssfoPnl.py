@@ -38,6 +38,7 @@ class SsfoPnl(object):
             account.end = self.end_time
             for day in [1, 3, 7]:
                 account.start = self.end_time + datetime.timedelta(days = -day)
+                account.get_ledgers()
                 account.get_fpnl()
                 day_fpnl[day] = account.fpnl["total"].sum() / account.adjEq
             fpnl[account.parameter_name] = day_fpnl.copy()
