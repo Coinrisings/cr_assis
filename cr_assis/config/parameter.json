@@ -12,7 +12,7 @@
         "accounts": ["bg_001", "ljw_002"]
     },
     "blur": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.001,
         "accounts": ["bg_001", "ljw_002", "bm_bm001"]
