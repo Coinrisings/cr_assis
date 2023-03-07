@@ -1,8 +1,9 @@
 import pandas as pd
 import numpy as np
-import datetime, time, os, yaml, json, draw_ssh
+from cr_assis import draw_ssh
+import datetime, time, os, yaml, json
 from pymongo import MongoClient
-from connectData import ConnectData
+from cr_assis.connectData import ConnectData
 from pathlib import Path
 from bokeh.plotting import show
 from bokeh.models.widgets import Panel, Tabs
@@ -1097,6 +1098,8 @@ class AccountBase(object):
     def get_third_pnl(self):
         cash = {}
         price = np.nan
+        self.end = datetime.datetime.utcnow() + datetime.timedelta(hours = 8) if not hasattr(self, "end") else self.end
+        self.start = self.end + datetime.timedelta(hours=-24) if not hasattr(self, "start") else self.start
         for timestamp in [self.start, self.end]:
             start = timestamp + datetime.timedelta(minutes = -10, hours = -8)
             end = timestamp + datetime.timedelta(hours = -8)

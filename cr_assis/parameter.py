@@ -5,19 +5,22 @@ import datetime, os, json
 from github import Github
 
 # anta001 = AccountBase(deploy_id="anta_anta001@dt_okex_uswap_okex_cfuture_btc")
-bg001 = AccountBase(deploy_id= "bg_001@ssf_okexv5_spot_okexv5_uswap_btc")
-ljw002 = AccountBase(deploy_id= "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
+# bg001 = AccountBase(deploy_id= "bg_001@ssf_okexv5_spot_okexv5_uswap_btc")
+# ljw002 = AccountBase(deploy_id= "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
 # ch008 = AccountBase(deploy_id= "ch_ch008@ssf_okexv5_spot_okexv5_uswap_btc")
 # ch010 = AccountBase(deploy_id= "ch_ch010@ssf_okexv5_spot_okexv5_uswap_btc")
-cr001 = AccountBase(deploy_id= "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
+# cr001 = AccountBase(deploy_id= "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
+bm001 = AccountBase(deploy_id= "bm_bm001@ssf_okexv5_spot_okexv5_uswap_btc")
 ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
+print(bm001.get_now_parameter().loc[0, "_comments"]["timestamp"])
+print(bm001.get_now_parameter().loc[0, "spreads"])
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}"
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [bg001, ljw002, cr001, ht001]
+accounts = [bm001]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -34,7 +37,7 @@ fragment_min = 100
 loss_open = 0.0001
 profit_close = 0.005
 closemaker = 1.005
-with open("/Users/ssh/Documents/GitHub/cr_assis/config/parameter.json", "r") as f:
+with open("/Users/ssh/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
 for account in accounts:
     parameter = pd.DataFrame(columns = cols)

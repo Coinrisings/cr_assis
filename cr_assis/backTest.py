@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os, datetime
-from research.utils import draw_ssh
+from cr_assis import draw_ssh
 from IPython.display import display
 
 class BackTest(object):
