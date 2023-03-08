@@ -1,4 +1,4 @@
-from accountBase import AccountBase
+from cr_assis.account.accountBase import AccountBase
 import pandas as pd
 import datetime, os
 from github import Github

@@ -1,6 +1,6 @@
-from accountBase import AccountBase
+from cr_assis.account.accountBase import AccountBase
 from research.utils.ObjectDataType import AccountData
-from buffet2 import Get_Parameter as buffet
+from run.buffet2 import Get_Parameter as buffet
 import os, yaml
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:
     data = yaml.load(f, Loader= yaml.SafeLoader)

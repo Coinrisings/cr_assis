@@ -1,9 +1,9 @@
 import pandas as pd
 import numpy as np
-from cr_assis import draw_ssh
+from cr_assis.draw import draw_ssh
 import datetime, time, os, yaml, json
 from pymongo import MongoClient
-from cr_assis.connectData import ConnectData
+from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
 from bokeh.plotting import show
 from bokeh.models.widgets import Panel, Tabs

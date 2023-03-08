@@ -1,5 +1,5 @@
 import pandas as pd
-from connectData import ConnectData
+from cr_assis.connect.connectData import ConnectData
 from IPython.display import display
 
 database = ConnectData()

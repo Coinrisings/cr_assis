@@ -1,5 +1,5 @@
-from cr_assis.accountBase import AccountBase
-from cr_assis.connectData import ConnectData
+from cr_assis.account.accountBase import AccountBase
+from cr_assis.connect.connectData import ConnectData
 import pandas as pd
 import numpy as np
 import datetime
