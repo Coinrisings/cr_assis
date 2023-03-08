@@ -13,7 +13,7 @@ class AccountBase(object):
     def __init__(self,  deploy_id: str, strategy = "funding") -> None:
         self.deploy_id = deploy_id
         self.strategy = strategy
-        self.script_path = str(Path( __file__ ).parent.absolute())
+        self.script_path = str(Path( __file__ ).parent.parent.absolute())
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
     
