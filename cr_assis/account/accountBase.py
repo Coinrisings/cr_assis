@@ -350,7 +350,8 @@ class AccountBase(object):
         select {ccy} as equity, balance_id from balance_v2 where username = '{self.username}' and client = '{self.client}' and time >= {the_time} - {interval} and time <= {the_time}
         """
         ret = self.database._send_influx_query(a, database = "account_data")
-        ret.dropna(subset=["balance_id"], inplace = True)
+        if "balance_id" in ret.columns:
+            ret.dropna(subset=["balance_id"], inplace = True)
         if len(ret) > 0:
             equity = np.mean(ret["equity"])
         return equity

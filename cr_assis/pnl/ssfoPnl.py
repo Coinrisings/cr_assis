@@ -22,7 +22,7 @@ class SsfoPnl(object):
         third_pnl = {}
         for account in self.accounts:
             for day in [1, 3, 7]:
-                third_pnl[day] = account.get_mean_equity() / account.get_mean_equity(the_time = f'now() - {day}d')
+                third_pnl[day] = account.get_mean_equity() / account.get_mean_equity(the_time = f'now() - {day}d') - 1
             rpnl[account.parameter_name] = third_pnl.copy()
         self.rpnl = rpnl
         return rpnl
