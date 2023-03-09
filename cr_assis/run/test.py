@@ -1,7 +1,10 @@
 import datetime, requests, datetime, json, hashlib, hmac, base64
 import pandas as pd
 from cr_assis.pnl.dtfPnl import DtfPnl
-from account.accountBase import AccountBase
+from cr_assis.account.accountBase import AccountBase
+
+with open("/Users/ssh/parameters/buffet2.0_config/ssf/buffet2.0_config.json", "r") as f:
+    data = json.load(f)
 # anta001 = AccountBase(deploy_id="anta_anta001@dt_okex_uswap_okex_cfuture_btc")
 ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
 ht001.get_account_position()

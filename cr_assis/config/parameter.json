@@ -1,12 +1,12 @@
 {
     "eth": {
-        "level": 1,
+        "level": -1,
         "side": "long",
-        "uplimit": 0.2,
-        "accounts": ["test_otest5"]
+        "uplimit": 0.001,
+        "accounts": ["anta_anta001", "bg_bg003", "ch_ch003", "ch_ch004", "ljw_001"]
     },
     "dome": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.13,
         "accounts": ["bg_001", "ljw_002", "bm_bm001"]
@@ -15,30 +15,30 @@
         "level": 1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
     },
     "blur": {
         "level": 1,
         "side": "long",
         "uplimit": 0.3,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
     },
     "ar": {
         "level": 1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
     },
     "cvc": {
-        "level": 0,
+        "level": 1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002"]
+        "accounts": ["bg_001", "ljw_002", "anta_anta001"]
     },
     "gft": {
         "level": 1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
     }
 }

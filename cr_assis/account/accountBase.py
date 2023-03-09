@@ -342,6 +342,18 @@ class AccountBase(object):
                 print(f"give up getting {self.parameter_name} equity at {datetime.datetime.now()}")
                 return 
         self.adjEq = data.usdt.values[0]
+    
+    def get_mean_equity(self, the_time = "now()", interval = "1d") -> float:
+        equity = np.nan
+        ccy = self.principal_currency.lower()
+        a = f"""
+        select {ccy} as equity, balance_id from balance_v2 where username = '{self.username}' and client = '{self.client}' and time >= {the_time} - {interval} and time <= {the_time}
+        """
+        ret = self.database._send_influx_query(a, database = "account_data")
+        ret.dropna(subset=["balance_id"], inplace = True)
+        if len(ret) > 0:
+            equity = np.mean(ret["equity"])
+        return equity
         
     def get_capital(self, time = "None"):
         if self.exchange_master in ["okex", "okx", "okex5", "okexv5"] and self.exchange_slave in ["okex", "okx", "okex5", "okexv5"]:
