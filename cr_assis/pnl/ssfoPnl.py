@@ -21,11 +21,8 @@ class SsfoPnl(object):
         rpnl = {}
         third_pnl = {}
         for account in self.accounts:
-            account.get_equity() if not hasattr(account, "adjEq") else None
-            account.end = self.end_time 
             for day in [1, 3, 7]:
-                account.start = self.end_time + datetime.timedelta(days = -day)
-                third_pnl[day] = account.get_third_pnl()["USDT"] / account.adjEq
+                third_pnl[day] = account.get_mean_equity() / account.get_mean_equity(the_time = f'now() - {day}d')
             rpnl[account.parameter_name] = third_pnl.copy()
         self.rpnl = rpnl
         return rpnl
