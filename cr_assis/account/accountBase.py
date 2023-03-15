@@ -656,7 +656,7 @@ class AccountBase(object):
         else:
             slave["slave_MV"] = slave["slave_number"] * origin_slave["coin_price"]
         
-        result = pd.merge(master, slave, on = "coin")
+        result = pd.merge(master, slave, on = "coin", how = "outer")
         result.set_index("coin", inplace = True)
         result["diff"] = result["master_MV"] - result["slave_MV"]
         self.now_position = result.copy()

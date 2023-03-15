@@ -1,9 +1,33 @@
 {
     "eth": {
+        "level":1,
+        "side": "long",
+        "uplimit": 1,
+        "accounts": ["anta_anta001"]
+    },
+    "btc": {
         "level": -1,
         "side": "long",
-        "uplimit": 0.001,
-        "accounts": ["anta_anta001", "bg_bg003", "ch_ch003", "ch_ch004", "ljw_001"]
+        "uplimit": 0.1,
+        "accounts": ["cr_cr001", "ljw_002", "ht_ht001"]
+    },
+    "mask":{
+        "level": -1,
+        "side": "short",
+        "uplimit": 0.13,
+        "accounts": ["test_otest5"]
+    },
+    "gmt":{
+        "level": -1,
+        "side": "short",
+        "uplimit": 0.13,
+        "accounts": ["test_otest5"]
+    },
+    "ape":{
+        "level": -1,
+        "side": "short",
+        "uplimit": 0.13,
+        "accounts": ["test_otest5"]
     },
     "dome": {
         "level": -1,
@@ -12,33 +36,39 @@
         "accounts": ["bg_001", "ljw_002", "bm_bm001"]
     },
     "people": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
     },
     "blur": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.3,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
+        "accounts": ["ch_ch008"]
+    },
+    "cfx": {
+        "level": -1,
+        "side": "long",
+        "uplimit": 0.3,
+        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
     },
     "ar": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
     },
     "cvc": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "anta_anta001"]
+        "accounts": ["bg_001", "ljw_002"]
     },
     "gft": {
-        "level": 1,
+        "level": -1,
         "side": "long",
         "uplimit": 0.13,
-        "accounts": ["bg_001", "ljw_002", "bm_bm001", "anta_anta001"]
+        "accounts": ["bg_001", "ljw_002", "bm_bm001"]
     }
 }

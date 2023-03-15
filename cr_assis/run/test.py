@@ -2,17 +2,49 @@ import datetime, requests, datetime, json, hashlib, hmac, base64
 import pandas as pd
 from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
+import matplotlib.pyplot as plt
 
-with open("/Users/ssh/parameters/buffet2.0_config/ssf/buffet2.0_config.json", "r") as f:
-    data = json.load(f)
-# anta001 = AccountBase(deploy_id="anta_anta001@dt_okex_uswap_okex_cfuture_btc")
-ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
-ht001.get_account_position()
-account = ht001
-account.start = datetime.datetime(2023,3,6,0,0,0)
-account.end = datetime.datetime(2023,3,7,0,0,0)
-third_pnl = account.get_third_pnl()
-print(third_pnl)
+def get_new_coins_chance(combo):
+    #加载数据
+    master, slave = combo.split("-")
+    exchange_master = master.split("_")[0]
+    exchange_slave = slave.split("_")[0]
+    kind1 = master.split("_")[1]
+    kind2 = slave.split("_")[1] 
+    if exchange_master in ["okex", "okx", "ok"]:
+        exchange1 = "okex5"
+    else:
+        exchange1 = exchange_master
+    if exchange_slave in ["okex", "okx", "ok"]:
+        exchange2 = "okex5"
+    else:
+        exchange2 = exchange_slave
+    end = datetime.datetime.now()+datetime.timedelta(hours=8)
+    start = end - datetime.timedelta(days=365)
+    f,fundings, na = run_funding(exchange1,kind1,exchange2,kind2,start.date(),end.date(),play =False,log_out = False)
+    funding_ssf = -fundings.T.copy().sort_index()
+    #新币
+    data = pd.DataFrame()
+    for coin in funding_ssf.columns:
+        f = funding_ssf[coin].dropna()
+        if len(f)>0 and (f.index[0] - funding_ssf.index[0]).days >= 30:
+            data.loc[coin,'t'] = f.index[0]
+    #新币30天数据
+    res = pd.DataFrame()
+    for coin in data.index:
+        df = funding_ssf[[coin]].dropna().iloc[:30*3].reset_index()[[coin]]
+        res = pd.concat([res,df],axis=1)
+    #3天数据的可靠性
+    data['f1'] = res.iloc[3*2:3*3].mean()
+    data['f3'] = res.iloc[:3*3].mean()
+    data['f_7'] = res.iloc[3*3:10*3].mean()
+    data['f_15'] = res.iloc[3*3:3*18].mean()
+    data['f_30'] = res.iloc[3*3:3*33].mean()
+    dp = data[data['f3']<=-0.0001]
+    plt.scatter(dp['f3'],dp['f_7'])
+    plt.plot(dp['f3'],dp['f3'],c='r')
+    dp = dp[['t','f1','f3','f_7','f_15','f_30']].sort_values('f_7')
+    return dp
 
 def get_future_date(timestamp: datetime.datetime) -> datetime.datetime:
     month = timestamp.month

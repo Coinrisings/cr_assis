@@ -4,27 +4,21 @@ import numpy as np
 import datetime, os, json
 from github import Github
 
-anta001 = AccountBase(deploy_id="anta_anta001@ssf_okexv5_spot_okexv5_uswap_btc")
-bg003 = AccountBase(deploy_id= "bg_bg003@ssf_okexv5_spot_okexv5_uswap_btc")
-ch003 = AccountBase(deploy_id= "ch_ch003@ssf_okexv5_spot_okexv5_uswap_btc")
-ch004 = AccountBase(deploy_id= "ch_ch004@ssf_okexv5_spot_okexv5_uswap_btc")
-ljw001 = AccountBase(deploy_id= "ljw_001@ssf_okexv5_spot_okexv5_uswap_btc")
-# ch008 = AccountBase(deploy_id= "ch_ch008@ssf_okexv5_spot_okexv5_uswap_btc")
-# otest5 = AccountBase(deploy_id="test_otest5@dt_okex_spot_okex_cfuture_btc")
-# ch010 = AccountBase(deploy_id= "ch_ch010@ssf_okexv5_spot_okexv5_uswap_btc")
-# cr001 = AccountBase(deploy_id= "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
-# bm001 = AccountBase(deploy_id= "bm_bm001@ssf_okexv5_spot_okexv5_uswap_btc")
-# ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
-# print(bm001.get_now_parameter().loc[0, "_comments"]["timestamp"])
-# print(bm001.get_now_parameter().loc[0, "spreads"])
-equity = anta001.get_mean_equity()
+anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_uswap_okex_cfuture_btc')
+# bg003 = AccountBase(deploy_id= "bg_bg003@ssf_okexv5_spot_okexv5_uswap_btc")
+# ch003 = AccountBase(deploy_id= "ch_ch003@ssf_okexv5_spot_okexv5_uswap_btc")
+# ch004 = AccountBase(deploy_id= "ch_ch004@ssf_okexv5_spot_okexv5_uswap_btc")
+# ljw002 = AccountBase(deploy_id= "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
+otest5 = AccountBase(deploy_id= "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
+cr001 = AccountBase(deploy_id= "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
+ht001 = AccountBase(deploy_id= "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}"
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}"
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [ljw001, bg003, ch003, ch004]
+accounts = [otest5]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -34,11 +28,11 @@ git_file = "parameter_ssfo"
 local_file = f"parameter_{datetime.datetime.now()}"
 suffix = "230331"
 num = 0
-hours = 24
+hours = 1
 add = 0
 fragment = 6000
-fragment_min = 100
-loss_open = 0.0001
+fragment_min = 10
+loss_open = 0.0005
 profit_close = 0.005
 closemaker = 1.005
 with open("/Users/ssh/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
