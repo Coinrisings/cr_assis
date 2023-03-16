@@ -79,7 +79,3 @@ class EvaDT(object):
         spread = np.mean(result["spread"])
         return spread
         
-a = EvaDT(csv_path="/Users/ssh/Downloads/funding.csv")
-a.get_funding_profit()
-a.get_spread_cost()
-print(11)
