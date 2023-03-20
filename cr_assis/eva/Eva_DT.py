@@ -50,6 +50,11 @@ class EvaDT(object):
             if self.profit.loc[timestamp, "funding"] >= self.expect_profit:
                 spread = self.get_spread(coin = self.profit.loc[timestamp, "coin"], timestamp=timestamp)
                 self.profit.loc[timestamp, "spread"] = spread
+                if not self.profit.loc[timestamp, "is_long"]:
+                    spread_cost = self.profit.loc[timestamp, "spread"] - 1
+                else:
+                    spread_cost = 1 - self.profit.loc[timestamp, "spread"]
+                self.profit.loc[timestamp, "cost"] = spread_cost
     
     def _send_requests(self, url: str) -> dict:
         headers = {
