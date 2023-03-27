@@ -10,14 +10,16 @@ from github import Github
 # ch004 = AccountBase(deploy_id= "ch_ch004@ssf_okexv5_spot_okexv5_uswap_btc")
 # ljw002 = AccountBase(deploy_id= "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
 cr003 = AccountBase(deploy_id = "cr_cr003@dt_okex_cswap_okex_uswap_btc")
+ch003 = AccountBase(deploy_id = "ch_ch003@dt_okex_cswap_okex_uswap_btc")
 ch004 = AccountBase(deploy_id = "ch_ch004@dt_okex_cswap_okex_uswap_btc")
+otest5 = AccountBase(deploy_id = "test_otest5@dt_okex_cswap_okex_uswap_btc")
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [cr003]
+accounts = [otest5]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -30,7 +32,7 @@ num = 0
 hours = 2
 add = 0
 fragment = 2000
-fragment_min = 10
+fragment_min = 100
 loss_open = 0.0005
 profit_close = 0.005
 closemaker = 1.005

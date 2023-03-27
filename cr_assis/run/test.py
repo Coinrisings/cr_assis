@@ -5,25 +5,51 @@ from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 import matplotlib.pyplot as plt
 
-start = datetime.datetime(2023,3,17,0,0,0)
-end = datetime.datetime(2023,3,24)
+# BU
+# btc_number = 30
+# btc_price = 27938
+# eth_price = 1761
+# adjEq = btc_number * btc_price
+# mul = 1
+# single_mv = adjEq * mul
+# print(f"ETH usdt: {format(round(single_mv / eth_price /  0.1, 0), ',')}")
+# print(f"BTC usdt: {format(round(btc_number * mul / 0.01, 0), ',')}")
+# print(f"ETH usdc: {format(round(single_mv / eth_price /  0.001, 0), ',')}")
+# print(f"BTC usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
+# eth_usdt = 0.005
+# btc_usdt = 0.005
+# eth_usdc = 0.05
+# btc_usdc = 0.035
+# mm = single_mv * (btc_usdt + btc_usdc + eth_usdt + eth_usdc)
+# mr = adjEq / mm
+# print(f"mr: {mr}")
 
-url = f"https://www.okx.com/api/v5/finance/savings/lending-rate-history?ccy=USDT&after={}&before={}"
-
-
-print(datetime.date.today() - datetime.date(2022,9,28))
-btc_number = 5
-btc_price = 27708
+# DT-USDC
+btc_number = 30
+btc_price = 27938
+eth_price = 1761
 adjEq = btc_number * btc_price
-mul = 5
-usdt = adjEq * mul
-print(f"usd: {format(round(usdt / 100, 0), ',')}")
-print(f"usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
-usd_mmr = 0.01
-usdc_mmr = 0.01
-mm = usdt * (usd_mmr + usdc_mmr)
+mul = 0.8
+single_mv = adjEq * mul
+print(f"ETH usd: {format(round(single_mv / 10, 0), ',')}")
+print(f"BTC usd: {format(round(single_mv / 100, 0), ',')}")
+print(f"ETH usdc: {format(round(single_mv / eth_price /  0.001, 0), ',')}")
+print(f"BTC usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
+eth_usd = 0.01
+btc_usd = 0.01
+eth_usdc = 0.015
+btc_usdc = 0.01
+mm = single_mv * (btc_usd + btc_usdc + eth_usd + eth_usdc)
 mr = adjEq / mm
 print(f"mr: {mr}")
+
+dec = 0.5
+upnl = single_mv * dec * 2
+print(f"{format(upnl, ',')}")
+mm1 = mm + upnl * 0.08
+mr1 = adjEq * (1-dec) / mm1
+print(mr1)
+
 data = pd.DataFrame(columns = ["upnl", "mr"])
 price0 = 27699
 for price in np.linspace(4000, price0, 20):

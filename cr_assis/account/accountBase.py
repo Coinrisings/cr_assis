@@ -96,6 +96,8 @@ class AccountBase(object):
         self.contractsize = pd.read_csv(f"{os.environ['HOME']}/parameters/config_buffet/dt/contractsize.csv", index_col = 0)
         self.balance_id = self.deploy_id.replace("@", "-") + "@sum"
         data = self.get_now_parameter()
+        self.secret_master = data.loc[0, "secret_master"]
+        self.secret_slave = data.loc[0, "secret_slave"]
         secret_slave = data.loc[0, "secret_slave"]
         slave = secret_slave.split("@")[0].split("/")[-1]
         self.slave_client, self.slave_username = slave.split("_")
@@ -557,12 +559,12 @@ class AccountBase(object):
     
     def get_influx_position(self, timestamp: str, the_time: str) -> pd.DataFrame:
         a = f"""
-            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
+            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.client}' and username = '{self.username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) and (secret_id = '{self.secret_master}' or secret_id = '{self.secret_slave}') group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
         data = self._send_complex_query(sql = a)
         if self.client != self.slave_client or self.username != self.slave_username:
             a = f"""
-            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
+            select ex_field, time, exchange, long, long_open_price, settlement, short, short_open_price, pair from position where client = '{self.slave_client}' and username = '{self.slave_username}' and time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) and (secret_id = '{self.secret_master}' or secret_id = '{self.secret_slave}') group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
             """
             df = self._send_complex_query(sql = a)
             data = pd.concat([data, df])
