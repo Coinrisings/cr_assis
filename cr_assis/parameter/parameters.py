@@ -12,15 +12,15 @@ from IPython.display import display
 # ch005 = AccountBase(deploy_id = "ch_ch005@dt_okex_cswap_okex_uswap_btc")
 # ch006 = AccountBase(deploy_id = "ch_ch006@dt_okex_cswap_okex_uswap_btc")
 # ch007 = AccountBase(deploy_id = "ch_ch007@dt_okex_cswap_okex_uswap_btc")
-ch008 = AccountBase(deploy_id = "ch_ch008@ssf_okexv5_spot_okexv5_uswap_btc")
-ch010 = AccountBase(deploy_id = "ch_ch010@ssf_okexv5_spot_okexv5_uswap_btc")
+ch003 = AccountBase(deploy_id = "ch_ch003@ssf_okexv5_spot_okexv5_uswap_btc")
+ch004 = AccountBase(deploy_id = "ch_ch004@ssf_okexv5_spot_okexv5_uswap_btc")
 # ch009 = AccountBase(deploy_id = "ch_ch009@dt_okex_cfuture_okex_uswap_btc")
 # cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
 # ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc")
 # ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cfuture_okex_uswap_btc")
 # ljw002 = AccountBase(deploy_id = "ljw_002@dt_okex_cfuture_okex_uswap_btc")
 # wz001 = AccountBase(deploy_id = "wz_001@dt_okex_cswap_okex_uswap_usdt")
-accounts = [ch008, ch010]
+accounts = [ch003, ch004]
 # for account in accounts:
 #     account.get_account_position()
 #     print(account.parameter_name)
@@ -35,7 +35,8 @@ cols = ["account", "contract", "portfolio_level", "open", "closemaker", "positio
         "is_long", "chase_tick", "master_pair", "slave_pair"]
 file_name = f"{file_path}/parameter_{datetime.datetime.now()}.xlsx"
 writer = pd.ExcelWriter(file_name, engine='openpyxl')
-git_file = "parameter_dt_future"
+# git_file = "parameter_dt_future"
+git_file = "parameter_ssfo"
 coin = "btc"
 suffix = "230331"
 loss_open = 0.0001

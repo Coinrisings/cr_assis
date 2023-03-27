@@ -1,24 +1,36 @@
 import datetime, requests, datetime, json, hashlib, hmac, base64
 import pandas as pd
+import numpy as np
 from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 import matplotlib.pyplot as plt
+
+start = datetime.datetime(2023,3,17,0,0,0)
+end = datetime.datetime(2023,3,24)
+
+url = f"https://www.okx.com/api/v5/finance/savings/lending-rate-history?ccy=USDT&after={}&before={}"
+
+
 print(datetime.date.today() - datetime.date(2022,9,28))
-btc_number = 60
-btc_price = 25748.6
+btc_number = 5
+btc_price = 27708
 adjEq = btc_number * btc_price
-mul = 1.4
+mul = 5
 usdt = adjEq * mul
-print(f"usdt: {format(round(usdt, 0), ',')}")
-print(f"swap: {format(round(usdt / 100, 0), ',')}")
-usdt_mmr = 0.07
-swap_mmr = 0.015
-mm = usdt * (usdt_mmr + swap_mmr)
+print(f"usd: {format(round(usdt / 100, 0), ',')}")
+print(f"usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
+usd_mmr = 0.01
+usdc_mmr = 0.01
+mm = usdt * (usd_mmr + usdc_mmr)
 mr = adjEq / mm
 print(f"mr: {mr}")
-m = 1
-s = 0.6 * m / 1.4 + 0.2 * m
-print(f"s: {s}")
+data = pd.DataFrame(columns = ["upnl", "mr"])
+price0 = 27699
+for price in np.linspace(4000, price0, 20):
+    upnl = (btc_price - price) * btc_number * mul
+    mm1 = mm + upnl * 0.08
+    mr1 = adjEq / mm1
+    data.loc[price] = [upnl, mr1]
 
 def get_new_coins_chance(combo):
     #加载数据
