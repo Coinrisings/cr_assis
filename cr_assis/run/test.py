@@ -5,29 +5,13 @@ from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 import matplotlib.pyplot as plt
 
-# BU
-# btc_number = 30
-# btc_price = 27938
-# eth_price = 1761
-# adjEq = btc_number * btc_price
-# mul = 1
-# single_mv = adjEq * mul
-# print(f"ETH usdt: {format(round(single_mv / eth_price /  0.1, 0), ',')}")
-# print(f"BTC usdt: {format(round(btc_number * mul / 0.01, 0), ',')}")
-# print(f"ETH usdc: {format(round(single_mv / eth_price /  0.001, 0), ',')}")
-# print(f"BTC usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
-# eth_usdt = 0.005
-# btc_usdt = 0.005
-# eth_usdc = 0.05
-# btc_usdc = 0.035
-# mm = single_mv * (btc_usdt + btc_usdc + eth_usdt + eth_usdc)
-# mr = adjEq / mm
-# print(f"mr: {mr}")
-
+otest5 = AccountBase(deploy_id="test_otest5@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
+data = otest5.get_spreads(coin = "btc")
+df = otest5.get_now_position()
 # DT-USDC
 btc_number = 30
-btc_price = 27938
-eth_price = 1761
+btc_price = 27072
+eth_price = 1717
 adjEq = btc_number * btc_price
 mul = 0.8
 single_mv = adjEq * mul
@@ -37,9 +21,10 @@ print(f"ETH usdc: {format(round(single_mv / eth_price /  0.001, 0), ',')}")
 print(f"BTC usdc: {format(round(btc_number * mul / 0.0001, 0), ',')}")
 eth_usd = 0.01
 btc_usd = 0.01
-eth_usdc = 0.015
+eth_usdc = 0.01
 btc_usdc = 0.01
-mm = single_mv * (btc_usd + btc_usdc + eth_usd + eth_usdc)
+trade_fee = 0.00038
+mm = single_mv * (btc_usd + btc_usdc + eth_usd + eth_usdc) + single_mv * 4 * trade_fee
 mr = adjEq / mm
 print(f"mr: {mr}")
 

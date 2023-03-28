@@ -159,7 +159,7 @@ class Get_Parameter():
                     
 #         logger.info(f"获取到的config为:{account_config}！")
 
-        with open('/home/ssh/jupyter/cr_assis/buffet2.0_config.json') as f:
+        with open('/Users/ssh/Documents/GitHub/cr_assis/cr_assis/config/buffet2.0_config.json') as f:
             account_config = json.loads(f.read())
 
         # 获取contract_size 
@@ -222,34 +222,21 @@ class Get_Parameter():
                     continue
 
                 # mr获取，获取不到跳过
-                mr = self.obtain_mr(acc.client, acc.username)
+                mr = acc.mr if hasattr(acc, "mr") else acc.get_mgnRatio()
+                if mr != {}:
+                    logger.info(f"{acc.parameter_name}:当前获取到的mr为：{mr}")
 
-                if len(mr) > 0:
-                    mr['coin'] = mr[['pair']].applymap(lambda x: x.split('-')[0])
-                    mr_ = mr.set_index('coin')
-                    
-                    try:
-                        # mr['coin'] = mr[['pair']].applymap(lambda x: x.split('-')[0])
-                        # mr_ = mr.set_index('coin')
-                        mr_ = mr_.loc[coins]
-                        logger.info(f"{acc.parameter_name}:当前获取到的mr为：{mr_[['pair', 'mr', 'dt']]}")
-
-                    except:
-                        coins_ = list(set(mr_.index) & set(coins))
-                        mr_ = mr_.loc[coins_]
-                        logger.info(f"{acc.parameter_name}:当前获取到的mr为：{mr_[['pair', 'mr', 'dt']]}")
                 else:
                     logger.warning(f"{acc.parameter_name}:没有获取到当前的mr。")
-                    continue
 
                 # 初始parameter
                 parameter = pd.DataFrame(index=coins,
-                                         columns=['account', 'coin', 'portfolio', 'open', 'closemaker', 'position',
-                                                  'closetaker',
-                                                  'open2', 'closemaker2', 'position2', 'closetaker2', 'fragment',
-                                                  'fragment_min', 'funding_stop_open',
-                                                  'funding_stop_close', 'position_multiple', 'timestamp', 'is_long',
-                                                  'chase_tick', 'master_pair', 'slave_pair'])
+                                        columns=['account', 'coin', 'portfolio', 'open', 'closemaker', 'position',
+                                                'closetaker',
+                                                'open2', 'closemaker2', 'position2', 'closetaker2', 'fragment',
+                                                'fragment_min', 'funding_stop_open',
+                                                'funding_stop_close', 'position_multiple', 'timestamp', 'is_long',
+                                                'chase_tick', 'master_pair', 'slave_pair'])
 
                 # 如果账户持有，赋值为原来参数
                 if len(now_pos) > 0:
@@ -321,7 +308,7 @@ class Get_Parameter():
                                 break
                 else:
                     logger.info(
-                        f"{acc.parameter_name}:目前仓位为：{now_mv}小于仓位上限{config['accounts'][acc.parameter_name][0] * config['max_mv_multiple']}，总仓位没有超限。")
+                        f"{acc.parameter_name}:目前仓位为：{now_mv}小于仓位上限{config['accounts'][acc.parameter][0] * config['max_mv_multiple']}，总仓位没有超限。")
 
                     '''
                     加仓
@@ -331,12 +318,12 @@ class Get_Parameter():
                         logger.warning(f"{acc.parameter_name}:可选加仓币数为{add},不执行加仓操作。")
 
                     else:
-                        if len(mr_[mr_['mr'] < config['accounts'][acc.parameter_name][1]]) > 0:
-                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['accounts'][acc.parameter_name][1]},不执行加仓操作。")
+                        if len(mr_[mr_['mr'] < config['accounts'][acc.parameter][1]]) > 0:
+                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['accounts'][acc.parameter][1]},不执行加仓操作。")
 
                         else:
                             # 计算可加仓mv%
-                            uplimit_mv = config['accounts'][acc.parameter_name][0]
+                            uplimit_mv = config['accounts'][acc.parameter][0]
                             res_mv = max(0, uplimit_mv - now_mv)
                             if res_mv <= 0:
                                 logger.info(f"{acc.parameter_name}:剩余可加仓mv为：{res_mv}%，不执行加仓操作。")

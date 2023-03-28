@@ -18,15 +18,15 @@
         "accounts": ["cr_cr003"]
     },
     "btc": {
-        "level": -1,
+        "level": 1,
         "side": "short",
-        "uplimit": 0.1,
+        "uplimit": 4,
         "accounts": ["test_otest5"]
     },
     "eth":{
-        "level": -1,
+        "level": 1,
         "side": "short",
-        "uplimit": 0.1,
+        "uplimit": 4,
         "accounts": ["test_otest5"]
     }
 }

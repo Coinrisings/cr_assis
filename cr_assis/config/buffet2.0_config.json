@@ -1,25 +1,14 @@
 
 {
-    "binance_spot-binance_usdt_swap":{
+    "okx_usd_swap-okx_usdc_swap":{
         "accounts":{
+            "test_otest5": [200, 8]
         },
         "add":{
-            "matic":0,
-            "op":0,
-            "mask":0,
-            "fet":0,
-            "stg":0,
-            "flow":0,
-            "jasmy":0
+            "btc":1,
+            "eth":1
         },
         "reduce":{
-            "matic":13,
-            "op":13,
-            "jasmy":13,
-            "fet":13,
-            "stg":13,
-            "flow":13,
-            "mask":8
         },
         "funding_stop_open":0.0001,
         "funding_stop_close":0.0001,
@@ -30,81 +19,12 @@
         "max_mv_multiple":1.1,
         "reduce_mv_multiple":1.05,
         "signal_uplimit_mv":{
-            "matic":10.8,
-            "op":10.8,
-            "jasmy":10.8,
-            "fet":10.8,
-            "stg":10.8,
-            "flow":10.8,
-            "mask":5 
+            "btc":100,
+            "eth":100
         },
         "coin_amount_uplimit":7,
         "open":[
-
-        ],
-        "closemaker":[
-            1.01
-        ],
-        "closemaker2":[
-
-        ],
-        "closetaker":[
-
-        ],
-        "closetaker2":[
-
-        ],
-        "close_thresh":30,
-        "open_thresh":30,
-        "future_date":[
-            "20230301"
-        ],
-        "is_long":{
-            "fet":1,
-            "stg":1,
-            "flow":1,
-            "op":1,
-            "matic":1,
-            "jasmy":1,
-            "btc":1,
-            "eth":1,
-            "mask":1
-        },
-        "cm2_chg":0.0005,
-        "open_add":0,
-        "close_add":-0.0010,
-        "min_select_u":1,
-        "min_select_ratio":0.001
-    },
-    "okx_spot-okx_usdt_swap": {
-        "accounts":{
-            "ht_ht001": [65, 9]
-        },
-        "add":{
-            "ar":1,
-            "blur":1,
-            "zec":1,
-            "ldo":1
-        },
-        "reduce":{
-        },
-        "funding_stop_open":0.0001,
-        "funding_stop_close":0.005,
-        "chase_tick":1,
-        "fragment_min_u":10,
-        "fragment_u":2000,
-        "position_multiple":1,
-        "max_mv_multiple":1.15,
-        "reduce_mv_multiple":1.1,
-        "signal_uplimit_mv":{
-            "ar": 13,
-            "blur": 13,
-            "zec":13,
-            "ldo":13
-        },
-        "coin_amount_uplimit":5,
-        "open":[
-
+            0.9995
         ],
         "closemaker":[
             1.005
@@ -121,17 +41,15 @@
         "close_thresh":30,
         "open_thresh":30,
         "future_date":[
-            "230331"
+            "230630"
         ],
         "is_long":{
-            "ar": 1,
-            "blur": 1,
-            "zec":1,
-            "ldo":1
+            "btc":0,
+            "eth":0
         },
-        "cm2_chg":0.0003,
+        "cm2_chg":0.0005,
         "open_add":0,
-        "close_add": 0,
+        "close_add":0,
         "min_select_u":1,
         "min_select_ratio":0.001
     }

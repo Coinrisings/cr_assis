@@ -10,9 +10,9 @@ from bokeh.models.widgets import Panel, Tabs
 
 class AccountBase(object):
     
-    def __init__(self,  deploy_id: str, strategy = "funding") -> None:
+    def __init__(self,  deploy_id: str, is_usdc = False) -> None:
         self.deploy_id = deploy_id
-        self.strategy = strategy
+        self.is_usdc = is_usdc
         self.script_path = str(Path( __file__ ).parent.parent.absolute())
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
@@ -26,26 +26,27 @@ class AccountBase(object):
                 mongo_uri = info["mongo"]
                 return mongo_uri
     
+    def get_combo_name(self, name: str) -> str:
+        self.load_strategyInfo_json() if not hasattr(self, "strategy_info") else None
+        for key, value in self.strategy_info.items():
+            name = name.replace(key, value)
+        return name
+    
     def get_strategy_info(self, strategy: str):
         """解析deployd_id的信息"""
         words = strategy.split("_")
         master = (words[1] + "_" + words[2]).replace("okexv5", "okx").replace("okex", "okx")
-        master = master.replace("uswap", "usdt_swap")
-        master = master.replace("cswap", "usd_swap")
-        master = master.replace("ufuture", "usdt_future")
-        master = master.replace("cfuture", "usd_future")
+        master = self.get_combo_name(name = master)
         slave = (words[3] + "_" + words[4]).replace("okexv5", "okx").replace("okex", "okx")
-        slave = slave.replace("uswap", "usdt_swap")
-        slave = slave.replace("cswap", "usd_swap")
-        slave = slave.replace("ufuture", "usdt_future")
-        slave = slave.replace("cfuture", "usd_future")
+        slave = self.get_combo_name(slave)
+        if self.is_usdc:
+            master = master.replace("usdt_swap", "usdc_swap")
+            slave = slave.replace("usdt_swap", "usdc_swap")
         ccy = words[-1].upper()
         if ccy == "U":
             ccy = "USDT"
         elif ccy == "C":
             ccy = "BTC"
-        else:
-            pass
         return master, slave, ccy
 
     def get_bbu_info(self, strategy: str):
@@ -66,6 +67,7 @@ class AccountBase(object):
     
     def init_account(self, deploy_id: str) -> None:
         """initilize account's info by deploy_id"""
+        self.strategy = "funding"
         self.parameter_name, strategy = deploy_id.split("@")
         self.client, self.username = self.parameter_name.split("_")
         words = strategy.split("_")
@@ -439,8 +441,9 @@ class AccountBase(object):
         self.upnlUsd = upnlUsd
         return upnl, upnlUsd
     
-    def get_mgnRatio(self):
+    def get_mgnRatio(self) -> dict:
         exchanges = set([self.exchange_master, self.exchange_slave])
+        dataname = "margin_ratio"
         mr = {}
         for exchange in exchanges:
             if exchange in ["ok", "okex", "okexv5", "okx", "o"]:
@@ -450,29 +453,14 @@ class AccountBase(object):
             else:
                 print(f"get_mgnRatio: {exchange} has no margin ratio data")
                 return 
-            
-            data = pd.DataFrame()
-            num = 0
-            while len(data) == 0:
-                dataname = "margin_ratio"
-                a = f"""
-                select mr from {dataname} where username = '{self.username}' and client = '{self.client}' and 
-                exchange = '{exchange_unified}' and time> now() - 3m LIMIT 1
-                """
-                self.database.load_influxdb(database = "account_data")
-                ret = self.database.influx_clt.query(a)
-                self.database.influx_clt.close()
-                data = pd.DataFrame(ret.get_points())
-                if len(data) == 0 :
-                    num += 1
-                    if num < 10:
-                        time.sleep(5)
-                    else:
-                        data.loc[0, "mr"] = np.nan
-                        mr[exchange] = np.nan
-                        break
-            mr[exchange] = data.mr.values[0]
+            a = f"""
+            select mr from {dataname} where username = '{self.username}' and client = '{self.client}' and 
+            exchange = '{exchange_unified}' and time> now() - 3m LIMIT 1
+            """
+            data = self.database._send_influx_query(a, database = "account_data")
+            mr[exchange] = np.nan if len(data) == 0 else data.mr.values[0]
         self.mr = mr.copy()
+        return mr
         
     def get_now_parameter(self):
         mongo_clt = MongoClient(self.mongon_url)
@@ -508,19 +496,24 @@ class AccountBase(object):
         return data
     
     def unified_exchange_name(self, exchange):
-        if exchange in ["okx", "okex", "okexv5", "okex5", "ok", "o"]:
-            exchange = "okex"
-        elif exchange in ["binance", "b"]:
-            exchange = "binance"
-        elif exchange in ["gate", "gateio", "g"]:
-            exchange = "gate"
-        elif exchange in ["bybit", "by"]:
-            exchange = "bybit"
-        elif exchange in ["ftx", "f"]:
-            exchange = "ftx"
-        else:
-            print(f"{self.parameter_name} exchange name is not supported")
+        self.load_exchange_json() if not hasattr(self, "exchange_json") else None
+        for key, value in self.exchange_json.items():
+            if exchange in value:
+                exchange = key
+                break
         return exchange
+    
+    def load_exchange_json(self):
+        path = self.script_path + "/config"
+        with open(f"{path}/unified_exchange.json", "r") as f:
+            exchange_json = json.load(f)
+        self.exchange_json = exchange_json
+    
+    def load_strategyInfo_json(self):
+        path = self.script_path + "/config"
+        with open(f"{path}/strategy_info.json", "r") as f:
+            strategy_info = json.load(f)
+        self.strategy_info = strategy_info
     
     def load_suffix_json(self):
         path = self.script_path + "/config"
