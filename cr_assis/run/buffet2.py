@@ -1,5 +1,6 @@
 import sys, os, datetime, glob, time, math, configparser, json
 import research
+from pathlib import Path
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import pandas as pd
@@ -159,7 +160,7 @@ class Get_Parameter():
                     
 #         logger.info(f"获取到的config为:{account_config}！")
 
-        with open('/Users/ssh/Documents/GitHub/cr_assis/cr_assis/config/buffet2.0_config.json') as f:
+        with open(f'{str(Path( __file__ ).parent.parent.absolute())}/config/buffet2.0_config.json') as f:
             account_config = json.loads(f.read())
 
         # 获取contract_size 
@@ -308,7 +309,7 @@ class Get_Parameter():
                                 break
                 else:
                     logger.info(
-                        f"{acc.parameter_name}:目前仓位为：{now_mv}小于仓位上限{config['accounts'][acc.parameter][0] * config['max_mv_multiple']}，总仓位没有超限。")
+                        f"{acc.parameter_name}:目前仓位为：{now_mv}小于仓位上限{config['accounts'][acc.parameter_name][0] * config['max_mv_multiple']}，总仓位没有超限。")
 
                     '''
                     加仓
@@ -318,12 +319,12 @@ class Get_Parameter():
                         logger.warning(f"{acc.parameter_name}:可选加仓币数为{add},不执行加仓操作。")
 
                     else:
-                        if len(mr_[mr_['mr'] < config['accounts'][acc.parameter][1]]) > 0:
+                        if min(mr.values()) < config['accounts'][acc.parameter_name][1]:
                             logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['accounts'][acc.parameter][1]},不执行加仓操作。")
 
                         else:
                             # 计算可加仓mv%
-                            uplimit_mv = config['accounts'][acc.parameter][0]
+                            uplimit_mv = config['accounts'][acc.parameter_name][0]
                             res_mv = max(0, uplimit_mv - now_mv)
                             if res_mv <= 0:
                                 logger.info(f"{acc.parameter_name}:剩余可加仓mv为：{res_mv}%，不执行加仓操作。")
