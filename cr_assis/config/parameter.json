@@ -2,13 +2,13 @@
     "btc": {
         "level": 1,
         "side": "short",
-        "uplimit": 0.001,
+        "uplimit": 1,
         "accounts": ["bg_bg003", "ht_ht001"]
     },
     "eth": {
         "level": 1,
         "side": "short",
-        "uplimit": 0.001,
+        "uplimit": 1,
         "accounts": ["bg_bg003", "ht_ht001"]
     }
 }
