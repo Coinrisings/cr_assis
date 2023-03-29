@@ -1,32 +1,14 @@
 {
-    "etc": {
-        "level": 1,
-        "side": "long",
-        "uplimit": 0.5,
-        "accounts": ["cr_cr003"]
-    },
-    "trx": {
-        "level": 0,
-        "side": "long",
-        "uplimit": 1,
-        "accounts": ["cr_cr003"]
-    },
-    "crv": {
-        "level": 1,
-        "side": "short",
-        "uplimit": 1.5,
-        "accounts": ["cr_cr003"]
-    },
     "btc": {
         "level": 1,
         "side": "short",
-        "uplimit": 4,
-        "accounts": ["test_otest5"]
+        "uplimit": 0.001,
+        "accounts": ["bg_bg003", "ht_ht001"]
     },
-    "eth":{
+    "eth": {
         "level": 1,
         "side": "short",
-        "uplimit": 4,
-        "accounts": ["test_otest5"]
+        "uplimit": 0.001,
+        "accounts": ["bg_bg003", "ht_ht001"]
     }
 }

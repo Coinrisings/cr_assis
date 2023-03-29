@@ -32,7 +32,6 @@ class Get_Parameter():
         for account in self.accounts:
             if account.parameter_name in all_parameter.keys():
                 all_combo[account.parameter_name] = account.folder
-            
 
         result = []
         dic = {}
@@ -94,7 +93,7 @@ class Get_Parameter():
             with open(e, "rb") as f:
                 data = f.read()
                 name = "excel/" + e.split('/')[-2] + '/' + e.split('/')[-1]
-                repo.create_file(name, f"uploaded by ssh at {datetime.datetime.now()}", data)  # 显示上传字段
+                repo.create_file(name, f"uploaded by scq at {datetime.datetime.now()}", data)  # 显示上传字段
                 print(f"{name} uploaded")
                 print(datetime.datetime.now())
         return True
@@ -132,7 +131,7 @@ class Get_Parameter():
 
     # 获取mr
     def obtain_mr(self, client, username):
-        t = pd.to_datetime(datetime.datetime.utcnow()) + pd.Timedelta('8h')
+        t = pd.to_datetime(datetime.datetime.now()) + pd.Timedelta('8h')
         start = readData.transfer_time(t - pd.Timedelta(600, unit='s'))
         end = readData.transfer_time(t)
         a = f"""SELECT "mr","pair" FROM margin_ratio WHERE client='{client}' AND username='{username}'
@@ -148,18 +147,20 @@ class Get_Parameter():
 
        # 获取config
     
-#         account_config = {}
-#         path = os.environ['HOME'] + "/parameters/buffet2.0_config"
-#         for file_path in glob.glob(f"{path}/*/"):
-#             try:
-#                 with open(f"{file_path}buffet2.0_config.json", "r") as file:
-#                     file_content = json.load(file)
-#                     account_config.update(file_content)
-#             except:
-#                  logger.warning(f"{file_path}该业务线没有config！")
+        # account_config = {}
+        # path = os.environ['HOME'] + "/parameters/buffet2.0_config"
+        # for file_path in glob.glob(f"{path}/*/"):
+        #     try:
+        #         with open(f"{file_path}buffet2.0_config.json", "r") as file:
+        #             file_content = json.load(file)
+        #             account_config.update(file_content)
+        #     except:
+        #          logger.warning(f"{file_path}该业务线没有config！")
                     
-#         logger.info(f"获取到的config为:{account_config}！")
+        # logger.info(f"获取到的config为:{account_config}！")
 
+        # with open('/home/scq/jupyter/buffet2.0/config/buffet2.0_config.json') as f:
+        #     account_config = json.loads(f.read())
         with open(f'{str(Path( __file__ ).parent.parent.absolute())}/config/buffet2.0_config.json') as f:
             account_config = json.loads(f.read())
 
@@ -190,43 +191,25 @@ class Get_Parameter():
             
             for acc in accounts:
                 
-                try:
-                    config = account_config[acc.combo]
-                except:
-                    logger.warning(f"{acc.parameter_name}:获取config错误!")
+                config = account_config[acc.combo]
                     
                 # 权益获取，获取不到跳过
-                try:
-                    eq = acc.get_equity()
-                    equity = acc.adjEq
-                except:
-                     logger.warning(f"{acc.parameter_name}:获取equity错误!")
+                eq = acc.get_equity()
+                equity = acc.adjEq
                     
-
-                if equity is np.nan:
-                    logger.warning(f"{acc.parameter_name}:没有获取到当前equity!")
-                    continue
-                else:
-                    pass
-
                 # 仓位获取，获取不到跳过
-                try:
-                    acc.get_account_position()
-                    now_pos = acc.position
-                    now_pos.set_index('coin', inplace=True)
-                    now_pos = now_pos[now_pos['MV'] > min(config['min_select_u'], equity * config['min_select_ratio'])]
-                    coins = list(now_pos.index)
-                    logger.info(f"{acc.parameter_name}:当前获取到的position为：{now_pos.to_dict()}")
+                acc.get_account_position()
+                now_pos = acc.position
+                now_pos.set_index('coin', inplace=True)
+                now_pos = now_pos[now_pos['MV'] > min(config['min_select_u'], equity * config['min_select_ratio'])]
+                coins = list(now_pos.index)
+                logger.info(f"{acc.parameter_name}:当前获取到的position为：{now_pos.to_dict()}")
 
-                except:
-                    logger.warning(f"{acc.parameter_name}:没有获取最近10分钟position!")
-                    continue
 
                 # mr获取，获取不到跳过
                 mr = acc.mr if hasattr(acc, "mr") else acc.get_mgnRatio()
                 if mr != {}:
                     logger.info(f"{acc.parameter_name}:当前获取到的mr为：{mr}")
-
                 else:
                     logger.warning(f"{acc.parameter_name}:没有获取到当前的mr。")
 
@@ -314,97 +297,127 @@ class Get_Parameter():
                     '''
                     加仓
                     '''
-
                     if add == {} or sum(add.values()) == 0:
                         logger.warning(f"{acc.parameter_name}:可选加仓币数为{add},不执行加仓操作。")
 
                     else:
+
                         if min(mr.values()) < config['accounts'][acc.parameter_name][1]:
-                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['accounts'][acc.parameter][1]},不执行加仓操作。")
+                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['acc.parameter_nameounts'][acc.parameter_name][1]},不执行加仓操作。")
 
                         else:
                             # 计算可加仓mv%
                             uplimit_mv = config['accounts'][acc.parameter_name][0]
-                            res_mv = max(0, uplimit_mv - now_mv)
+                            res_mv = max(np.array(0), uplimit_mv - now_mv)
+                            res_mv1=res_mv
+
                             if res_mv <= 0:
                                 logger.info(f"{acc.parameter_name}:剩余可加仓mv为：{res_mv}%，不执行加仓操作。")
 
                             # 如果可以加仓，遍历需要加仓的币
                             else:
                                 logger.info(f"{acc.parameter_name}:剩余可加仓mv为：{res_mv}%，执行加仓操作。")
+
                                 for coin in list(add.keys()):
-                                    coin_price = acc.get_coin_price(coin=coin, kind=acc.kind_master)
-                                    spread = acc.get_spreads(coin)
 
-                                    if acc.master.split('_')[1] == 'usd' and acc.exchange_master in ["okx", "okex", "okex5", "ok", "o", "okexv5"]:
-                                        master = 'okex-' + acc.master.split('_')[1] + '-' + \
-                                                 acc.master.split('_')[2]
-                                        coin_price = contractsize.loc[coin.upper(), master]
-
-                                    elif acc.master.split('_')[1] == 'usd' and acc.exchange_master not in [
-                                        "okx", "okex", "okex5", "ok", "o", "okexv5"]:
-                                        master = acc.master.replace('_', '-')
-                                        coin_price = contractsize.loc[coin.upper(), master]
+                                    if res_mv <= 0:
+                                        break
 
                                     else:
-                                        print(acc, 'u本位，币价为实时价格')
-                                        pass
+                                        hold_coin_mv = now_pos.loc[coin, 'MV%']
 
-                                    # 已持有币加仓
-                                    if coin in list(now_pos.index):
-
-                                        if res_mv * add[coin] / sum(list(add.values())) * equity / coin_price / 100 > 0:
-                                            parameter.loc[coin, 'position'] += res_mv * add[coin] / sum(
-                                                list(add.values())) * equity / coin_price / 100
-                                            parameter.loc[coin, 'portfolio'] = 1
-                                            if config['open'] == []:
-                                                if parameter.loc[coin, 'is_long'] == 1:
-                                                    parameter.loc[coin, 'open'] = self.calc_up_thresh(
-                                                        spread['bid0_spread'], threshold=config['open_thresh'],
-                                                        up_down=0) + config['open_add']
-                                                else:
-                                                    parameter.loc[coin, 'open'] = self.calc_up_thresh(
-                                                        spread['ask0_spread'], threshold=config['open_thresh'],
-                                                        up_down=0) + config['open_add']
-                                            else:
-                                                parameter.loc[coin, 'open'] = config['open'][0]
-
-                                            logger.info(
-                                                f"{acc.parameter_name}:{coin},'已持有币加仓，剩余新加比例为{add[coin] / sum(list(add.values())) * 100}%，新加position为:'{res_mv * add[coin] / sum(list(add.values())) * equity / coin_price / 100}")
+                                        if hold_coin_mv > config['signal_uplimit_mv'][coin]:
+                                            logger.info(f"{acc.parameter_name}:{coin},'该币单币上限超限，该币加仓跳过")
+                                            continue
                                         else:
-                                            logger.info(
-                                                f"{acc.parameter_name}:{coin},'已持有币加仓，剩余新加比例为{add[coin] / sum(list(add.values())) * 100}%，新加position为0")
+                                            coin_ava_mv = min(config['signal_uplimit_mv'][coin] - hold_coin_mv,
+                                                              res_mv1 * add[coin] / sum(list(add.values())))
+                                            logger.info(f"{acc.parameter_name}:{coin},'该币可加仓mv为:{coin_ava_mv}")
 
-                                    # 新币加仓       
-                                    else:
-                                        if add[coin] != 0:
-                                            parameter.loc[coin, 'position'] = res_mv * add[coin] / sum(
-                                                list(add.values())) * equity / coin_price / 100
-                                            parameter.loc[coin, 'account'] = acc.parameter_name
-                                            parameter.loc[coin, 'portfolio'] = 1
-                                            parameter.loc[coin, 'closemaker'] = config['closemaker'][0]
-                                            parameter.loc[coin, 'position_multiple'] = config['position_multiple']
-                                            parameter.loc[coin, 'chase_tick'] = config['chase_tick']
-                                            is_long = config['is_long'][coin]
-                                            parameter.loc[coin, 'is_long'] = is_long
+                                        coin_price = acc.get_coin_price(coin=coin, kind=acc.kind_master)
+                                        spread = acc.get_spreads(coin)
 
-                                            if config['open'] == []:
-                                                if is_long == 1:
-                                                    parameter.loc[coin, 'open'] = self.calc_up_thresh(
-                                                        spread['bid0_spread'], threshold=config['open_thresh'],
-                                                        up_down=0) + config['open_add']
-                                                else:
-                                                    parameter.loc[coin, 'open'] = self.calc_up_thresh(
-                                                        spread['ask0_spread'], threshold=config['open_thresh'],
-                                                        up_down=0) + config['open_add']
-                                            else:
-                                                parameter.loc[coin, 'open'] = config['open'][0]
+                                        if acc.master.split('_')[1] == 'usd' and acc.exchange_master in [
+                                            "okx", "okex", "okex5", "ok", "o", "okexv5"]:
+                                            master = 'okex-' + acc.master.split('_')[1] + '-' + \
+                                                     acc.master.split('_')[2]
+                                            coin_price = contractsize.loc[coin.upper(), master]
 
-                                            logger.info(
-                                                f"{acc.parameter_name}:{coin},'新币加仓，剩余新加比例为{add[coin] / sum(list(add.values())) * 100}%,新加position为：{res_mv * add[coin] / sum(list(add.values())) * equity / coin_price / 100}")
+                                        elif acc.master.split('_')[1] == 'usd' and acc.exchange_master not in ["okx", "okex", "okex5", "ok", "o",
+                                                                             "okexv5"]:
+                                            master = acc.master.replace('_', '-')
+                                            coin_price = contractsize.loc[coin.upper(), master]
+
+
                                         else:
-                                            logger.info(
-                                                f"{acc.parameter_name}:{coin},'新币加仓，剩余新加比例为{add[coin] / sum(list(add.values())) * 100}%,新加position为0")
+                                            print(acc.parameter_name, 'u本位，币价为实时价格')
+                                            pass
+
+                                        # 已持有币加仓
+                                        if coin in list(now_pos.index):
+
+                                            if coin_ava_mv * equity / coin_price / 100 > 0:
+                                                parameter.loc[
+                                                    coin, 'position'] += coin_ava_mv * equity / coin_price / 100
+                                                parameter.loc[coin, 'portfolio'] = 1
+
+                                                if config['open'] == []:
+                                                    if parameter.loc[coin, 'is_long'] == 1:
+                                                        parameter.loc[coin, 'open'] = self.calc_up_thresh(
+                                                            spread['bid0_spread'], threshold=config['open_thresh'],
+                                                            up_down=0) + config['open_add']
+                                                    else:
+                                                        parameter.loc[coin, 'open'] = self.calc_up_thresh(
+                                                            spread['ask0_spread'], threshold=config['open_thresh'],
+                                                            up_down=0) + config['open_add']
+                                                else:
+                                                    parameter.loc[coin, 'open'] = config['open'][0]
+
+                                                res_mv -= coin_ava_mv
+                                                logger.info(
+                                                    f"{acc.parameter_name}:{coin},'已持有币加仓，新加仓位占剩余仓位比为{coin_ava_mv / res_mv1 * 100}%，新加position为:'{coin_ava_mv * equity / coin_price / 100},剩余可加仓mv为：{res_mv}")
+
+                                            else:
+                                                logger.info(
+                                                    f"{acc.parameter_name}:{coin},'已持有币加仓，新加仓位占剩余仓位比为{coin_ava_mv / res_mv1 * 100}%，新加position为0,,剩余可加仓mv为：{res_mv}")
+
+                                        # 新币加仓
+                                        else:
+                                            if len(list(now_pos.index)) >= config["coin_amount_uplimit"]:
+                                                logger.info(
+                                                    f"{acc.parameter_name}:{coin},'目前持有币数为{len(list(now_pos.index))},大于币数上限{config['coin_amount_uplimit']},该币加仓跳过")
+                                                continue
+
+                                            else:
+                                                if (add[coin] != 0):
+                                                    parameter.loc[coin, 'position'] = coin_ava_mv * equity / coin_price / 100
+                                                    parameter.loc[coin, 'account'] = acc.parameter_name
+                                                    parameter.loc[coin, 'portfolio'] = 1
+                                                    parameter.loc[coin, 'closemaker'] = config['closemaker'][0]
+                                                    parameter.loc[coin, 'position_multiple'] = config[
+                                                        'position_multiple']
+                                                    parameter.loc[coin, 'chase_tick'] = config['chase_tick']
+                                                    is_long = config['is_long'][coin]
+                                                    parameter.loc[coin, 'is_long'] = is_long
+
+                                                    if config['open'] == []:
+                                                        if is_long == 1:
+                                                            parameter.loc[coin, 'open'] = self.calc_up_thresh(
+                                                                spread['bid0_spread'], threshold=config['open_thresh'],
+                                                                up_down=0) + config['open_add']
+                                                        else:
+                                                            parameter.loc[coin, 'open'] = self.calc_up_thresh(
+                                                                spread['ask0_spread'], threshold=config['open_thresh'],
+                                                                up_down=0) + config['open_add']
+                                                    else:
+                                                        parameter.loc[coin, 'open'] = config['open'][0]
+
+                                                    res_mv -= coin_ava_mv
+                                                    logger.info(
+                                                        f"{acc.parameter_name}:{coin},'新币加仓，新加仓位占剩余仓位比为{coin_ava_mv / res_mv1 * 100}%,新加position为：{coin_ava_mv * equity / coin_price / 100},剩余可加仓mv为：{res_mv}")
+                                                else:
+                                                    logger.info(
+                                                        f"{acc.parameter_name}:{coin},'新币加仓，新加仓位占剩余仓位比为{coin_ava_mv / res_mv1 * 100}%,新加position为0,,剩余可加仓mv为：{res_mv}")
 
                     '''
                     减仓
@@ -440,7 +453,7 @@ class Get_Parameter():
                                 coin_price = contractsize.loc[coin.upper(), master]
 
                             else:
-                                print(acc, 'u本位，币价为实时价格')
+                                print(acc.parameter_name, 'u本位，币价为实时价格')
                                 pass
 
                             # 如果清仓
@@ -492,7 +505,7 @@ class Get_Parameter():
                         coin_price = contractsize.loc[c.upper(), master]
 
                     else:
-                        print(acc, 'u本位，币价为实时价格')
+                        print(acc.parameter_name, 'u本位，币价为实时价格')
                         pass
 
                     parameter.loc[c, 'fragment_min'] = config['fragment_min_u'] / coin_price
@@ -521,8 +534,8 @@ class Get_Parameter():
                         parameter.loc[c, 'position2'] = max(2 * parameter.loc[c, 'position'],
                                                             now_pos.loc[c, 'position'])
                     except:
-                        logger.info(f"{acc.parameter_name}:{c}的目前仓位没有获取到，该币二档将为一档的2倍！")
-                        parameter['position2'] = parameter['position'] * 2
+                        logger.info(f"{acc}:{c}的目前仓位没有获取到，该币二档将为一档的2倍！")
+                        parameter.loc[c,'position2']=parameter.loc[c,'position']*2
                 if config['closetaker'] == []:
                     parameter['closetaker'] = parameter['closemaker'] + 0.001
                 else:
@@ -537,7 +550,7 @@ class Get_Parameter():
 
                 parameter['funding_stop_open'] = config['funding_stop_open']
                 parameter['funding_stop_close'] = config['funding_stop_close']
-                parameter['timestamp'] = datetime.datetime.utcnow() + pd.Timedelta('8h') + pd.Timedelta('5m')
+                parameter['timestamp'] = datetime.datetime.now() + pd.Timedelta('8h') + pd.Timedelta('5m')
                 parameter.set_index('account', inplace=True)
                 parameter.dropna(how='all', axis=1, inplace=True)
                 if len(parameter) > 0:

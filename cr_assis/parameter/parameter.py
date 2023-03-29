@@ -7,30 +7,32 @@ from github import Github
 # anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_uswap_okex_cfuture_btc')
 # bg003 = AccountBase(deploy_id= "bg_bg003@ssf_okexv5_spot_okexv5_uswap_btc")
 # ch003 = AccountBase(deploy_id= "ch_ch003@ssf_okexv5_spot_okexv5_uswap_btc")
-# ch004 = AccountBase(deploy_id= "ch_ch004@ssf_okexv5_spot_okexv5_uswap_btc")
+# ch006 = AccountBase(deploy_id= "ch_ch006@ssf_okexv5_spot_okexv5_uswap_btc")
 # ljw002 = AccountBase(deploy_id= "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
 cr003 = AccountBase(deploy_id = "cr_cr003@dt_okex_cswap_okex_uswap_btc")
 ch003 = AccountBase(deploy_id = "ch_ch003@dt_okex_cswap_okex_uswap_btc")
 ch004 = AccountBase(deploy_id = "ch_ch004@dt_okex_cswap_okex_uswap_btc")
 otest5 = AccountBase(deploy_id = "test_otest5@dt_okex_cswap_okex_uswap_btc")
+bg003 = AccountBase(deploy_id = "bg_bg003@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
+ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}"
 # file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
+git_file = "parameter_dt"
+# git_file = "parameter_ssfo"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [otest5]
+accounts = [ht001]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
 parameters = {}
-git_file = "parameter_dt"
-# git_file = "parameter_ssfo"
 local_file = f"parameter_{datetime.datetime.now()}"
 suffix = "230331"
 num = 0
 hours = 2
-add = 0
+add = 0.0001
 fragment = 2000
 fragment_min = 10
 loss_open = 0.0005
