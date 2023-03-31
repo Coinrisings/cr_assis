@@ -18,7 +18,7 @@ class AccountBase(object):
         self.init_account(self.deploy_id)
     
     
-    def load_mongo_url(self):
+    def load_mongo_url(self) -> str:
         with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml") as f:
             data = yaml.load(f, Loader= yaml.SafeLoader)
         for info in data:
@@ -32,7 +32,7 @@ class AccountBase(object):
             name = name.replace(key, value)
         return name
     
-    def get_strategy_info(self, strategy: str):
+    def get_strategy_info(self, strategy: str) -> tuple[str, str, str]:
         """解析deployd_id的信息"""
         words = strategy.split("_")
         master = (words[1] + "_" + words[2]).replace("okexv5", "okx").replace("okex", "okx")
@@ -49,7 +49,7 @@ class AccountBase(object):
             ccy = "BTC"
         return master, slave, ccy
 
-    def get_bbu_info(self, strategy: str):
+    def get_bbu_info(self, strategy: str) -> tuple[str, str, str]:
         """解析bbu线的deploy_id信息"""
         words = strategy.split("_")
         exchange = words[1].replace("okex", "okx")
@@ -113,7 +113,7 @@ class AccountBase(object):
     
     def get_folder(self):
         """ parameter folder in GitHub """
-        self.folder = self.deploy_id.split("@")[-1].split("_")[0]
+        self.folder = self.deploy_id.split("@")[-1].split("_")[0].replace("ssfd", "ssf")
         
     def get_quarter(self):
         today = datetime.date.today()
@@ -220,12 +220,13 @@ class AccountBase(object):
                 print(f"Failed to get {self.parameter_name} position at {datetime.datetime.now()}")
                 return 
         data = pd.DataFrame(columns =["coin", "side", "position", "MV", "MV%"], index = range(len(now_position)))
+        folder = self.deploy_id.split("@")[-1].split("_")[0]
         for i in data.index:
             coin = now_position.index.values[i]
             data.loc[i, "coin"] = coin
             data.loc[i, "side"] = now_position.loc[coin, "side"]
-            data.loc[i, "position"] = now_position.loc[coin, "master_number"]
-            data.loc[i, "MV"] = round(now_position.loc[coin, "master_MV"], 3)
+            data.loc[i, "position"] = now_position.loc[coin, "master_number"]  if folder != "ssfd" else round(now_position.loc[coin, "slave_number"], 3)
+            data.loc[i, "MV"] = round(now_position.loc[coin, "master_MV"], 3) if folder != "ssfd" else round(now_position.loc[coin, "slave_MV"], 3)
             data.loc[i, "MV%"] = round(data.loc[i, "MV"] / self.adjEq * 100, 3)
         if "MV" in data.columns:
             data = data.sort_values(by = "MV", ascending = False) 
