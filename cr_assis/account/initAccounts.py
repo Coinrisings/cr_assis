@@ -39,7 +39,11 @@ class InitAccounts(object):
             parameter_name, _ = deploy_id.split("@")
             client, _ = parameter_name.split("_")
             tell1 = not (self.ignore_test and client in ["test", "lxy"])
-            tell2 = strategy in deploy_id
+            tell2 = False
+            for i in strategy:
+                if i in deploy_id:
+                    tell2 = True
+                    break
             if tell1 and tell2:
                 accounts[parameter_name] = AccountBase(deploy_id = deploy_id, is_usdc= is_usdc)
         self.accounts = accounts.copy()
