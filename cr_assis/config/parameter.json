@@ -1,14 +1,20 @@
 {
     "btc": {
-        "level": 1,
+        "level": 0,
         "side": "short",
-        "uplimit":0.1,
-        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "test_otest5"]
+        "uplimit":1,
+        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "ch_ch006", "ch_ch005", "ch_ch007"]
     },
     "eth": {
-        "level": 1,
+        "level": 0,
+        "side": "short",
+        "uplimit": 1,
+        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "ch_ch006", "ch_ch005", "ch_ch007"]
+    },
+    "icp": {
+        "level": -1,
         "side": "long",
         "uplimit": 0.1,
-        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "test_otest5"]
+        "accounts": []
     }
 }

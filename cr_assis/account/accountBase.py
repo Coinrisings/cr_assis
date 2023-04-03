@@ -990,73 +990,41 @@ class AccountBase(object):
     def get_fpnl(self, log = False):
         data = self.ledgers.copy()
         pairs = list(data.pair.unique())
-        coins = set()
         stable_coins = ["USDT", "USD", "USDC", "USDK", "USDP", "DAI", "BUSD"]
-        if np.nan in pairs:
-            pairs.remove(np.nan)
-        
-        for pair in pairs:
-            if type(pair) == type("a"):
-                coin = pair.split("-")[0].upper()
-                coins.add(coin)
-        coins = list(coins)
-        symbols0 = list(data["symbol"].unique())
-        symbols = []
-        for i in symbols0:
-            if type(i) == str:
-                symbols.append(i)
-        if len(symbols) == 0:
-            symbols.append("USDT")
-        for i in range(len(symbols)):
-            symbols[i] = symbols[i].upper()
-        symbols = list(set(symbols))
-        for symbol in stable_coins:
-            if symbol in symbols:
-                symbols.remove(symbol)
-        if len(symbols)>0:
-            klines = self.get_klines_data(start = self.start, end = self.end, exchange = self.exchange_master,coins = symbols, contract = "spot")
-        if "interest" in data.type.values:
-            fpnl = pd.DataFrame(columns = ["funding_fee", "interest", "total"])
-        else:
-            fpnl = pd.DataFrame(columns = ["total"])
-        if len(data) >0 :
-            for i in data.index:
-                if type(data.loc[i, "symbol"]) == str:
-                    symbol = data.loc[i, "symbol"].upper()
-                else:
-                    symbol = "USDT"
-                dt = data.loc[i, "dt"] + datetime.timedelta(seconds = - data.loc[i, "dt"].second)
-                if symbol in stable_coins:
-                    price = 1
-                else:
-                    if "dt" in klines[symbol].columns and dt in klines[symbol]["dt"].values:
-                        price = float(klines[symbol][klines[symbol]["dt"] == dt].close.values)
-                    else:
-                        price = np.nan
-                data.loc[i, "price"] = price
-                amount = data.loc[i, "amount"]
-                data.loc[i, "balance_change_U"] = amount * data.loc[i, "price"]
-            for coin in coins:
-                names = []
-                for stable in stable_coins:
-                    names.append(f"{coin.upper()}-{stable}-SWAP")
-                if "interest" in data.type.values:
-                    interest = 0
-                    df = data[((data["symbol"] == coin) | (data["symbol"] == coin.upper()))].copy()
-                    interest += sum(df[df["type"] == "interest"]["balance_change_U"].values)
-                    fpnl.loc[coin.upper(), "interest"] = interest
-                    funding_fee = 0
-                    for name in names:
-                        df = data[((data["pair"] == name) | (data["pair"] == name.lower()))].copy()
-                        funding_fee += sum(df[df["type"] == "funding_fee"]["balance_change_U"].values)
-                    fpnl.loc[coin.upper(), "funding_fee"] = funding_fee
-                    fpnl.loc[coin.upper(), "total"] = fpnl.loc[coin.upper(), "interest"] + fpnl.loc[coin.upper(), "funding_fee"]
-                else:
-                    funding_fee = 0
-                    for name in names:
-                        df = data[((data["pair"] == name) | (data["pair"] == name.lower()))].copy()
-                        funding_fee += sum(df[df["type"] == "funding_fee"]["balance_change_U"].values)
-                    fpnl.loc[coin.upper(), "total"] = funding_fee
+        data["symbol"].fillna("USDT", inplace = True)
+        data["symbol"] = data["symbol"].str.upper()
+        for i in data.index:
+            if data.loc[i, "type"] == "interest":
+                data.loc[i, "coin"] = data.loc[i, "symbol"].upper()
+            else:
+                data.loc[i, "coin"] = data.loc[i, "pair"].split("-")[0].upper()
+        coins = list(data["coin"].unique())
+        symbols = set(data["symbol"].unique()) - set(stable_coins)
+        klines = self.get_klines_data(start = self.start, end = self.end, exchange = self.exchange_master,coins = symbols, contract = "spot") if len(symbols)>0 else {}
+        fpnl = pd.DataFrame(columns = ["funding_fee", "interest", "total"]) if "interest" in data.type.values else pd.DataFrame(columns = ["total"])
+        for i in data.index:
+            symbol = data.loc[i, "symbol"]
+            dt = data.loc[i, "dt"] + datetime.timedelta(seconds = - data.loc[i, "dt"].second)
+            if symbol in stable_coins:
+                price = 1
+            else:
+                price = float(klines[symbol][klines[symbol]["dt"] == dt].close.values) if "dt" in klines[symbol].columns and dt in klines[symbol]["dt"].values else np.nan
+            data.loc[i, "price"] = price
+            amount = data.loc[i, "amount"]
+            data.loc[i, "balance_change_U"] = amount * data.loc[i, "price"]
+        for coin in coins:
+            funding_fee = 0
+            df = data[data["coin"] == coin].copy()
+            funding_fee = sum(df[df["type"] == "funding_fee"]["balance_change_U"].values)
+            fpnl.loc[coin, "funding_fee"] = funding_fee
+            
+            if "interest" in data.type.values:
+                interest = 0
+                interest += sum(df[df["type"] == "interest"]["balance_change_U"].values)
+                fpnl.loc[coin, "interest"] = interest
+                fpnl.loc[coin.upper(), "total"] = fpnl.loc[coin.upper(), "interest"] + fpnl.loc[coin.upper(), "funding_fee"]
+            else:
+                fpnl.loc[coin, "total"] = fpnl.loc[coin, "funding_fee"]
         self.ledgers_fpnl = data.copy()
         self.fpnl = fpnl.copy()
         return fpnl
