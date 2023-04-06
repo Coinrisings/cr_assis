@@ -7,20 +7,19 @@ from github import Github
 ch006 = AccountBase(deploy_id='ch_ch006@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 # ch003 = AccountBase(deploy_id='ch_ch003@dt_okex_cswap_okex_uswap_btc')
 # ch004 = AccountBase(deploy_id='ch_ch004@dt_okex_cswap_okex_uswap_btc')
-# otest5 = AccountBase(deploy_id = "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
+otest5 = AccountBase(deploy_id = "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
 ch005 = AccountBase(deploy_id='ch_ch005@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 ch007 = AccountBase(deploy_id='ch_ch007@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 bg003 = AccountBase(deploy_id = "bg_bg003@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 ht001 = AccountBase(deploy_id = "ht_ht001@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
-file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/DT/parameter_reverse/{datetime.date.today()}"
-# file_path = f"/Users/ssh/Documents/MEGA/SSH5/coinrising/DT/parameter_future/{datetime.date.today()}"
-# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/BUO/parameter/{datetime.date.today()}"
-# file_path = f"/Users/ssh/Documents/MEGA/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
-git_file = "parameter_dt"
-# git_file = "parameter_ssfo"
+# file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
+# file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
+file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
+# git_file = "parameter_dt"
+git_file = "parameter_ssfo"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [ch005, ch006, ch007]
+accounts = [otest5]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -30,12 +29,12 @@ suffix = "230331"
 num = 0
 hours = 2
 add = 0
-fragment = 4000
+fragment = 100
 fragment_min = 10
 loss_open = 0.0001
 profit_close = 0.005
 closemaker = 1.005
-with open("/Users/ssh/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
+with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
 for account in accounts:
     parameter = pd.DataFrame(columns = cols)
@@ -89,8 +88,7 @@ writer = pd.ExcelWriter(f"{file_path}/{local_file}.xlsx", engine='openpyxl')
 for sheet_name in parameters.keys():
     data = parameters[sheet_name]
     data["timestamp"] = datetime.datetime.now() + datetime.timedelta(minutes=3)
-    data.to_excel(excel_writer=writer, sheet_name=sheet_name, encoding="UTF-8")
-writer.save()
+    data.to_excel(excel_writer=writer, sheet_name=sheet_name)
 writer.close()
 
 #upload
