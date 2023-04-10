@@ -8,6 +8,11 @@ ch006 = AccountBase(deploy_id='ch_ch006@dt_okex_cswap_okex_uswap_btc', is_usdc= 
 # ch003 = AccountBase(deploy_id='ch_ch003@dt_okex_cswap_okex_uswap_btc')
 # ch004 = AccountBase(deploy_id='ch_ch004@dt_okex_cswap_okex_uswap_btc')
 otest5 = AccountBase(deploy_id = "test_otest5@ssf_okexv5_spot_okexv5_uswap_btc")
+bg001 = AccountBase(deploy_id = "bg_001@ssf_okexv5_spot_okexv5_uswap_btc")
+bm001 = AccountBase(deploy_id = "bm_bm001@ssf_okexv5_spot_okexv5_uswap_btc")
+cr001 = AccountBase(deploy_id = "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
+ljw001 = AccountBase(deploy_id = "ljw_001@ssf_okexv5_spot_okexv5_uswap_btc")
+ljw002 = AccountBase(deploy_id = "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
 ch005 = AccountBase(deploy_id='ch_ch005@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 ch007 = AccountBase(deploy_id='ch_ch007@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 bg003 = AccountBase(deploy_id = "bg_bg003@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
@@ -19,7 +24,7 @@ file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/SSFO/parameter/{dateti
 git_file = "parameter_ssfo"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [otest5]
+accounts = [ljw002]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -29,7 +34,7 @@ suffix = "230331"
 num = 0
 hours = 2
 add = 0
-fragment = 100
+fragment = 2000
 fragment_min = 10
 loss_open = 0.0001
 profit_close = 0.005

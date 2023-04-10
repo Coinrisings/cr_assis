@@ -3,18 +3,18 @@
         "level": 1,
         "side": "short",
         "uplimit":1,
-        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "ch_ch006", "ch_ch005", "ch_ch007"]
+        "accounts": []
     },
     "eth": {
-        "level": 0,
+        "level": 1,
         "side": "short",
-        "uplimit": 1,
-        "accounts": ["bg_bg003", "ht_ht001", "anta_anta001", "ch_ch006", "ch_ch005", "ch_ch007", "test_otest5"]
+        "uplimit": 0.5,
+        "accounts": []
     },
-    "icp": {
-        "level": -1,
+    "etc": {
+        "level": 1,
         "side": "long",
-        "uplimit": 0.1,
+        "uplimit": 0.5,
         "accounts": []
     }
 }

@@ -5,6 +5,12 @@ from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 import matplotlib.pyplot as plt
 
+ts = "1639472400000"
+url = f"https://www.okx.com/api/v5/finance/savings/lending-rate-history?ccy=USDT&after={ts}"
+response = requests.get(url)
+
+
+
 otest5 = AccountBase(deploy_id="test_otest5@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 data = otest5.get_spreads(coin = "btc")
 df = otest5.get_now_position()
