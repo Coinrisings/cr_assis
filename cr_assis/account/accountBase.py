@@ -321,32 +321,16 @@ class AccountBase(object):
         return coin_price
     
     def get_equity(self):
-        data = pd.DataFrame()
-        num = 0
-        while len(data) == 0:
-            dataname = "balance_v2"
-            a = f'''
-            select usdt,balance_id,time from {dataname} where time > now() - 10m and balance_id = '{self.balance_id}'
-            order by time desc
-            '''
-            self.database.load_influxdb(database = "account_data")
-            ret = self.database.influx_clt.query(a)
-            data = pd.DataFrame(ret.get_points())
-            self.database.influx_clt.close()
-            if "balance_id" in data.columns:
-                data["true"] = data["balance_id"].apply(lambda x: True if type(x) == type("a") else False)
-                data = data[data["true"]]
-            else:
-                data = pd.DataFrame()
-                self.adjEq = np.nan
-            if len(data) == 0 and num < 10:
-                num += 1
-                print(f"{self.parameter_name} failed to get equity at {datetime.datetime.now()}: {num}")
-                time.sleep(1)
-            elif num >= 10:
-                print(f"give up getting {self.parameter_name} equity at {datetime.datetime.now()}")
-                return 
-        self.adjEq = data.usdt.values[0]
+        dataname = "balance_v2"
+        a = f'''
+        select usdt,balance_id,time from {dataname} where time > now() - 10m and balance_id = '{self.balance_id}'
+        order by time desc
+        '''
+        self.database.load_influxdb(database = "account_data")
+        ret = self.database.influx_clt.query(a)
+        data = pd.DataFrame(ret.get_points())
+        self.database.influx_clt.close()
+        self.adjEq = data.usdt.values[0] if "usdt" in data.columns else np.nan
     
     def get_mean_equity(self, the_time = "now()", interval = "1d") -> float:
         equity = np.nan
