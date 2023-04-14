@@ -1,8 +1,14 @@
 {
+    "btc": {
+        "level": 1,
+        "side": "short",
+        "uplimit":0.8,
+        "accounts": ["anta_anta001"]
+    },
     "eth": {
         "level": 1,
         "side": "short",
-        "uplimit":0.9,
+        "uplimit":0.65,
         "accounts": ["anta_anta001"]
     }
 }

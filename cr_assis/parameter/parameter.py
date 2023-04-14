@@ -10,13 +10,15 @@ anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_cswap_okex_uswap_btc', is_
 bg001 = AccountBase(deploy_id = "bg_001@ssf_okexv5_spot_okexv5_uswap_btc")
 bm001 = AccountBase(deploy_id = "bm_bm001@ssf_okexv5_spot_okexv5_uswap_btc")
 cr001 = AccountBase(deploy_id = "cr_cr001@ssf_okexv5_spot_okexv5_uswap_btc")
-ljw001 = AccountBase(deploy_id = "ljw_001@ssf_okexv5_spot_okexv5_uswap_btc")
+ch010 = AccountBase(deploy_id = "ch_ch010@dt_okex_cswap_okex_uswap_btc")
+ch008 = AccountBase(deploy_id = "ch_ch008@dt_okex_cswap_okex_uswap_btc")
+ch009 = AccountBase(deploy_id = "ch_ch009@dt_okex_cswap_okex_uswap_btc")
 ljw002 = AccountBase(deploy_id = "ljw_002@ssf_okexv5_spot_okexv5_uswap_btc")
-# file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
+file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
 # file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter_future/{datetime.date.today()}"
-file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
-# git_file = "parameter_dt"
-git_file = "parameter_ssfo"
+# file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/SSFO/parameter/{datetime.date.today()}"
+git_file = "parameter_dt"
+# git_file = "parameter_ssfo"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
 accounts = [anta001]

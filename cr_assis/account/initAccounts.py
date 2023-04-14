@@ -24,7 +24,7 @@ class InitAccounts(object):
         for key in collections:
             a = mongo_clt["Strategy_orch"][key].find()
             data = pd.DataFrame(a)
-            data = data[(data["orch"]) & (data["version"] != "0") & (data["version"] != None) & (data["version"] != "0")].copy()
+            data = data[(data["orch"]) & (data["version"] != "0") & (data["version"] != None)].copy()
             deploy_ids += list(data["_id"].values)
         deploy_ids.sort()
         self.deploy_ids = deploy_ids
