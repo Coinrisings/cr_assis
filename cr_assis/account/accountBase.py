@@ -219,6 +219,7 @@ class AccountBase(object):
                 num = 0
                 print(f"Failed to get {self.parameter_name} position at {datetime.datetime.now()}")
                 return 
+        now_position.dropna(subset = ["master_number"], inplace = True) if "master_number" in now_position.columns else None
         data = pd.DataFrame(columns =["coin", "side", "position", "MV", "MV%"], index = range(len(now_position)))
         folder = self.deploy_id.split("@")[-1].split("_")[0]
         for i in data.index:
@@ -582,7 +583,7 @@ class AccountBase(object):
             elif "future" in symbol:
                 d = d[d["ex_field"] == "futures"].copy()
             else:
-                d = d[d["ex_field"] == "spot"].copy()
+                d = d[(d["ex_field"] == "spot") | (d["ex_field"] == "margin")].copy()
             n = len(df)
             if len(d) > 0:
                 df.loc[n] = d.iloc[-1]

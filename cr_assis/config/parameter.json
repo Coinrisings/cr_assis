@@ -2,13 +2,55 @@
     "btc": {
         "level": 1,
         "side": "short",
-        "uplimit":0.8,
-        "accounts": ["anta_anta001"]
+        "uplimit":0.5,
+        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001", "test_otest5"]
     },
     "eth": {
         "level": 1,
         "side": "short",
-        "uplimit":0.65,
-        "accounts": ["anta_anta001"]
+        "uplimit":0.5,
+        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001", "test_otest5"]
+    },
+    "etc": {
+        "level": 1,
+        "side": "long",
+        "uplimit":0.5,
+        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001", "test_otest5"]
+    },
+    "crv": {
+        "level": -1,
+        "side": "short",
+        "uplimit":1.5,
+        "accounts": ["cr_cr003"]
+    },
+    "xlm": {
+        "level": 1,
+        "side": "long",
+        "uplimit":1.5,
+        "accounts": ["cr_cr003"]
+    },
+    "trx": {
+        "level": -1,
+        "side": "long",
+        "uplimit":1.5,
+        "accounts": ["cr_cr003"]
+    },
+    "fil": {
+        "level": 1,
+        "side": "short",
+        "uplimit": 0.1,
+        "accounts": ["test_otest4"]
+    },
+    "ltc": {
+        "level": 1,
+        "side": "short",
+        "uplimit": 0.1,
+        "accounts": ["test_otest4"]
+    },
+    "doge": {
+        "level": 1,
+        "side": "short",
+        "uplimit": 0.1,
+        "accounts": ["test_otest4"]
     }
 }
