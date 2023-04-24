@@ -13,7 +13,7 @@ class RunEva(object):
     def __init__(self):
         self.eva = eva
     
-    def daily_get_funding(self, file_path = f"{os.environ['HOME']}/data/eva_result"):
+    def daily_get_funding(self, file_path = f"/mnt/efs/fs1/data_ssh/eva_result"):
         all_datas = self.eva.daily_get_funding(save = False)
         
         sheet_names = list(all_datas.keys())
@@ -30,6 +30,6 @@ class RunEva(object):
 
 def main():
     Eva = RunEva()
-    Eva.daily_get_funding(file_path = "/home/ssh/jupyter/data/eva_result")
+    Eva.daily_get_funding(file_path = "/mnt/efs/fs1/data_ssh/eva_result")
 
 main()

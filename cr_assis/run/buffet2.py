@@ -303,7 +303,7 @@ class Get_Parameter():
                     else:
 
                         if min(mr.values()) < config['accounts'][acc.parameter_name][1]:
-                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['acc.parameter_nameounts'][acc.parameter_name][1]},不执行加仓操作。")
+                            logger.warning(f"{acc.parameter_name}:目前账户有合约对应的mr低于{config['accounts'][acc.parameter_name][1]},不执行加仓操作。")
 
                         else:
                             # 计算可加仓mv%
