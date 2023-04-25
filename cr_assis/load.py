@@ -1,6 +1,6 @@
 import sys, os, datetime, glob, time, math, configparser, json, yaml
 from bokeh.io import output_notebook
-output_notebook()
+# output_notebook()
 import pandas as pd
 import numpy as np
 with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml", "rb") as f:

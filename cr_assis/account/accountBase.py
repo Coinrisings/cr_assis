@@ -211,7 +211,7 @@ class AccountBase(object):
         self.get_equity()
         self.get_now_position()
         now_position = self.now_position.copy()
-        # now_position = now_position.dropna()
+        now_position = now_position.dropna()
         if len(now_position) == 0:
             data = self.get_now_position(timestamp = "12h")
             
