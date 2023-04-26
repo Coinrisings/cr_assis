@@ -31,7 +31,7 @@ hours = 2
 add = 0
 fragment = 200
 fragment_min = 10
-loss_open = 0.003
+loss_open = 0.004
 profit_close = 0.005
 closemaker = 1.02
 with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:

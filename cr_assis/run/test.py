@@ -3,6 +3,11 @@ import pandas as pd
 import numpy as np
 from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
+from cr_assis.connect.updateEmail import UpdateEmail
+
+update = UpdateEmail()
+update.start_date = datetime.date(2023,4,24)
+update.update_account_volume()
 
 ts = round(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = 0)) * 1000, 0)
 url = "https://www.okx.com/v3/users/fee/getVolumeLevelInfo?t={ts}"

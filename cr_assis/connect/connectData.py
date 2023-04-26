@@ -1,5 +1,6 @@
 from pymongo import MongoClient
 from influxdb import InfluxDBClient
+from imap_tools import MailBox
 import pandas as pd
 import redis, os, yaml, requests
 import urllib3
@@ -19,6 +20,14 @@ class ConnectData(object):
             if "mongo" in info:
                 mongo_uri = info["mongo"]
                 return mongo_uri
+    
+    def load_email_account(self):
+        with open(f"{os.environ['HOME']}/.cr_assis/mongo_url.yml", "rb") as f:
+            data = yaml.load(f, Loader= yaml.SafeLoader)
+        for info in data:
+            if "name" in info.keys() and info["name"] == "gmail":
+                self.email_address: str = info["address"]
+                self.email_password: str = info["password"]
     
     def load_influxdb(self, database = "ephemeral"):
         db = "DataSource"
@@ -99,3 +108,7 @@ class ConnectData(object):
         else:
             data = {}
         return data
+    
+    def load_mailbox(self):
+        self.load_email_account() if not hasattr(self, "email_password") else print(1111111)
+        self.mailbox = MailBox("imap.gmail.com").login(self.email_address, self.email_password)
