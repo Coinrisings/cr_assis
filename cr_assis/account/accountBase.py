@@ -327,10 +327,7 @@ class AccountBase(object):
         select usdt,balance_id,time from {dataname} where time > now() - 10m and balance_id = '{self.balance_id}'
         order by time desc
         '''
-        self.database.load_influxdb(database = "account_data")
-        ret = self.database.influx_clt.query(a)
-        data = pd.DataFrame(ret.get_points())
-        self.database.influx_clt.close()
+        data = self.database._send_influx_query(sql = a, database = "account_data", is_dataFrame= True)
         self.adjEq = data.usdt.values[0] if "usdt" in data.columns else np.nan
     
     def get_mean_equity(self, the_time = "now()", interval = "1d") -> float:
@@ -552,9 +549,7 @@ class AccountBase(object):
     
     def get_now_position(self, timestamp = "10m", the_time = "now()"):
         """ master, slave : "usdt-swap", "usd-swap", "spot" """
-        #master, slave : "usdt-swap", "usd-swap", "spot"
-        if the_time != "now()" and "'" not in the_time:
-            the_time = f"'{the_time}'"
+        the_time = f"'{the_time}'" if the_time != "now()" and "'" not in the_time else the_time
         data = self.get_influx_position(timestamp = timestamp, the_time=the_time)
         if len(data.columns) > 0:
             data = data[(data["long"] >0) | (data["short"] >0) ].copy()

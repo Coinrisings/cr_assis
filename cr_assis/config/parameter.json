@@ -1,23 +1,35 @@
 {
-    "btc": {
+    "xrp": {
         "level": 1,
         "side": "long",
-        "uplimit":0.1,
-        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001", "test_otest5"]
+        "uplimit":0.001,
+        "accounts": ["cr_cr001", "ljw_001"]
     },
-    "eth": {
+    "ada": {
         "level": 1,
-        "side": "short",
-        "uplimit":0.5,
-        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001"]
-    },
-    "etc": {
-        "level": -1,
         "side": "long",
-        "uplimit":1,
-        "accounts": ["bm_bm001", "ljw_001", "bg_001", "ljw_002", "cr_cr001", "anta_anta001"]
+        "uplimit":0.001,
+        "accounts": ["cr_cr001", "ljw_001"]
     },
     "fitfi": {
+        "level": 1,
+        "side": "long",
+        "uplimit":1,
+        "accounts": ["cr_cr003"]
+    },
+    "kishu": {
+        "level": 1,
+        "side": "long",
+        "uplimit":0.5,
+        "accounts": ["cr_cr003"]
+    },
+    "slp": {
+        "level": 1,
+        "side": "long",
+        "uplimit":0.5,
+        "accounts": ["cr_cr003"]
+    },
+    "gft": {
         "level": 1,
         "side": "long",
         "uplimit":1,

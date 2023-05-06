@@ -4,10 +4,10 @@ import numpy as np
 from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.updateEmail import UpdateEmail
+from cr_assis.account.accountOkex import AccountOkex
 
-update = UpdateEmail()
-update.start_date = datetime.date(2023,4,24)
-update.update_account_volume()
+anta001 = AccountOkex(deploy_id="anta_anta001@dt_okex_cswap_okex_uswap_btc")
+anta001.get_now_position()
 
 ts = round(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = 0)) * 1000, 0)
 url = "https://www.okx.com/v3/users/fee/getVolumeLevelInfo?t={ts}"

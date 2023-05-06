@@ -4,11 +4,12 @@ import numpy as np
 import datetime, os, json
 from github import Github
 
-anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_cswap_okex_uswap_btc')
+anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
 # bg001 = AccountBase(deploy_id = "bg_001@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 # bm001 = AccountBase(deploy_id = "bm_bm001@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 # cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
-# ljw002 = AccountBase(deploy_id = "ljw_002@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
+ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cswap_okex_uswap_btc")
+cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
 cr003 = AccountBase(deploy_id = "cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
 otest5 = AccountBase(deploy_id = "test_otest5@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 otest4 = AccountBase(deploy_id= "test_otest4@dt_okex_cswap_okex_spot_btc")
@@ -19,7 +20,7 @@ git_file = "parameter_dt"
 # git_file = "parameter_ssfo"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [cr003]
+accounts = [ljw001, cr001]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -28,12 +29,12 @@ local_file = f"parameter_{datetime.datetime.now()}"
 suffix = "230331"
 num = 0
 hours = 2
-add = 0
+add = -0.0005
 fragment = 200
 fragment_min = 10
-loss_open = 0.004
+loss_open = 0.0001
 profit_close = 0.005
-closemaker = 1.02
+closemaker = 1.005
 with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
 for account in accounts:
@@ -67,7 +68,7 @@ for account in accounts:
         real_side = holding_position.loc[coin, "side"] if coin in holding_position.index.values else portfolio[coin]["side"]
         is_long = 1 if real_side == "long" else 0
         if master_pair.split("-")[1] != "usd":
-            price = account.get_coin_price(coin)
+            price = max(account.get_coin_price(coin), 0.000000000433)
         else:
             if coin == "btc":
                 price = 100

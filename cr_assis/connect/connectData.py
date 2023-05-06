@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from influxdb import InfluxDBClient
 from imap_tools import MailBox
 import pandas as pd
+import numpy as np
 import redis, os, yaml, requests
 import urllib3
 urllib3.disable_warnings()
@@ -51,8 +52,9 @@ class ConnectData(object):
         self.redis_json = redis_json
         
     def get_redis_data(self, key: str):
+        self.load_redis() if not hasattr(self, "redis_clt") else None
         key = bytes(key, encoding = "utf8")
-        data = self.redis_clt.hgetall(key)
+        data = self.redis_clt.hgetall(key) if key in self.redis_clt.keys() else {}
         return data
 
     def _send_influx_query(self, sql: str, database: str, is_dataFrame = True):
