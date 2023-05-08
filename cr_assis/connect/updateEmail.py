@@ -101,7 +101,7 @@ class UpdateEmail(object):
         """
         spot_volume, swap_volume, option_volume = self.get_daily_spot(date), self.get_daily_swap(date), self.get_daily_option(date)
         volume = pd.DataFrame(columns = ["spot", "future_perp", "option"])
-        volume.loc[date] = [spot_volume, swap_volume, option_volume]
+        volume.loc[str(date)] = [spot_volume, swap_volume, option_volume]
         return volume
     
     def update_account_volume(self):
