@@ -3,7 +3,7 @@ from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import ccxt
+import ccxt, copy
 
 class AccountOkex(AccountBase):
     """Account Information only in Okex
@@ -11,7 +11,12 @@ class AccountOkex(AccountBase):
     
     def __init__(self, deploy_id: str) -> None:
         self.deploy_id = deploy_id
+        self.balance_id = self.deploy_id.replace("@", "-") + "@sum"
         self.exchange_position = "okexv5"
+        self.exchange_combo = "okx"
+        self.exchange_contract = "okex"
+        self.folder = "dt"
+        self.parameter: pd.DataFrame
         self.empty_position:pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap", "diff", "diff_U"])
         self.usd_position: pd.DataFrame = pd.DataFrame(columns = ["usd-swap"])
         self.script_path = str(Path( __file__ ).parent.parent.absolute())
@@ -20,14 +25,102 @@ class AccountOkex(AccountBase):
         self.client, self.username = self.parameter_name.split("_")
         self.database = ConnectData()
         self.markets = ccxt.okex().load_markets()
+        self.contractsize_uswap : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
-        self.is_master = {"usd-future":0, "usd-swap":1, "usdc_swap":2, "usdt":3, "usdt-future":4, "usdt-swap":5}
+        self.exposure_number = 1
+        self.is_master = {"usd-future":0, "usd-swap":1, "usdc-swap":2, "usdt":3, "usdt-future":4, "usdt-swap":5, "": np.inf}
+        self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
+                        "usdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
+        self.exchange_master, self.exchange_slave = "okex", "okex"
     
+    def get_contractsize(self, symbol: str) -> float:
+        return self.markets[symbol]["contractSize"] if symbol in self.markets.keys() else np.nan
+    
+    def get_pair_suffix_contract(self, contract: str) -> str:
+        """get pair suffix from master or slave
+        """
+        contract = contract.replace("-", "_").replace("spot", "usdt")
+        contract = contract.replace(contract.split("_")[0], "")
+        return contract
+    
+    def get_pair_suffix(self, combo: str, future: str) -> tuple[str, str]:
+        """get pair suffix from a combo
+        """
+        master, slave = combo.split("-")
+        master, slave = self.get_pair_suffix_contract(master), self.get_pair_suffix_contract(slave)
+        return master.replace("future", future), slave.replace("future", future)
+    
+    def get_pair_name(self, coin: str, combo: str) -> tuple[str, str]:
+        master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
+        return coin+master_suffix.replace("_", "-"), coin+slave_suffix.replace("_", "-")
+    
+    def get_secrect_name(self, coin: str, combo: str) -> tuple[str, str]:
+        master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
+        return self.parameter_name+self.secret_id[master_suffix[1:].replace("_", "-")], self.parameter_name+self.secret_id[slave_suffix[1:].replace("_", "-")]
+        
+    def get_spreads(self, coin: str, combo: str, suffix="", start="now() - 24h", end = "now()") -> pd.DataFrame:
+        """get spreads data
+        Args:
+            coin (str): coin name, str.lower
+            combo (str): combo name, like "okx_usd_swap-okx_usdt_swap"
+            suffix (str, optional): future delivery time. Defaults to "", which means this quarter
+            start (str, optional): start time. Defaults to "now() - 24h".
+            end (str, optional): end time. Defaults to "now()".
+
+        Returns:
+            pd.DataFrame: spreads data, columns = ["time", "ask0_spread", "bid0_spread", "dt"]
+        """
+        coin = coin.lower()
+        master, slave = combo.split("-")
+        start, end = self.get_influx_time_str(start), self.get_influx_time_str(end)
+        suffix = self.get_quarter() if suffix == "" else suffix
+        contract_master, contract_slave = self.get_pair_suffix(combo, future = suffix)
+        kind_master = master.split("_")[-1].replace("future", "futures")
+        kind_slave = slave.split("_")[-1].replace("future", "futures")
+        database = self.get_all_database()
+        dataname = f'''spread_orderbook_{self.exchange_contract}_{kind_master}_{coin}{contract_master}__orderbook_{self.exchange_contract}_{kind_slave}_{coin}{contract_slave}'''
+        dataname_reverse = f'''spread_orderbook_{self.exchange_contract}_{kind_slave}_{coin}{contract_slave}__orderbook_{self.exchange_contract}_{kind_master}_{coin}{contract_master}'''
+        is_exist = True
+        if dataname in database:
+            a = f"select time, ask0_spread, bid0_spread from {dataname} where time >= {start} and time <= {end}"
+        elif dataname_reverse in database:
+            a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= {start} and time <= {end}"
+        elif "future" in combo:
+            if suffix in contract_master:
+                dataname = f'''spread_orderbook_{self.exchange_contract}_{kind_master}_{coin}{contract_master}__orderbook_{self.exchange_contract}_spot_{coin}_usdt'''
+                if dataname in database:
+                    a = f"select time, ask0_spread, bid0_spread from {dataname} where time >= {start} and time <= {end}"
+                else:
+                    is_exist = False
+            else:
+                dataname_reverse = f'''spread_orderbook_{self.exchange_contract}_{kind_slave}_{coin}{contract_slave}__orderbook_{self.exchange_contract}_spot_{coin}_usdt'''
+                if dataname_reverse in database:
+                    a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= now() - time >= {start} and time <= {end}"
+                else:
+                    is_exist = False
+        else:
+            is_exist = False
+        spreads_data = pd.DataFrame(columns = ["time", "ask0_spread", "bid0_spread", "dt"])
+        if not is_exist:
+            print(f"{self.parameter_name} {combo} {coin} spreads database doesn't exist")
+        else:
+            return_data = self.database._send_influx_query(sql = a, database = "spreads", is_dataFrame= True)
+            if len(return_data) > 0:
+                spreads_data = return_data
+        return spreads_data
+        
     def get_contractsize_cswap(self, coin: str) ->float:
         coin = coin.upper()
         symbol = f"{coin}/USD:{coin}"
-        contractsize = self.markets[symbol]["contractSize"] if symbol in self.markets.keys() else np.nan
+        contractsize = self.get_contractsize(symbol)
         self.contractsize_cswap[coin] = contractsize
+        return contractsize
+    
+    def get_contractsize_uswap(self, coin: str) ->float:
+        coin = coin.upper()
+        symbol = f"{coin}/USDT:USDT"
+        contractsize = self.get_contractsize(symbol)
+        self.contractsize_uswap[coin] = contractsize
         return contractsize
     
     def get_influx_position(self, timestamp: str, the_time: str) -> pd.DataFrame:
@@ -105,14 +198,71 @@ class AccountOkex(AccountBase):
         ret = self.database.get_redis_data(key = f"{self.exchange_position}/{coin.lower()}-usdt")
         return float(ret[b'ask0_price']) if b'ask0_price' in ret.keys() else np.nan
     
+    def tell_exposure(self) -> pd.DataFrame:
+        data = self.now_position.copy() if hasattr(self, "now_position") else self.empty_position.copy()
+        for coin in data.index:
+            contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
+            array = data.loc[coin].sort_values()
+            array.drop(["diff", "diff_U"], inplace = True)
+            tell1 = np.isnan(data.loc[coin, "diff"])
+            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6
+            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2
+            data.loc[coin, "is_exposure"] = tell1 and tell2 and tell3
+        data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
+        return data
+    
     def get_now_position(self, timestamp="5m", the_time="now()") -> pd.DataFrame:
         the_time = f"'{the_time}'" if the_time != "now()" and "'" not in the_time else the_time
         self.origin_position = self.get_influx_position(timestamp = timestamp, the_time=the_time)
-        self.now_position:pd.DataFrame = self.gather_position()
+        self.now_position: pd.DataFrame = self.gather_position()
         self.now_position = self.calculate_exposure()
+        self.now_position = self.tell_exposure()
         return self.now_position.copy()
     
-    def get_account_position(self):
+    def tell_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
+        data = data.sort_values()
+        tell1 = abs(data[0] + data[-1]) <= contractsize * self.exposure_number and data[0] * data[-1] < 0
+        tell2 = abs(data[1] + data[-1]) > contractsize * self.exposure_number or data[1] * data[-1] > 0
+        tell3 = abs(data[0] + data[-2]) > contractsize * self.exposure_number or data[0] * data[-2] > 0
+        result = [data.index[0], data.index[-1]] if tell1 and tell2 and tell3 else ["", ""]
+        ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
+                "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+        return ret
+    
+    def transfer_pair(self, pair: str) -> str:
+        ret = pair.replace("-", "_")
+        ret = ret.replace("usdt", "spot") if ret.split("_")[-1] == "usdt" and "swap" not in ret else ret
+        return ret
+            
+    def get_coin_combo(self, coin: str, master_pair: str, slave_pair: str) -> str:
+        master = self.transfer_pair(master_pair.replace(coin.lower(), ""))
+        slave = self.transfer_pair(slave_pair.replace(coin.lower(), ""))
+        return f"{self.exchange_combo}{master}-{self.exchange_combo}{slave}"
+    
+    def get_account_position(self) -> pd.DataFrame:
         self.get_equity()
         data = self.get_now_position()
-        
+        position = pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%", "master_pair", "slave_pair", "master_secret", "slave_secret", "combo"])
+        data.drop(data[data["is_exposure"]].index, inplace= True)
+        data.drop(["diff", "diff_U", "is_exposure"], axis=1, inplace=True)
+        num = 0
+        for coin in data.index:
+            contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
+            ret = self.tell_master(data = data.loc[coin], contractsize = contractsize)
+            if ret["master"] == "" or ret["slave"] == "":
+                continue
+            else:
+                position.loc[num, "coin"] = coin.lower()
+                position.loc[num, "side"] = "long" if data.loc[coin, ret["master"]] > 0 else "short"
+                position.loc[num, "position"] = abs(data.loc[coin, ret["master"]]) if ret["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[coin, ret["master"]])
+                position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if ret["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
+                position.loc[num, "MV%"] = round(position.loc[num, "MV"] / self.adjEq * 100, 4)
+                position.loc[num, ["master_pair", "slave_pair"]] = [f'{position.loc[num, "coin"]}-{ret["master"]}', f'{position.loc[num, "coin"]}-{ret["slave"]}']
+                position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[ret["master"]]}', f'{self.parameter_name}{self.secret_id[ret["slave"]]}']
+                position.loc[num, "combo"] = self.get_coin_combo(coin, position.loc[num, "master_pair"], position.loc[num, "slave_pair"])
+                num += 1
+        position.drop(position[(position["master_secret"] == self.parameter_name) | (position["master_secret"] == self.parameter_name)].index, inplace= True)
+        position.sort_values(by = "MV%", ascending= False, inplace= True)
+        position.index = range(len(position))
+        self.position = position.copy()
+        return position

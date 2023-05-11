@@ -1,6 +1,7 @@
 from cr_assis.load import *
 import pandas as pd
 from cr_assis.account.accountBase import AccountBase
+from cr_assis.account.accountOkex import AccountOkex
 from pymongo import MongoClient
 from pathlib import Path
 
@@ -46,6 +47,17 @@ class InitAccounts(object):
                     break
             if tell1 and tell2:
                 accounts[parameter_name] = AccountBase(deploy_id = deploy_id, is_usdc= is_usdc)
+        self.accounts = accounts.copy()
+        return accounts
+    
+    def init_accounts_okex(self) -> dict[str, AccountOkex]:
+        deploy_ids = self.get_all_deploys()
+        accounts:dict[str, AccountOkex] = {}
+        for deploy_id in deploy_ids:
+            parameter_name, strategy = deploy_id.split("@")
+            client, _ = parameter_name.split("_")
+            if not (self.ignore_test and client in ["test", "lxy"]) and "okex" == strategy.split("_")[1] and "okex" == strategy.split("_")[3]:
+                accounts[parameter_name] = AccountOkex(deploy_id = deploy_id)
         self.accounts = accounts.copy()
         return accounts
     

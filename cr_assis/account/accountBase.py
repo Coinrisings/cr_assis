@@ -125,7 +125,7 @@ class AccountBase(object):
         elif month <= 6:
             last_day = "0630"
         elif month <= 9:
-            last_day = "0930"
+            last_day = "0929"
         else:
             last_day = "1231"
         quarter = quarter + last_day
@@ -546,6 +546,10 @@ class AccountBase(object):
             data = pd.concat([data, df])
         data.index = range(len(data))
         return data
+    
+    def get_influx_time_str(self, the_time: str) -> str:
+        the_time = f"'{the_time}'" if "now()" not in the_time and "'" not in the_time else the_time
+        return the_time
     
     def get_now_position(self, timestamp = "10m", the_time = "now()"):
         """ master, slave : "usdt-swap", "usd-swap", "spot" """

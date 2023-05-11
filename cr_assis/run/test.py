@@ -5,9 +5,11 @@ from cr_assis.pnl.dtfPnl import DtfPnl
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.updateEmail import UpdateEmail
 from cr_assis.account.accountOkex import AccountOkex
+from cr_assis.buffet2.buffetOkex import BuffetOkex
 
-anta001 = AccountOkex(deploy_id="anta_anta001@dt_okex_cswap_okex_uswap_btc")
-anta001.get_now_position()
+bft = BuffetOkex()
+bft.json_path = "/Users/chelseyshao/Downloads/config"
+bft.run_buffet(upload = False)
 
 ts = round(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = 0)) * 1000, 0)
 url = "https://www.okx.com/v3/users/fee/getVolumeLevelInfo?t={ts}"
