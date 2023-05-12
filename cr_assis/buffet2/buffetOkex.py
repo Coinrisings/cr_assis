@@ -337,6 +337,9 @@ class BuffetOkex(Buffet):
         for coin in account.parameter[account.parameter["combo"] == combo].index:
             account.parameter.loc[coin, "master_pair"] = account.parameter.loc[coin, "master_pair"].replace("future", config["future_date"][0])
             account.parameter.loc[coin, "slave_pair"] = account.parameter.loc[coin, "slave_pair"].replace("future", config["future_date"][0])
+            account.parameter.loc[coin, "funding_stop_open"] = config["funding_stop_open"]
+            account.parameter.loc[coin, "funding_stop_close"] = config["funding_stop_close"]
+            account.parameter.loc[coin, "chase_tick"] = config["chase_tick"]
         return account.parameter
     
     def arrange_parameter(self, account: AccountOkex):
@@ -390,16 +393,14 @@ class BuffetOkex(Buffet):
             upload (bool, optional): upload excel to github or not. Defaults to False.
         """
         self.print_log()
-        self.initilize()
-        self.get_parameter(is_save = is_save)
-        # try:
-        #     self.initilize()
-        #     self.get_parameter(is_save = is_save)
-        # except Exception as e:
-        #     self.log_bug(e)
-        # if upload:
-        #     try:
-        #         self.upload_parameter()
-        #     except Exception as e:
-        #         self.log_bug(e)
+        try:
+            self.initilize()
+            self.get_parameter(is_save = is_save)
+        except Exception as e:
+            self.log_bug(e)
+        if upload:
+            try:
+                self.upload_parameter()
+            except Exception as e:
+                self.log_bug(e)
         self.logger.handlers.clear()
