@@ -56,6 +56,12 @@ class ConnectData(object):
         key = bytes(key, encoding = "utf8")
         data = self.redis_clt.hgetall(key) if key in self.redis_clt.keys() else {}
         return data
+    
+    def get_redis_okex_price(self, coin: str, suffix: str) -> float:
+        self.load_redis() if not hasattr(self, "redis_clt") else None
+        key = bytes(f"okexv5/{coin.lower()}-{suffix}", encoding="utf8")
+        price = float(self.redis_clt.hgetall(key)[b'bid0_price']) if key in self.redis_clt.keys() else np.nan
+        return price
 
     def _send_influx_query(self, sql: str, database: str, is_dataFrame = True):
         self.load_influxdb(database)

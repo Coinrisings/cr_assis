@@ -16,8 +16,11 @@ class AccountOkex(AccountBase):
         self.exchange_combo = "okx"
         self.exchange_contract = "okex"
         self.folder = "dt"
+        self.ccy = "BTC"
         self.parameter: pd.DataFrame
         self.empty_position:pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap", "diff", "diff_U"])
+        self.open_price: pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap"])
+        self.now_price: pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap"])
         self.usd_position: pd.DataFrame = pd.DataFrame(columns = ["usd-swap"])
         self.script_path = str(Path( __file__ ).parent.parent.absolute())
         self.mongon_url = self.load_mongo_url()
@@ -26,6 +29,7 @@ class AccountOkex(AccountBase):
         self.database = ConnectData()
         self.markets = ccxt.okex().load_markets()
         self.contractsize_uswap : dict[str, float] = {}
+        self.cashBal : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
         self.exposure_number = 1
         self.is_master = {"usd-future":0, "usd-swap":1, "usdc-swap":2, "usdt":3, "usdt-future":4, "usdt-swap":5, "": np.inf}
@@ -219,6 +223,33 @@ class AccountOkex(AccountBase):
         self.now_position = self.tell_exposure()
         return self.now_position.copy()
     
+    def get_open_price(self) -> pd.DataFrame:
+        self.get_now_position() if not hasattr(self, "now_position") else None
+        for coin in self.now_position.index:
+            for contract in self.open_price.columns:
+                if self.now_position.loc[coin, contract] != 0:
+                    df = self.origin_position[self.origin_position["pair"] == f"{coin.lower()}-{contract}"].copy()
+                    self.open_price.loc[coin, contract] = (df["long_open_price"] + df["short_open_price"]).values[-1] if len(df) > 0 else np.nan
+                else:
+                    self.open_price.loc[coin, contract] = 0
+            if self.now_position.loc[coin, "usdt"] != 0:
+                max_col = abs(self.now_position.loc[coin, self.open_price.columns.drop("usdt")]).sort_values().index[-1]
+                self.open_price.loc[coin, "usdt"] = self.open_price.loc[coin, max_col]
+        return self.open_price.copy()
+    
+    def get_cashBal(self, coin: str) -> float:
+        a = f"""
+        select last(origin) as origin FROM "equity_snapshot" WHERE time > now() - 5m and username = '{self.username}' and client = '{self.client}' and symbol = '{coin.lower()}'
+        """
+        ret = self.database._send_influx_query(a, database = "account_data", is_dataFrame= True)
+        self.cashBal[coin.upper()] = float(eval(ret["origin"].values[-1])["cashBal"]) if len(ret) > 0 else np.nan
+        return self.cashBal[coin.upper()]
+    
+    def get_now_price(self):
+        self.get_now_position() if not hasattr(self, "now_position") else None
+        for coin in set(self.now_position.index) | set([self.ccy]):
+            self.now_price.loc[coin] = self.database.get_redis_okex_price(coin = coin.lower(), suffix="usdt")
+            
     def tell_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
         data = data.sort_values()
         tell1 = abs(data[0] + data[-1]) <= contractsize * self.exposure_number and data[0] * data[-1] < 0

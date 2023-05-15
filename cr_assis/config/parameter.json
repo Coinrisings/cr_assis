@@ -34,5 +34,11 @@
         "side": "long",
         "uplimit":1,
         "accounts": ["cr_cr003"]
+    },
+    "eth": {
+        "level": 1,
+        "side": "short",
+        "uplimit":1,
+        "accounts": ["test_otest4"]
     }
 }
