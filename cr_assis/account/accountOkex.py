@@ -211,16 +211,19 @@ class AccountOkex(AccountBase):
             tell1 = np.isnan(data.loc[coin, "diff"])
             tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6
             tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2
-            data.loc[coin, "is_exposure"] = tell1 and tell2 and tell3
+            data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data
     
     def get_now_position(self, timestamp="5m", the_time="now()") -> pd.DataFrame:
-        the_time = f"'{the_time}'" if the_time != "now()" and "'" not in the_time else the_time
+        the_time = f"'{the_time}'" if "now()" not in the_time and "'" not in the_time else the_time
         self.origin_position = self.get_influx_position(timestamp = timestamp, the_time=the_time)
         self.now_position: pd.DataFrame = self.gather_position()
         self.now_position = self.calculate_exposure()
         self.now_position = self.tell_exposure()
+        if self.deploy_id == "bg_001@dt_okex_cswap_okex_uswap_btc":
+            self.now_position["is_exposure"] = False
+            self.now_position["usdt"] = 0
         return self.now_position.copy()
     
     def get_open_price(self) -> pd.DataFrame:
@@ -239,7 +242,7 @@ class AccountOkex(AccountBase):
     
     def get_cashBal(self, coin: str) -> float:
         a = f"""
-        select last(origin) as origin FROM "equity_snapshot" WHERE time > now() - 5m and username = '{self.username}' and client = '{self.client}' and symbol = '{coin.lower()}'
+        select last(origin) as origin FROM "equity_snapshot" WHERE time > now() - 10m and username = '{self.username}' and client = '{self.client}' and symbol = '{coin.lower()}'
         """
         ret = self.database._send_influx_query(a, database = "account_data", is_dataFrame= True)
         self.cashBal[coin.upper()] = float(eval(ret["origin"].values[-1])["cashBal"]) if len(ret) > 0 else np.nan
@@ -270,9 +273,9 @@ class AccountOkex(AccountBase):
         slave = self.transfer_pair(slave_pair.replace(coin.lower(), ""))
         return f"{self.exchange_combo}{master}-{self.exchange_combo}{slave}"
     
-    def get_account_position(self) -> pd.DataFrame:
+    def get_account_position(self, timestamp = "5m", the_time = "now()") -> pd.DataFrame:
         self.get_equity()
-        data = self.get_now_position()
+        data = self.get_now_position(timestamp=timestamp, the_time=the_time)
         position = pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%", "master_pair", "slave_pair", "master_secret", "slave_secret", "combo"])
         data.drop(data[data["is_exposure"]].index, inplace= True)
         data.drop(["diff", "diff_U", "is_exposure"], axis=1, inplace=True)

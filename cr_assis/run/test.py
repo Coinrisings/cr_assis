@@ -7,9 +7,8 @@ from cr_assis.connect.updateEmail import UpdateEmail
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.buffet2.buffetOkex import BuffetOkex
 
-account = AccountOkex(deploy_id="cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
-account.get_now_position()
-ret = account.get_open_price()
+account = AccountOkex(deploy_id="bg_001@dt_okex_cswap_okex_uswap_btc")
+ret = account.get_account_position()
 
 bft = BuffetOkex()
 bft.json_path = "/Users/chelseyshao/Downloads/config"

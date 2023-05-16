@@ -7,7 +7,7 @@ import datetime
 class SsfoPnl(object):
     """pnl for ssf-o"""
     
-    def __init__(self, accounts: list) -> None:
+    def __init__(self, accounts: list[AccountBase]) -> None:
         """
         Args:
             accounts (list): list of AccountBase
