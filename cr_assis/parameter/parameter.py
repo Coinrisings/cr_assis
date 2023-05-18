@@ -8,13 +8,14 @@ anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_cswap_okex_uswap_btc', is_
 ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cswap_okex_uswap_btc")
 cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
 cr003 = AccountBase(deploy_id = "cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
+ht001 = AccountBase(deploy_id = "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
 otest5 = AccountBase(deploy_id = "test_otest5@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
 otest4 = AccountBase(deploy_id= "test_otest4@dt_okex_cswap_okex_uswap_btc")
 file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
 git_file = "parameter_ssh"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [otest4]
+accounts = [ht001]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -29,7 +30,7 @@ fragment_min = 10
 loss_open = 0.001
 profit_close = 0.005
 open1 = 1.0007
-closemaker = 1
+closemaker = 0.99
 with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
 for account in accounts:

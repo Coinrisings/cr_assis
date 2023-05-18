@@ -7,7 +7,7 @@ from cr_assis.connect.updateEmail import UpdateEmail
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.buffet2.buffetOkex import BuffetOkex
 
-account = AccountOkex(deploy_id="bg_001@dt_okex_cswap_okex_uswap_btc")
+account = AccountOkex(deploy_id="bm_bm001@dt_okex_cswap_okex_uswap_btc")
 ret = account.get_account_position()
 
 bft = BuffetOkex()

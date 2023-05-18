@@ -59,6 +59,7 @@ class ConnectOkex(object):
                 break
         if ret == []:
             ret = self.get_discount_apiInfo(coin)
+        self.discount_info[coin]= ret
         return ret
     
     def get_discount_apiInfo(self, coin:str) -> list:
