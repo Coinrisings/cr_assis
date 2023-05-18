@@ -17,6 +17,7 @@ class AccountOkex(AccountBase):
         self.exchange_contract = "okex"
         self.folder = "dt"
         self.ccy = "BTC"
+        self.principal_currency = "BTC"
         self.parameter: pd.DataFrame
         self.empty_position:pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap", "diff", "diff_U"])
         self.open_price: pd.DataFrame = pd.DataFrame(columns = ["usdt", "usdt-swap", "usdt-future", "usd-swap", "usd-future", "usdc-swap"])
@@ -36,6 +37,8 @@ class AccountOkex(AccountBase):
         self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
                         "usdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
         self.exchange_master, self.exchange_slave = "okex", "okex"
+        self.path_orders = [f'{self.client}__{self.parameter_name}@okexv5_swap_usd', f'{self.client}__{self.parameter_name}@okexv5_swap_usdt']
+        self.path_ledgers = [f'{self.client}__{self.parameter_name}@okexv5_swap_usd', f'{self.client}__{self.parameter_name}@okexv5_swap_usdt']
     
     def get_contractsize(self, symbol: str) -> float:
         return self.markets[symbol]["contractSize"] if symbol in self.markets.keys() else np.nan
