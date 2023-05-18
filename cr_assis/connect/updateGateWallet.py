@@ -40,18 +40,19 @@ class UpdateGateWallet(object):
         return ret
     
     def get_total_pnl(self):
-        self.total_pnl, self.total_capital, self.dnw_sum, self.total_position = 0, 0, 0, 0
+        self.total_pnl, self.total_capital, self.total_equity,self.dnw_sum, self.total_position = 0, 0, 0, 0, 0
         for i in self.query_ret:
             info = i["available"]["usdt"]
             self.total_pnl += float(info["history"]["pnl"])
             self.single_equity[i["uid"]] = float(info["total"]) + float(info["unrealised_pnl"])
             self.total_capital += float(info["total"]) + float(info["unrealised_pnl"]) - float(info["history"]["dnw"])
+            self.total_equity += self.single_equity[i["uid"]]
             self.dnw_sum += float(info["history"]["dnw"])
             self.total_position += float(info["position_margin"])
             self.single_mv[i["uid"]] = float(info["position_margin"]) / (float(info["total"]) + float(info["unrealised_pnl"])) if float(info["total"]) + float(info["unrealised_pnl"]) != 0 else 0
         self.total_mv = self.total_position / self.total_capital if self.total_capital != 0 else np.nan
-        data = pd.DataFrame(columns = ["total_pnl", "total_capital", "dnw_sum", "total_mv"])
-        data.loc[self.now] = [self.total_pnl, self.total_capital, self.dnw_sum, self.total_mv]
+        data = pd.DataFrame(columns = ["total_pnl", "total_capital", "total_equity","dnw_sum", "total_mv"])
+        data.loc[self.now] = [self.total_pnl, self.total_capital, self.total_equity,self.dnw_sum, self.total_mv]
         self.total_summary = data
     
     def save_total_data(self):

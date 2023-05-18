@@ -12,7 +12,7 @@ class EvaGateWallet(object):
         self.file_path = "/mnt/efs/fs1/data_ssh/mm/capital/gate"
         self.max_loss = 0.5
         self.max_mv = 0.2
-        self.title_name = {"total_pnl": "所有子账户累计交易盈亏总额", "total_capital": "所有子账户子账户资金加总", "dnw_sum": "所有子账户累计转入-累计转出", "total_mv": "头寸大小统计"}
+        self.title_name = {"total_pnl": "所有子账户累计交易盈亏总额", "total_capital": "所有子账户子账户资金加总", "total_equity": "所有子账户净值","dnw_sum": "所有子账户累计转入-累计转出", "total_mv": "头寸大小统计"}
     
     def read_total_summary(self, start: datetime.datetime, end: datetime.datetime, is_play = True):
         total_summary = self.read_data(path = f"{self.file_path}/total", start = start, end = end)

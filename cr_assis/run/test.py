@@ -6,9 +6,11 @@ from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.updateEmail import UpdateEmail
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.buffet2.buffetOkex import BuffetOkex
+from cr_assis.connect.updateGateWallet import UpdateGateWallet
 
-account = AccountOkex(deploy_id="bm_bm001@dt_okex_cswap_okex_uswap_btc")
-ret = account.get_account_position()
+u = UpdateGateWallet()
+u.file_path = "/Users/chelseyshao/data/mm"
+u.handle_ret()
 
 bft = BuffetOkex()
 bft.json_path = "/Users/chelseyshao/Downloads/config"
