@@ -1,0 +1,13 @@
+{
+    "default_path": "/default/default_okex.json", 
+    "total_mv": {
+        "test_otest5": [100, 110, 120]
+    },
+    "single_mv" : {
+        "dtc": {"btc": [10, 15], "eth": [10, 15]},
+        "dt": {"ada": [20, 25], "xrp": [20, 25]}
+    },
+    "thresh": {
+    
+    }
+}

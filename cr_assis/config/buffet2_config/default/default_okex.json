@@ -1,0 +1,26 @@
+{
+    "combo":{
+        "dt": "okex_usd_swap-okex_usdt_swap", 
+        "dtc": "okex_usd_swap-okex_usdc_swap"
+    },
+    "funding_open": 0.0001,
+    "funding_close": 0.005,
+    "chase_tick": 1,
+    "close": 1.005,
+    "open": "",
+    "closemaker": "",
+    "closetaker": "",
+    "closemaker2": "",
+    "closertaker2": "",
+    "cm2_change": -0.0003,
+    "fragment": 2000,
+    "fragment_min": 10,
+    "open_add": 0,
+    "close_add": 0,
+    "select_u": 1,
+    "select_ratio": 0.1,
+    "maxloss": 0.9999,
+    "open_thresh": 30,
+    "close_thresh": 30,
+    "future_date": "230630"
+}

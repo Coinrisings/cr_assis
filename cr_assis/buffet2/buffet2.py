@@ -83,7 +83,7 @@ class Get_Parameter():
                     repo.delete_file(content_file.path,
                                     message=f"buffet removes {content_file.name} at {datetime.datetime.utcnow()}",
                                     sha=content_file.sha)
-                    print(f"buffet removes {content_file.name} at {datetime.datetime.utcnow()}")
+                    self.logger.info(f"buffet removes {content_file.name} at {datetime.datetime.utcnow()}")
         else:
             pass
     
@@ -118,8 +118,7 @@ class Get_Parameter():
             data = towrite.getvalue()
             name = f"excel/{folder}/buffet2.0_parameter_{upload_time}.xlsx"
             repo.create_file(name, f"uploaded by buffet at {upload_time}", data)  # 显示上传字段
-            print(f"{name} uploaded")
-            print(datetime.datetime.utcnow())
+            self.logger.info(f"{name} uploaded at {datetime.datetime.utcnow()}")
         return True
 
     # 计算价差

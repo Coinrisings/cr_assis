@@ -13,9 +13,9 @@ class AccountOkex(AccountBase):
         self.deploy_id = deploy_id
         self.balance_id = self.deploy_id.replace("@", "-") + "@sum"
         self.exchange_position = "okexv5"
-        self.exchange_combo = "okx"
+        self.exchange_combo = "okex"
         self.exchange_contract = "okex"
-        self.folder = "dt"
+        self.folder = "pt"
         self.ccy = "BTC"
         self.principal_currency = "BTC"
         self.parameter: pd.DataFrame
@@ -276,7 +276,7 @@ class AccountOkex(AccountBase):
         slave = self.transfer_pair(slave_pair.replace(coin.lower(), ""))
         return f"{self.exchange_combo}{master}-{self.exchange_combo}{slave}"
     
-    def get_account_position(self, timestamp = "5m", the_time = "now()") -> pd.DataFrame:
+    def get_account_position(self, timestamp = "3h", the_time = "now()") -> pd.DataFrame:
         self.get_equity()
         data = self.get_now_position(timestamp=timestamp, the_time=the_time)
         position = pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%", "master_pair", "slave_pair", "master_secret", "slave_secret", "combo"])

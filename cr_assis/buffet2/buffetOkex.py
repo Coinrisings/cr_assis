@@ -1,4 +1,3 @@
-from research.utils.ObjectDataType import AccountData
 from cr_assis.buffet2.buffet2 import Get_Parameter as Buffet
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.account.initAccounts import InitAccounts
@@ -115,7 +114,7 @@ class BuffetOkex(Buffet):
         account.position = now_pos.copy()
         return now_pos
     
-    def init_accounts(self) -> dict[str, AccountData]:
+    def init_accounts(self) -> dict[str, AccountOkex]:
         """初始化所有orch打开的账户 删除获取不到position、adjEq和mr的账户
         """
         init = InitAccounts(ignore_test=False)

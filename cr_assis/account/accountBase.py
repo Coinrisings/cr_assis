@@ -324,9 +324,13 @@ class AccountBase(object):
     def get_equity(self):
         dataname = "balance_v2"
         a = f'''
-        select usdt,balance_id,time from {dataname} where time > now() - 10m and balance_id = '{self.balance_id}'
+        select usdt,balance_id,time from {dataname} where time > now() - 10m and username = '{self.username}' and client = '{self.client}'
         order by time desc
         '''
+        # a = f'''
+        # select usdt,balance_id,time from {dataname} where time > now() - 10m and balance_id = '{self.balance_id}'
+        # order by time desc
+        # '''
         data = self.database._send_influx_query(sql = a, database = "account_data", is_dataFrame= True)
         self.adjEq = data.usdt.values[0] if "usdt" in data.columns else np.nan
     

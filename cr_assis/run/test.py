@@ -1,20 +1,16 @@
 import datetime, requests, datetime, json, hashlib, hmac, base64
 import pandas as pd
 import numpy as np
-from cr_assis.pnl.dtfPnl import DtfPnl
-from cr_assis.account.accountBase import AccountBase
-from cr_assis.connect.updateEmail import UpdateEmail
 from cr_assis.account.accountOkex import AccountOkex
-from cr_assis.buffet2.buffetOkex import BuffetOkex
-from cr_assis.connect.updateGateWallet import UpdateGateWallet
 
-u = UpdateGateWallet()
-u.file_path = "/Users/chelseyshao/data/mm"
-u.handle_ret()
+with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", "r") as f:
+    data = json.load(f)
+print(data.keys())
 
-bft = BuffetOkex()
-bft.json_path = "/Users/chelseyshao/Downloads/config"
-bft.run_buffet(upload = False)
+account = AccountOkex(deploy_id="test_otest5@pt_okex_btc")
+ret = account.get_account_position()
+ret = account.get_now_parameter()
+print(ret.loc[0, "_comments"]["timestamp"])
 
 ts = round(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = 0)) * 1000, 0)
 url = "https://www.okx.com/v3/users/fee/getVolumeLevelInfo?t={ts}"
