@@ -15,6 +15,7 @@ class BuffetOkexNew(object):
         self.json_path = f"{os.environ['HOME']}/parameters/buffet2_config/pt"
         self.save_path = f"{os.environ['HOME']}/data/buffet2.0"
         self.accounts : dict[str, AccountOkex]
+        self.is_long = {"long": 1, "short": 0}
         self.now_position: dict[str, pd.DataFrame]
         self.token_path = f"{os.environ['HOME']}/.git-credentials"
         self.parameter: dict[str, dict[str, pd.DataFrame]] = {}
@@ -125,34 +126,70 @@ class BuffetOkexNew(object):
         
     def check_single_mv(self, coin: str, values: list) -> bool:
         is_error = True
-        if len(values) < 2:
-            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}长度小于2, 无法进行单币种超限减仓")
+        if len(values) != 2:
+            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}长度不等于2, 无法进行单币种超限减仓和加仓")
         elif values[1] < 0:
-            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}第二个数字小于0, 无法进行单币种超限减仓")
+            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}第二个数字小于0, 无法进行单币种超限减仓和加仓")
+        elif abs(values[1]) < abs(values[0]):
+            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}第二个数字绝对值小于第一个, 无法进行单币种超限减仓和加仓")
         else:
             is_error = False
         return is_error
 
+    def execute_reduce(self, coin: str, to_mv: float) -> None:
+        if coin not in self.execute_account.parameter.index or to_mv < 0:
+            self.logger.info(f"execute_reduce失败, {coin} 不在{self.execute_account.parameter_name}持仓中或者{to_mv}小于0")
+            return
+        if to_mv > 0:
+            self.execute_account.parameter.loc[coin, "position"] = self.now_position[self.execute_account.parameter_name].loc[coin, "position"] * to_mv / self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"]
+            self.execute_account.parameter.loc[coin, "portfolio"] = -2
+        else:
+            self.execute_account.parameter.loc[coin, "position"] = self.now_position[self.execute_account.parameter_name].loc[coin, "position"]
+            self.execute_account.parameter.loc[coin, "portfolio"] = -1
+        self.now_position[self.execute_account.parameter_name].loc[coin, "position"] *= to_mv / self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"]
+        self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"] = to_mv
+    
     def reduce_single_mv(self):
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
-        for name, reduce in self.config[self.execute_account.parameter_name]["single_mv"]:
+        for name, reduce in config["single_mv"]:
             combo = config["combo"][name] if name in config["combo"].keys() else name
-            position = now_position[now_position["combo"] == combo].copy()
             for coin, values in reduce.items():
                 if self.check_single_mv(coin, values):
                     continue
                 if coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] > values[1]:
-                    now_position.loc[coin, "position"] *= now_position.loc[coin, "MV%"] / values[1]
-                    now_position.loc[coin, "MV%"] = values[1]
-                    self.execute_account.parameter.loc[coin, "position"] = now_position.loc[coin, "position"]
-                    self.execute_account.parameter.loc[coin, "portfolio"] = -2
+                    self.execute_reduce(coin, values[1])
                 
     def reduce_total_mv(self):
-        pass
+        now_position = self.now_position[self.execute_account.parameter_name]
+        config = self.config[self.execute_account.parameter_name]["total_mv"]
+        plus = now_position["MV%"].sum() - config[self.execute_account.parameter_name][2]
+        if plus > 0:
+            remove_mv = now_position["MV%"].sum() - config[self.execute_account.parameter_name][1]
+            for coin in now_position.index:
+                to_mv = remove_mv / now_position["MV%"].sum()
+                self.execute_reduce(coin = coin, to_mv = to_mv)
+
+    def get_add(self) -> dict[str, dict[str, float]]:
+        real_add = {}
+        now_position = self.now_position[self.execute_account.parameter_name]
+        config = self.config[self.execute_account.parameter_name]
+        for name, add in config["single_mv"]:
+            combo = config["combo"][name] if name in config["combo"].keys() else name
+            for coin, values in add.items():
+                if self.check_single_mv(coin, values):
+                    continue
+                if coin not in self.execute_account.parameter.index:
+                    real_add.update({coin: values[0]})
+                elif now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] < abs(values[0]) and self.is_long[now_position.loc[coin, "side"]] * values[0] > 0:
+                    real_add.update({coin: values[0]})
+        return real_add
     
     def add_mv(self):
-        pass
+        now_position = self.now_position[self.execute_account.parameter_name]
+        config = self.config[self.execute_account.parameter_name]
+        ava = now_position["MV%"].sum() - config["total_mv"][self.execute_account.parameter_name][0]
+        
     
     def get_thresh(self):
         pass
@@ -160,7 +197,20 @@ class BuffetOkexNew(object):
     def save_parameter(self): 
         pass
     
-    def get_parameter(self, is_save = True) -> None:
+    def check_total_mv(self) -> bool:
+        is_error = True
+        config = self.config[self.execute_account.parameter_name]["total_mv"]
+        if len(config) != 3:
+            self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, 长度不等于3")
+        elif config[0] < 0 or config[1] < 0 or config[2] < 0:
+            self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, {config}中有小于0的数字")
+        elif config[0] < config[1] or config[1] < config[2]:
+            self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, {config}中第一个数字小于第二个或者第二个数字小于第三个")
+        else:
+            is_error = False
+        return is_error
+    
+    def get_parameter(self) -> None:
         """获得config里面写的并且orch打开的okex账户的parameter
         Args:
             is_save (bool, optional): save parameter. Defaults to True.
@@ -169,8 +219,10 @@ class BuffetOkexNew(object):
             self.execute_account = account
             self.init_parameter()
             self.reduce_single_mv()
-            self.reduce_total_mv()
-            self.add_mv()
+            if self.check_total_mv:
+                self.logger.warning(f"{name}config中total_mv有误, 不进行总仓位减仓或加仓")
+            else:
+                self.add_mv() if self.now_position[account.parameter_name]["MV%"].sum() < self.config[account.parameter_name]["total_mv"][0] else self.reduce_total_mv()
             self.get_thresh()
             self.parameter[name] = account.parameter
     

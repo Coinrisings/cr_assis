@@ -7,11 +7,7 @@
             ]
         },
         "add": {
-            "etc": 0,
-            "xrp": 1,
-            "eth": 0,
-            "btc": 0,
-            "ada": 1
+            "xrp": 1
         },
         "reduce": {
             "etc": 0
@@ -33,16 +29,16 @@
         },
         "coin_amount_uplimit": 7,
         "open": [
-            2
-        ],
-        "closemaker": [
             0.999
         ],
-        "closemaker2": [
-            1.002
+        "closemaker": [
+            2
         ],
-        "closetaker": [],
-        "closetaker2": [],
+        "closemaker2": [
+            2
+        ],
+        "closetaker": [0.997],
+        "closetaker2": [2],
         "close_thresh": 30,
         "open_thresh": 30,
         "future_date": [

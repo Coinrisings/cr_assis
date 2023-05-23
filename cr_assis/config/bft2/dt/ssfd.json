@@ -1,5 +1,5 @@
 {
-    "okex_spot-okex_usd_swap": {
+    "okex_usd_swap-okex_spot": {
         "accounts": {
             "test_otest5": [
                 15,
@@ -37,8 +37,7 @@
             "230630"
         ],
         "is_long": {
-            "btc": 1,
-            "aidoge": 1
+            "fil": 0
         },
         "cm2_chg": 0.0003,
         "open_add": 0,

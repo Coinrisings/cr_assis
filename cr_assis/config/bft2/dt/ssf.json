@@ -2,7 +2,7 @@
     "okex_spot-okex_usdt_swap": {
         "accounts": {
             "test_otest5": [
-                30,
+                50,
                 10
             ]
         },
@@ -10,7 +10,9 @@
             "btc": 1,
             "aidoge": 1
         },
-        "reduce": {},
+        "reduce": {
+            "btc": 0
+        },
         "funding_stop_open": 0.005,
         "funding_stop_close": 0.005,
         "chase_tick": 1,
@@ -25,7 +27,7 @@
         },
         "coin_amount_uplimit": 7,
         "open": [
-            0.999
+            0.99
         ],
         "closemaker": [
             1.005
@@ -47,6 +49,6 @@
         "close_add": 0,
         "min_select_u": 1,
         "min_select_ratio": 0.001,
-        "maxloss": 0.999
+        "maxloss": 0.99
     }
 }

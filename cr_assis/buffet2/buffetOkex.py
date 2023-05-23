@@ -300,7 +300,7 @@ class BuffetOkex(Buffet):
             spread = self.get_spreads_data(combo, coin, suffix=config["future_date"][0])
             if config["closemaker2"] == []:
                 col = "ask0_spread" if is_long else "bid0_spread"
-                closemaker2 = self.calc_up_thresh(spread[col], threshold=config['open_thresh'], up_down=0) + config['close_add'] - config["cm2_chg"]
+                closemaker2 = max(self.calc_up_thresh(spread[col], threshold=config['open_thresh'], up_down=0) + config['close_add'] - config["cm2_chg"], config["maxloss"])
             else:
                 closemaker2 = config['closemaker2'][0]
         return closemaker2
@@ -315,10 +315,10 @@ class BuffetOkex(Buffet):
             level = parameter.loc[coin, "portfolio"]
             parameter.loc[coin, "open"] = max(self.get_open1(account,coin,is_long=parameter.loc[coin, "is_long"]), maxloss) if level == 1 else 2
             parameter.loc[coin, "closemaker"] = max(self.get_closemaker(account,coin,is_long=parameter.loc[coin, "is_long"]), maxloss) if level == -1 else config["closemaker"][0]
-            parameter.loc[coin, "closemaker2"] = max(self.get_closemaker2(account,coin,is_long=parameter.loc[coin, "is_long"]), maxloss) if level == -2 else parameter.loc[coin, "closemaker"] - config["cm2_chg"]
-            parameter.loc[coin, "open2"] = parameter.loc[coin, "open"] + 1
-            parameter.loc[coin, "closetaker"] = parameter.loc[coin, "closemaker"] + 0.001 if config["closetaker"] == [] else config['closetaker'][0]
-            parameter.loc[coin, "closetaker2"] = parameter.loc[coin, "closemaker2"] + 0.001 if config["closetaker2"] == [] else config['closetaker2'][0]
+            parameter.loc[coin, "closemaker2"] = self.get_closemaker2(account,coin,is_long=parameter.loc[coin, "is_long"]) if level == -2 or config["closemaker2"] != [] else max(parameter.loc[coin, "closemaker"] - config["cm2_chg"], maxloss)
+            parameter.loc[coin, "open2"] = max(parameter.loc[coin, "open"] + 1, maxloss)
+            parameter.loc[coin, "closetaker"] = max(parameter.loc[coin, "closemaker"] + 0.001, maxloss) if config["closetaker"] == [] else config['closetaker'][0]
+            parameter.loc[coin, "closetaker2"] = max(parameter.loc[coin, "closemaker2"] + 0.001, maxloss) if config["closetaker2"] == [] else config['closetaker2'][0]
             parameter.loc[coin, "position_multiple"] = config["position_multiple"]
         return parameter
     
@@ -350,7 +350,7 @@ class BuffetOkex(Buffet):
         self.get_fragment(account)
         account.parameter["account"] = account.parameter_name
         account.parameter['coin'] = account.parameter["master_pair"]
-        account.parameter['timestamp'] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes= 5)
+        account.parameter['timestamp'] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes= 3)
         account.parameter.set_index('account', inplace=True)
         account.parameter.dropna(how='all', axis=1, inplace=True)
         account.parameter.drop("combo", axis = 1, inplace=True) if "combo" in account.parameter.columns else None
