@@ -3,12 +3,7 @@ import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 
-with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", "r") as f:
-    data = json.load(f)
-print(data.keys())
-
 account = AccountOkex(deploy_id="test_otest5@pt_okex_btc")
-ret = account.get_account_position()
 ret = account.get_now_parameter()
 print(ret.loc[0, "_comments"]["timestamp"])
 

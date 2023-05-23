@@ -111,7 +111,7 @@ class Get_Parameter():
             towrite = io.BytesIO()
             writer = pd.ExcelWriter(towrite, engine='openpyxl')
             for sheet_name, parameter in parameters.items():
-                parameter["timestamp"] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes=5)
+                parameter["timestamp"] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes=3)
                 parameter.to_excel(excel_writer=writer, sheet_name=sheet_name)
             writer.close()
             upload_time = datetime.datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S")

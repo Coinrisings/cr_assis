@@ -15,6 +15,7 @@ class BuffetOkexNew(object):
         self.json_path = f"{os.environ['HOME']}/parameters/buffet2_config/pt"
         self.save_path = f"{os.environ['HOME']}/data/buffet2.0"
         self.accounts : dict[str, AccountOkex]
+        self.now_position: dict[str, pd.DataFrame]
         self.token_path = f"{os.environ['HOME']}/.git-credentials"
         self.parameter: dict[str, dict[str, pd.DataFrame]] = {}
         self.coin_price: dict[str, float] = {}
@@ -105,10 +106,12 @@ class BuffetOkexNew(object):
             self.accounts.pop(name, None) if name not in self.config.keys() or self.check_account(account = self.accounts[name]) else None
         return self.accounts
     
-    def init_parameter(self, account: AccountOkex) -> pd.DataFrame:
+    def init_parameter(self) -> pd.DataFrame:
         """初始化parameter
         """
-        now_pos = account.position[(account.position["MV"] > self.config[account.parameter_name]["select_u"]) & (account.position["MV%"] > self.config[account.parameter_name]["select_ratio"])].copy()
+        account = self.execute_account
+        now_pos = account.position[(account.position["MV"] > self.config[account.parameter_name]["select_u"]) & (account.position["MV%"] > self.config[account.parameter_name]["select_ratio"])].copy().set_index("coin")
+        self.now_position[account.parameter_name] = now_pos.copy()
         parameter = pd.DataFrame(columns=self.parameter_cols, index = now_pos.index)
         if len(now_pos) > 0:
             self.logger.info(f"{account.parameter_name}:非新账户, 初始化目前已经持有币的parameter参数")
@@ -120,9 +123,31 @@ class BuffetOkexNew(object):
             self.logger.info(f"{account.parameter_name}:新账户, 初始化parameter, 参数默认为空")
         account.parameter = parameter
         
+    def check_single_mv(self, coin: str, values: list) -> bool:
+        is_error = True
+        if len(values) < 2:
+            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}长度小于2, 无法进行单币种超限减仓")
+        elif values[1] < 0:
+            self.logger.info(f"{self.execute_account.parameter_name}的single_mv填写错误, {coin}的value{values}第二个数字小于0, 无法进行单币种超限减仓")
+        else:
+            is_error = False
+        return is_error
+
     def reduce_single_mv(self):
-        pass
-    
+        now_position = self.now_position[self.execute_account.parameter_name]
+        config = self.config[self.execute_account.parameter_name]
+        for name, reduce in self.config[self.execute_account.parameter_name]["single_mv"]:
+            combo = config["combo"][name] if name in config["combo"].keys() else name
+            position = now_position[now_position["combo"] == combo].copy()
+            for coin, values in reduce.items():
+                if self.check_single_mv(coin, values):
+                    continue
+                if coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] > values[1]:
+                    now_position.loc[coin, "position"] *= now_position.loc[coin, "MV%"] / values[1]
+                    now_position.loc[coin, "MV%"] = values[1]
+                    self.execute_account.parameter.loc[coin, "position"] = now_position.loc[coin, "position"]
+                    self.execute_account.parameter.loc[coin, "portfolio"] = -2
+                
     def reduce_total_mv(self):
         pass
     

@@ -1,13 +1,14 @@
 {
-    "okex_usd_swap-okex_usdc_swap": {
+    "okex_spot-okex_usdt_swap": {
         "accounts": {
             "test_otest5": [
-                50,
+                30,
                 10
             ]
         },
         "add": {
-            "eth": 1
+            "btc": 1,
+            "aidoge": 1
         },
         "reduce": {},
         "funding_stop_open": 0.005,
@@ -19,7 +20,8 @@
         "max_mv_multiple": 1.1,
         "reduce_mv_multiple": 1.01,
         "signal_uplimit_mv": {
-            "eth": 50
+            "btc": 15,
+            "aidoge": 15
         },
         "coin_amount_uplimit": 7,
         "open": [
@@ -37,7 +39,8 @@
             "230630"
         ],
         "is_long": {
-            "eth": 0
+            "btc": 1,
+            "aidoge": 1
         },
         "cm2_chg": 0.0003,
         "open_add": 0,

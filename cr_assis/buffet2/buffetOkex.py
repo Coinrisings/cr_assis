@@ -16,11 +16,14 @@ class BuffetOkex(Buffet):
         self.usd_contractsize: dict[str, float] = {}
         self.spreads: dict[str, dict[str, pd.DataFrame]] = {}
         self.folder = "dt"
+        self.exchange_position = "okexv5"
+        self.load_default_config()
         self.contractsize_path: str = os.environ['HOME'] + '/parameters/config_buffet/dt/contractsize.csv'
         self.parameter_cols = ['account', 'coin', 'portfolio', 'open', 'closemaker', 'position', 'closetaker', 'open2', 'closemaker2', 'position2', 'closetaker2', 'fragment',
                             'fragment_min', 'funding_stop_open', 'funding_stop_close', 'position_multiple', 'timestamp', 'is_long', 'chase_tick', 'master_pair', 'slave_pair', "master_secret", "slave_secret", "combo"]
     
     def load_default_config(self):
+        self.account_config = {} if not hasattr(self, "account_config") else self.account_config
         self.account_config["default"] = {
             "funding_stop_open":0.0001,
             "funding_stop_close":0.005,
@@ -119,6 +122,7 @@ class BuffetOkex(Buffet):
         """
         init = InitAccounts(ignore_test=False)
         self.accounts = init.init_accounts_okex()
+        self.load_default_config()
         names = set(self.accounts.keys())
         for name in names:
             self.accounts.pop(name, None) if self.check_account(account = self.accounts[name]) else None
@@ -138,7 +142,7 @@ class BuffetOkex(Buffet):
     def get_all_names(self) -> set[str]:
         names = set()
         for combo in self.account_config.keys():
-            names = names | set(self.account_config[combo]["accounts"])
+            names = names | set(self.account_config[combo]["accounts"]) if combo != "default" else names
         names = names & set(self.accounts.keys())
         return names
     
@@ -392,14 +396,18 @@ class BuffetOkex(Buffet):
             upload (bool, optional): upload excel to github or not. Defaults to False.
         """
         self.print_log()
-        try:
-            self.initilize()
-            self.get_parameter(is_save = is_save)
-        except Exception as e:
-            self.log_bug(e)
+        self.initilize()
+        self.get_parameter(is_save = is_save)
         if upload:
-            try:
-                self.upload_parameter()
-            except Exception as e:
-                self.log_bug(e)
+            self.upload_parameter()
+        # try:
+        #     self.initilize()
+        #     self.get_parameter(is_save = is_save)
+        # except Exception as e:
+        #     self.log_bug(e)
+        # if upload:
+        #     try:
+        #         self.upload_parameter()
+        #     except Exception as e:
+        #         self.log_bug(e)
         self.logger.handlers.clear()

@@ -276,7 +276,7 @@ class AccountOkex(AccountBase):
         slave = self.transfer_pair(slave_pair.replace(coin.lower(), ""))
         return f"{self.exchange_combo}{master}-{self.exchange_combo}{slave}"
     
-    def get_account_position(self, timestamp = "3h", the_time = "now()") -> pd.DataFrame:
+    def get_account_position(self, timestamp = "10m", the_time = "now()") -> pd.DataFrame:
         self.get_equity()
         data = self.get_now_position(timestamp=timestamp, the_time=the_time)
         position = pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%", "master_pair", "slave_pair", "master_secret", "slave_secret", "combo"])
