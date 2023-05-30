@@ -1,21 +1,15 @@
-from cr_assis.account.accountBase import AccountBase
+from cr_assis.account.accountOkex import AccountOkex
 import pandas as pd
 import numpy as np
 import datetime, os, json
 from github import Github
 
-anta001 = AccountBase(deploy_id='anta_anta001@dt_okex_cswap_okex_uswap_btc', is_usdc= True)
-ljw001 = AccountBase(deploy_id = "ljw_001@dt_okex_cswap_okex_uswap_btc")
-cr001 = AccountBase(deploy_id = "cr_cr001@dt_okex_cswap_okex_uswap_btc")
-cr003 = AccountBase(deploy_id = "cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
-ht001 = AccountBase(deploy_id = "ht_ht001@ssf_okexv5_spot_okexv5_uswap_btc")
-otest5 = AccountBase(deploy_id = "test_otest5@dt_okex_cswap_okex_uswap_btc", is_usdc= True)
-otest4 = AccountBase(deploy_id= "test_otest4@dt_okex_cswap_okex_uswap_btc")
+cr003 = AccountOkex(deploy_id = "cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
 file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
 git_file = "parameter_ssh"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [ht001]
+accounts = [cr003]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -24,13 +18,13 @@ local_file = f"parameter_{datetime.datetime.now()}"
 suffix = "230331"
 num = 0
 hours = 2
-add = -0.0005
+add = 0
 fragment = 200
 fragment_min = 10
 loss_open = 0.001
 profit_close = 0.005
 open1 = 1.0007
-closemaker = 0.99
+closemaker = 1.005
 with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
 for account in accounts:
@@ -39,8 +33,10 @@ for account in accounts:
     holding_position = account.position if hasattr(account, "position") else pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%"])
     holding_position.set_index("coin", inplace= True)
     folder = account.folder
-    master_pair = account.contract_master.replace("future", suffix)
-    slave_pair = account.contract_slave.replace("future", suffix)
+    master_pair = account.position["master_pair"].values[0]
+    slave_pair = account.position["slave_pair"].values[0]
+    master_pair = master_pair.replace(master_pair.split("-")[0], "")
+    salve_pair = slave_pair.replace(master_pair.split("-")[0], "")
     for coin in set(holding_position.index.values) | set(portfolio.keys()):
         if coin not in holding_position.index.values and account.parameter_name not in portfolio[coin]["accounts"]:
             continue
@@ -52,7 +48,7 @@ for account in accounts:
             if coin in holding_position["position"].values and side != holding_position.loc[coin, "side"]:
                 pass
             else:
-                spreads = account.get_spreads(coin = coin, hours = hours)
+                spreads = account.get_spreads(coin = coin, combo = "okex_spot-okex_usdt_swap", start = "now() - 2h")
                 open1 = np.mean(spreads["bid0_spread"]) + add if portfolio[coin]["side"] == "long" else np.mean(spreads["ask0_spread"]) + add
         elif level == -1 and account.parameter_name in portfolio[coin]["accounts"] and coin in holding_position.index.values and side == portfolio[coin]["side"]:
             spreads = account.get_spreads(coin = coin, hours = hours)
@@ -64,7 +60,7 @@ for account in accounts:
         real_side = holding_position.loc[coin, "side"] if coin in holding_position.index.values else portfolio[coin]["side"]
         is_long = 1 if real_side == "long" else 0
         if master_pair.split("-")[1] != "usd":
-            price = max(account.get_coin_price(coin), 0.000000000433)
+            price = account.get_coin_price(coin)
         else:
             if coin == "btc":
                 price = 100

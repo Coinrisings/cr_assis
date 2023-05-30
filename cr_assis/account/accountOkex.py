@@ -33,7 +33,7 @@ class AccountOkex(AccountBase):
         self.cashBal : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
         self.exposure_number = 1
-        self.is_master = {"usd-future":0, "usd-swap":1, "usdc-swap":2, "usdt":3, "usdt-future":4, "usdt-swap":5, "": np.inf}
+        self.is_master = {"usd-future":0, "usd-swap":1, "usdc-swap":2, "usdt":3,"usdt-future":4, "usdt-swap":5,  "": np.inf}
         self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
                         "usdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
         self.exchange_master, self.exchange_slave = "okex", "okex"
@@ -61,7 +61,7 @@ class AccountOkex(AccountBase):
         master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
         return coin+master_suffix.replace("_", "-"), coin+slave_suffix.replace("_", "-")
     
-    def get_secrect_name(self, coin: str, combo: str) -> tuple[str, str]:
+    def get_secret_name(self, coin: str, combo: str) -> tuple[str, str]:
         master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
         return self.parameter_name+self.secret_id[master_suffix[1:].replace("_", "-")], self.parameter_name+self.secret_id[slave_suffix[1:].replace("_", "-")]
         
@@ -141,19 +141,26 @@ class AccountOkex(AccountBase):
         data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
         return data
     
+    def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:
+        data = raw_data[(raw_data["ex_field"] == "futures") & (raw_data["coin"] == coin)].copy()
+        data["col"] = data["pair"].apply(lambda x: x.split("-")[1] if type(x) == str else None)
+        data = data[data["col"] == col.split("-")[0]].copy()
+        return data
+    
     def gather_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> float:
         """Gather different future contracts positions about this coin
         """
-        data = raw_data[(raw_data["ex_field"] == "futures") & (raw_data["settlement"] == col.split("-")[0]) & (raw_data["coin"] == coin)].copy()
+        data = self.find_future_position(coin, raw_data, col)
         data.drop_duplicates(subset = ["pair"], keep= "last", inplace= True)
         if col.split("-")[0] != "usd":
             amount = data["long"].sum() - data["short"].sum()
         else:
             contractsize = self.contractsize_cswap[coin] if coin in self.contractsize_cswap.keys() else self.get_contractsize_cswap(coin)
             amount = ((data["long"] - data["short"]) * contractsize / (data["long_open_price"] + data["short_open_price"])).sum()
-        for coin in data.index:
-            pair = data.loc[coin, "pair"].replace(coin.lower(), "")[1:]
-            self.usd_position.loc[coin, pair] = data.loc[coin, "long"] - data.loc[coin, "short"]
+        for i in data.index:
+            coin = data.loc[i, "coin"]
+            # pair = data.loc[i, "pair"].replace(coin.lower(), "")[1:]
+            self.usd_position.loc[coin, col] = data.loc[i, "long"] - data.loc[i, "short"]
         return amount
     
     def gather_coin_position(self, coin: str, all_data: pd.DataFrame) -> pd.DataFrame:
@@ -175,7 +182,7 @@ class AccountOkex(AccountBase):
                     open_price = (data["long_open_price"] + data["short_open_price"]).values[-1] if len(data) > 0 else np.nan
                     result.loc[coin, col] = result.loc[coin, col] * contractsize / open_price if open_price != 0 else np.nan
             elif "future" == col.split("-")[-1]:
-                result.loc[coin, col] = self.gather_future_position(coin = coin, raw_data = data, col = col)
+                result.loc[coin, col] = self.gather_future_position(coin = coin, raw_data = all_data, col = col)
             else:
                 pass
         return result
@@ -211,14 +218,15 @@ class AccountOkex(AccountBase):
             contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
             array = data.loc[coin].sort_values()
             array.drop(["diff", "diff_U"], inplace = True)
+            array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
             tell1 = np.isnan(data.loc[coin, "diff"])
-            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6
-            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2
+            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1]] else False
+            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1]] else False
             data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data
     
-    def get_now_position(self, timestamp="5m", the_time="now()") -> pd.DataFrame:
+    def get_now_position(self, timestamp="10m", the_time="now()") -> pd.DataFrame:
         the_time = f"'{the_time}'" if "now()" not in the_time and "'" not in the_time else the_time
         self.origin_position = self.get_influx_position(timestamp = timestamp, the_time=the_time)
         self.now_position: pd.DataFrame = self.gather_position()
@@ -234,7 +242,7 @@ class AccountOkex(AccountBase):
         for coin in self.now_position.index:
             for contract in self.open_price.columns:
                 if self.now_position.loc[coin, contract] != 0:
-                    df = self.origin_position[self.origin_position["pair"] == f"{coin.lower()}-{contract}"].copy()
+                    df = self.origin_position[self.origin_position["pair"] == f"{coin.lower()}-{contract}"].copy() if "future" not in contract else self.find_future_position(coin, self.origin_position, contract)
                     self.open_price.loc[coin, contract] = (df["long_open_price"] + df["short_open_price"]).values[-1] if len(df) > 0 else np.nan
                 else:
                     self.open_price.loc[coin, contract] = 0
@@ -258,12 +266,18 @@ class AccountOkex(AccountBase):
             
     def tell_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
         data = data.sort_values()
-        tell1 = abs(data[0] + data[-1]) <= contractsize * self.exposure_number and data[0] * data[-1] < 0
+        tell1 = (abs(data[0] + data[-1]) <= contractsize * self.exposure_number if data.name != "BTC" or "usdt" not in [data.index[0], data.index[-1]] else True) and data[0] * data[-1] < 0
         tell2 = abs(data[1] + data[-1]) > contractsize * self.exposure_number or data[1] * data[-1] > 0
         tell3 = abs(data[0] + data[-2]) > contractsize * self.exposure_number or data[0] * data[-2] > 0
         result = [data.index[0], data.index[-1]] if tell1 and tell2 and tell3 else ["", ""]
-        ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
-                "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+        if data.name != "BTC" or "usdt" not in result:
+            ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
+                    "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+        else:
+            ret = {
+                "master" : result[0] if result[0] != "usdt" else result[1],
+                "slave": result[0] if result[0] == "usdt" else result[1]
+            }
         return ret
     
     def transfer_pair(self, pair: str) -> str:
@@ -301,5 +315,9 @@ class AccountOkex(AccountBase):
         position.drop(position[(position["master_secret"] == self.parameter_name) | (position["master_secret"] == self.parameter_name)].index, inplace= True)
         position.sort_values(by = "MV%", ascending= False, inplace= True)
         position.index = range(len(position))
-        self.position = position.copy()
+        if len(data) > 0:
+            self.position = position.copy()
+        else:
+            if not hasattr(self, "origin_position") or len(self.origin_position) == 0:
+                self.position = None
         return position

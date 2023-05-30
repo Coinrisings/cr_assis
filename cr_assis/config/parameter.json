@@ -1,16 +1,4 @@
 {
-    "xrp": {
-        "level": 1,
-        "side": "long",
-        "uplimit":0.001,
-        "accounts": ["cr_cr001", "ljw_001"]
-    },
-    "ada": {
-        "level": 1,
-        "side": "long",
-        "uplimit":0.001,
-        "accounts": ["cr_cr001", "ljw_001"]
-    },
     "fitfi": {
         "level": 1,
         "side": "long",
@@ -24,21 +12,9 @@
         "accounts": ["cr_cr003"]
     },
     "slp": {
-        "level": 1,
+        "level": 0,
         "side": "long",
         "uplimit":0.5,
         "accounts": ["cr_cr003"]
-    },
-    "gft": {
-        "level": 1,
-        "side": "long",
-        "uplimit":1,
-        "accounts": ["cr_cr003"]
-    },
-    "eth": {
-        "level": 1,
-        "side": "short",
-        "uplimit":1,
-        "accounts": ["test_otest4"]
     }
 }

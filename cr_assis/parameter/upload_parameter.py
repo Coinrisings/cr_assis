@@ -18,7 +18,7 @@ def upload_parameter(local_file: str, git_file: str, folder: str):
         repo.create_file(name, f"uploaded by ssh at {datetime.datetime.now()}", data)
         print(f"{name} uploaded")
 
-local_file = "/Users/chelseyshao/Downloads/parameter_dt.xlsx"
+local_file = "/Users/chelseyshao/Downloads/parameter_ssh.xlsx"
 git_file = "parameter_ssh"
 folder = "ssf"
 upload_parameter(local_file, git_file, folder)

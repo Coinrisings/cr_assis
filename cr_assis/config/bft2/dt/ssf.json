@@ -2,37 +2,44 @@
     "okex_spot-okex_usdt_swap": {
         "accounts": {
             "test_otest5": [
-                50,
+                100,
+                10
+            ],
+            "bg_bg003": [
+                100,
                 10
             ]
         },
         "add": {
-            "btc": 1,
+            "fil": 1,
+            "doge": 1,
             "aidoge": 1
         },
         "reduce": {
-            "btc": 0
         },
-        "funding_stop_open": 0.005,
-        "funding_stop_close": 0.005,
+        "funding_stop_open": 0.00035,
+        "funding_stop_close": 0.002,
         "chase_tick": 1,
         "fragment_min_u": 10,
         "fragment_u": 2000,
         "position_multiple": 1,
         "max_mv_multiple": 1.1,
-        "reduce_mv_multiple": 1.01,
+        "reduce_mv_multiple": 1.05,
         "signal_uplimit_mv": {
-            "btc": 15,
-            "aidoge": 15
+            "fil": 40,
+            "doge": 40,
+            "shib": 20,
+            "aidoge": 20
         },
         "coin_amount_uplimit": 7,
         "open": [
-            0.99
         ],
         "closemaker": [
             1.005
         ],
-        "closemaker2": [],
+        "closemaker2": [
+            
+        ],
         "closetaker": [],
         "closetaker2": [],
         "close_thresh": 30,
@@ -41,7 +48,9 @@
             "230630"
         ],
         "is_long": {
-            "btc": 1,
+            "fil": 1,
+            "doge": 1,
+            "shib": 1,
             "aidoge": 1
         },
         "cm2_chg": 0.0003,
@@ -49,6 +58,6 @@
         "close_add": 0,
         "min_select_u": 1,
         "min_select_ratio": 0.001,
-        "maxloss": 0.99
+        "maxloss": 0.999
     }
 }

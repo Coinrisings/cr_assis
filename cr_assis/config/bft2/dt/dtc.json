@@ -1,43 +1,44 @@
 {
     "okex_usd_swap-okex_usdc_swap": {
         "accounts": {
-            "test_otest5": [
-                50,
-                10
-            ]
+            
         },
         "add": {
-            "eth": 0
+            "eth": 0,
+            "btc": 0
         },
-        "reduce": {},
+        "reduce": {
+        },
         "funding_stop_open": 0.005,
-        "funding_stop_close": 0.005,
+        "funding_stop_close": 0.001,
         "chase_tick": 1,
-        "fragment_min_u": 10,
+        "fragment_min_u": 100,
         "fragment_u": 2000,
         "position_multiple": 1,
         "max_mv_multiple": 1.1,
         "reduce_mv_multiple": 1.01,
         "signal_uplimit_mv": {
-            "eth": 50
+            "eth": 25,
+            "btc": 25
         },
         "coin_amount_uplimit": 7,
         "open": [
-            0.999
+            2
         ],
         "closemaker": [
             0.999
         ],
-        "closemaker2": [2],
-        "closetaker": [2],
-        "closetaker2": [2],
+        "closemaker2": [],
+        "closetaker": [],
+        "closetaker2": [],
         "close_thresh": 30,
         "open_thresh": 30,
         "future_date": [
             "230630"
         ],
         "is_long": {
-            "eth": 0
+            "eth": 0,
+            "btc": 1
         },
         "cm2_chg": 0.0003,
         "open_add": 0,

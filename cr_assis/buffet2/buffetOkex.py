@@ -15,7 +15,7 @@ class BuffetOkex(Buffet):
         self.coin_price: dict[str, float] = {}
         self.usd_contractsize: dict[str, float] = {}
         self.spreads: dict[str, dict[str, pd.DataFrame]] = {}
-        self.folder = "dt"
+        self.folder = "pt"
         self.exchange_position = "okexv5"
         self.load_default_config()
         self.contractsize_path: str = os.environ['HOME'] + '/parameters/config_buffet/dt/contractsize.csv'
@@ -82,7 +82,7 @@ class BuffetOkex(Buffet):
             self.logger.warning(f"{account.parameter_name}:获取equity错误!")
             is_nan = True
         # 仓位获取，获取不到跳过
-        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0:
+        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0 or account.position == None:
             self.logger.warning(f"{account.parameter_name}:最近10分钟position数据缺失或者有敞口")
             is_nan = True
         # mr获取，获取不到跳过
@@ -219,7 +219,7 @@ class BuffetOkex(Buffet):
                 else:
                     parameter.loc[coin, ['position', 'portfolio', 'is_long', 'combo']] = [coin_ava_mv * account.adjEq / coin_price / 100, 1, self.account_config[combo]['is_long'][coin], combo]
                     parameter.loc[coin, ["master_pair", "slave_pair"]] = account.get_pair_name(coin, combo)
-                    parameter.loc[coin, ["master_secret", "slave_secret"]] = account.get_secrect_name(coin, combo)
+                    parameter.loc[coin, ["master_secret", "slave_secret"]] = account.get_secret_name(coin, combo)
                     self.logger.info(f"{account.parameter_name}:{coin},新币加仓，新加仓位占剩余仓位比为{coin_ava_mv / res_mv * 100}%,新加position为：{coin_ava_mv * account.adjEq / coin_price / 100}")
         return parameter
     
@@ -289,7 +289,7 @@ class BuffetOkex(Buffet):
             config = self.account_config[combo] if combo in self.account_config.keys() else self.account_config["default"]
             spread = self.get_spreads_data(combo, coin, suffix=config["future_date"][0])
             col = "ask0_spread" if is_long else "bid0_spread"
-            closemaker = self.calc_up_thresh(spread[col], threshold=config['open_thresh'], up_down=0) + config['close_add']
+            closemaker = self.calc_up_thresh(spread[col], threshold=config['close_thresh'], up_down=0) + config['close_add']
         return closemaker
     
     def get_closemaker2(self, account: AccountOkex, coin: str, is_long: bool) -> float:
@@ -300,7 +300,7 @@ class BuffetOkex(Buffet):
             spread = self.get_spreads_data(combo, coin, suffix=config["future_date"][0])
             if config["closemaker2"] == []:
                 col = "ask0_spread" if is_long else "bid0_spread"
-                closemaker2 = max(self.calc_up_thresh(spread[col], threshold=config['open_thresh'], up_down=0) + config['close_add'] - config["cm2_chg"], config["maxloss"])
+                closemaker2 = max(self.calc_up_thresh(spread[col], threshold=config['close_thresh'], up_down=0) + config['close_add'] - config["cm2_chg"], config["maxloss"])
             else:
                 closemaker2 = config['closemaker2'][0]
         return closemaker2
