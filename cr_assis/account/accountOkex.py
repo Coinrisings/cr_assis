@@ -132,7 +132,7 @@ class AccountOkex(AccountBase):
     
     def get_influx_position(self, timestamp: str, the_time: str) -> pd.DataFrame:
         a = f"""
-            select ex_field, long, long_open_price, settlement, short, short_open_price, pair from position 
+            select ex_field, secret_id,long, long_open_price, settlement, short, short_open_price, pair from position 
             where client = '{self.client}' and username = '{self.username}' and 
             time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) 
             and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1

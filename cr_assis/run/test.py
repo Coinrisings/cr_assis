@@ -4,13 +4,13 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 
 
-account = AccountOkex(deploy_id="bg_bg003@pt_okex_btc")
+account = AccountOkex(deploy_id="bg_001@pt_okex_btc")
 ret = account.get_account_position()
 print(ret)
 # ret = account.get_open_price()
 
-# ret = account.get_now_parameter()
-# print(ret.loc[0, "_comments"]["timestamp"])
+ret = account.get_now_parameter()
+print(ret.loc[0, "_comments"]["timestamp"])
 
 ts = round(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = 0)) * 1000, 0)
 url = "https://www.okx.com/v3/users/fee/getVolumeLevelInfo?t={ts}"

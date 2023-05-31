@@ -1,5 +1,5 @@
 {
-    "default_path": "/default/default_okex.json", 
+    "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv": {
         "test_otest5": [100, 110, 120]
     },

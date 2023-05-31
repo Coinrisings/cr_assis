@@ -4,7 +4,8 @@
             
         },
         "add": {
-            "fil": 0
+            "fil": 1,
+            "btc": 1
         },
         "reduce": {},
         "funding_stop_open": 0.005,
@@ -16,7 +17,8 @@
         "max_mv_multiple": 1.1,
         "reduce_mv_multiple": 1.01,
         "signal_uplimit_mv": {
-            "fil": 50
+            "fil": 100,
+            "btc": 100
         },
         "coin_amount_uplimit": 7,
         "open": [
@@ -34,51 +36,8 @@
             "230630"
         ],
         "is_long": {
-            "fil": 0
-        },
-        "cm2_chg": 0.0003,
-        "open_add": 0,
-        "close_add": 0,
-        "min_select_u": 1,
-        "min_select_ratio": 0.001,
-        "maxloss": 0.999
-    },
-    "okex_usd_future-okex_spot": {
-        "accounts": {
-            
-        },
-        "add": {
-            "eos": 0
-        },
-        "reduce": {},
-        "funding_stop_open": -0.5,
-        "funding_stop_close": 0.005,
-        "chase_tick": 1,
-        "fragment_min_u": 10,
-        "fragment_u": 2000,
-        "position_multiple": 1,
-        "max_mv_multiple": 1.1,
-        "reduce_mv_multiple": 1.01,
-        "signal_uplimit_mv": {
-            "eos": 50
-        },
-        "coin_amount_uplimit": 7,
-        "open": [
-            
-        ],
-        "closemaker": [
-            1.005
-        ],
-        "closemaker2": [],
-        "closetaker": [],
-        "closetaker2": [],
-        "close_thresh": 30,
-        "open_thresh": 30,
-        "future_date": [
-            "230630"
-        ],
-        "is_long": {
-            "eos": 0
+            "fil": 0,
+            "btc": 1
         },
         "cm2_chg": 0.0003,
         "open_add": 0,
