@@ -135,10 +135,11 @@ class AccountOkex(AccountBase):
             select ex_field, secret_id,long, long_open_price, settlement, short, short_open_price, pair from position 
             where client = '{self.client}' and username = '{self.username}' and 
             time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) 
-            and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC LIMIT 1
+            and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC
             """
         data = self._send_complex_query(sql = a)
         data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
+        data.drop_duplicates(subset= ["pair"], inplace = True)
         return data
     
     def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:
