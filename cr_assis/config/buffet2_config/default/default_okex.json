@@ -1,7 +1,8 @@
 {
     "combo":{
         "dt": "okex_usd_swap-okex_usdt_swap", 
-        "dtc": "okex_usd_swap-okex_usdc_swap"
+        "dtc": "okex_usd_swap-okex_usdc_swap",
+        "ssf": "okex_spot-okex_usdt_swap"
     },
     "funding_open": 0.0001,
     "funding_close": 0.005,

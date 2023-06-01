@@ -19,7 +19,7 @@ class BuffetOkexNew(object):
         self.is_long = {"long": 1, "short": 0}
         self.exchange_position = "okexv5"
         self.exchange_save = "okex"
-        self.now_position: dict[str, pd.DataFrame]
+        self.now_position: dict[str, pd.DataFrame] = {}
         self.add :dict = {}
         self.token_path = f"{os.environ['HOME']}/.git-credentials"
         self.parameter: dict[str, pd.DataFrame] = {}
@@ -80,10 +80,11 @@ class BuffetOkexNew(object):
     
     def load_config_default(self, config: dict) -> None:
         try:
-            path = os.path.dirname(self.json_path)+config["default_path"]
+            path = os.environ["HOME"]+config["default_path"]
             with open(path, "r") as f:
                 data = json.load(f)
-            ret = self.connect_account_config(config.update(data)) if set(data.keys()) == self.default_keys else {}
+            config.update(data)
+            ret = self.connect_account_config(config) if set(data.keys()) == self.default_keys else {}
         except:
             ret = {}
             self.logger.warning(f"{config}的default加载错误")
@@ -198,7 +199,7 @@ class BuffetOkexNew(object):
     def reduce_single_mv(self):
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
-        for name, reduce in config["single_mv"]:
+        for name, reduce in config["single_mv"].items():
             combo = config["combo"][name] if name in config["combo"].keys() else name
             for coin, values in reduce.items():
                 if self.check_single_mv(coin, values):
@@ -220,7 +221,7 @@ class BuffetOkexNew(object):
         real_add = {}
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
-        for name, add in config["single_mv"]:
+        for name, add in config["single_mv"].items():
             combo = config["combo"][name] if name in config["combo"].keys() else name
             for coin, values in add.items():
                 if self.check_single_mv(coin, values) or coin in real_add.keys():
@@ -331,10 +332,7 @@ class BuffetOkexNew(object):
             parameter.loc[coin, "open2"] = max(parameter.loc[coin, "open"] + 1, maxloss)
             parameter.loc[coin, "closetaker"] = max(parameter.loc[coin, "closemaker"] + 0.001, maxloss) if self.get_real_thresh(combo, thresh="closetaker") == "" else float(self.get_real_thresh(combo, thresh="closetaker") == "")
             parameter.loc[coin, "closetaker2"] = max(parameter.loc[coin, "closemaker2"] + 0.001, maxloss) if self.get_real_thresh(combo, thresh="closetaker2") == "" else float(self.get_real_thresh(combo, thresh="closetaker2") == "")
-        
-        self.get_position2()
-        self.get_fragment()
-        self.handle_future_suffix()
+        self.arrange_parameter()
         return parameter
     
     def get_position2(self) -> pd.DataFrame:
@@ -359,11 +357,19 @@ class BuffetOkexNew(object):
             account.parameter.loc[coin, "funding_stop_open"] =  float(self.get_real_thresh(combo, thresh="funding_open"))
             account.parameter.loc[coin, "funding_stop_close"] = float(self.get_real_thresh(combo, thresh="funding_close"))
             account.parameter.loc[coin, "chase_tick"] = float(self.get_real_thresh(combo, thresh="chase_tick"))
+        account.parameter["account"] = account.parameter_name
         account.parameter["position_multiple"] = 1
         account.parameter.set_index('account', inplace=True)
+        account.parameter['coin'] = account.parameter["master_pair"]
+        account.parameter['timestamp'] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes= 3)
         account.parameter.dropna(how='all', axis=1, inplace=True)
         account.parameter.drop("combo", axis = 1, inplace=True) if "combo" in account.parameter.columns else None
     
+    def arrange_parameter(self):
+        self.get_position2()
+        self.get_fragment()
+        self.handle_future_suffix()
+        
     def save_parameter(self): 
         path_save = f"{self.save_path}/parameter/{datetime.date.today()}/{self.exchange_save}"
         os.makedirs(path_save) if not os.path.exists(path_save) else None
@@ -375,13 +381,13 @@ class BuffetOkexNew(object):
     
     def check_total_mv(self) -> bool:
         is_error = True
-        config = self.config[self.execute_account.parameter_name]["total_mv"]
+        config = self.config[self.execute_account.parameter_name]["total_mv"][self.execute_account.parameter_name]
         if len(config) != 3:
             self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, 长度不等于3")
         elif config[0] < 0 or config[1] < 0 or config[2] < 0:
             self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, {config}中有小于0的数字")
-        elif config[0] < config[1] or config[1] < config[2]:
-            self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, {config}中第一个数字小于第二个或者第二个数字小于第三个")
+        elif config[0] > config[1] or config[1] > config[2]:
+            self.logger.warning(f"{self.execute_account.parameter_name}的total_mv填写错误, {config}中第一个数字大于第二个或者第二个数字大于第三个")
         else:
             is_error = False
         return is_error
@@ -395,10 +401,10 @@ class BuffetOkexNew(object):
             self.execute_account = account
             self.init_parameter()
             self.reduce_single_mv()
-            if self.check_total_mv:
+            if self.check_total_mv():
                 self.logger.warning(f"{name}config中total_mv有误, 不进行总仓位减仓或加仓")
             else:
-                self.add_mv() if self.now_position[account.parameter_name]["MV%"].sum() < self.config[account.parameter_name]["total_mv"][0] else self.reduce_total_mv()
+                self.add_mv() if self.now_position[account.parameter_name]["MV%"].sum() < self.config[account.parameter_name]["total_mv"][account.parameter_name][0] else self.reduce_total_mv()
             self.get_open_close()
             self.parameter[name] = account.parameter
     
@@ -457,19 +463,25 @@ class BuffetOkexNew(object):
             is_save (bool, optional): save excel or not. Defaults to True.
             upload (bool, optional): upload excel to github or not. Defaults to False.
         """
-        try:
-            self.init_accounts()
-            self.get_parameter(is_save = is_save)
-        except Exception as e:
-            self.log_bug(e)
+        self.init_accounts()
+        self.get_parameter()
         if is_save:
-            try:
-                self.save_parameter()
-            except Exception as e:
-                self.log_bug(e)
+            self.save_parameter()
         if upload:
-            try:
-                self.upload_parameter()
-            except Exception as e:
-                self.log_bug(e)
+            self.upload_parameter()
+        # try:
+        #     self.init_accounts()
+        #     self.get_parameter()
+        # except Exception as e:
+        #     self.log_bug(e)
+        # if is_save:
+        #     try:
+        #         self.save_parameter()
+        #     except Exception as e:
+        #         self.log_bug(e)
+        # if upload:
+        #     try:
+        #         self.upload_parameter()
+        #     except Exception as e:
+        #         self.log_bug(e)
         self.logger.handlers.clear()
