@@ -221,8 +221,8 @@ class AccountOkex(AccountBase):
             array.drop(["diff", "diff_U"], inplace = True)
             array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
             tell1 = np.isnan(data.loc[coin, "diff"])
-            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1]] else False
-            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1]] else False
+            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1], array.index[-2]] else False
+            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1], array.index[-2]] else False
             data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data

@@ -4,12 +4,13 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 
 
-account = AccountOkex(deploy_id="bg_001@pt_okex_btc")
-position = account.get_now_position().drop(["diff", "diff_U", "is_exposure", "usdt"], axis = 1)
-print(position)
-open_price = account.get_open_price().drop("usdt", axis = 1)
-value = (position * open_price).values.sum()
-print(value)
+account = AccountOkex(deploy_id="test_otest5@pt_okex_btc")
+# ret = account.get_account_position()
+# position = account.get_now_position().drop(["diff", "diff_U", "is_exposure", "usdt"], axis = 1)
+# print(position)
+# open_price = account.get_open_price().drop("usdt", axis = 1)
+# value = (position * open_price).values.sum()
+# print(value)
 
 ret = account.get_now_parameter()
 print(ret.loc[0, "_comments"]["timestamp"])

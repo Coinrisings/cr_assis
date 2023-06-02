@@ -30,7 +30,7 @@ class BuffetOkexNew(object):
         self.parameter_cols = ['account', 'coin', 'portfolio', 'open', 'closemaker', 'position', 'closetaker', 'open2', 'closemaker2', 'position2', 'closetaker2', 'fragment',
                             'fragment_min', 'funding_stop_open', 'funding_stop_close', 'position_multiple', 'timestamp', 'is_long', 'chase_tick', 'master_pair', 'slave_pair', "master_secret", "slave_secret", "combo"]
         self.config_keys = set(["default_path", "total_mv", "single_mv", "thresh"])
-        self.default_keys = set(['combo', 'funding_open', 'funding_close', 'chase_tick', 'close', 'open', 'closemaker', 'closetaker', 'closemaker2', 'closertaker2', 'cm2_change', 'fragment', 'fragment_min', 'open_add', 'close_add', 'select_u', 'select_ratio', 'maxloss', 'open_thresh', 'close_thresh', 'future_date'])
+        self.default_keys = set(['combo', 'funding_open', 'funding_close', 'chase_tick', 'close', 'open', 'closemaker', 'closetaker', 'closemaker2', 'closetaker2', 'cm2_change', 'fragment', 'fragment_min', 'open_add', 'close_add', 'select_u', 'select_ratio', 'maxloss', 'open_thresh', 'close_thresh', 'future_date'])
         self.execute_account: AccountOkex
         self.load_logger()
     
@@ -177,24 +177,29 @@ class BuffetOkexNew(object):
         if to_mv > 0:
             self.execute_account.parameter.loc[coin, "position"] = self.now_position[self.execute_account.parameter_name].loc[coin, "position"] * to_mv / self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"]
             self.execute_account.parameter.loc[coin, "portfolio"] = -2
+            self.logger.info(f"execute_reduce成功, {self.execute_account.parameter_name}持仓中{coin}将二档减仓至{to_mv}")
         else:
             self.execute_account.parameter.loc[coin, "position"] = self.now_position[self.execute_account.parameter_name].loc[coin, "position"]
             self.execute_account.parameter.loc[coin, "portfolio"] = -1
+            self.logger.info(f"execute_reduce成功, {self.execute_account.parameter_name}持仓中{coin}将一档减仓")
         self.now_position[self.execute_account.parameter_name].loc[coin, "position"] *= to_mv / self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"]
         self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"] = to_mv
     
     def execute_add(self, coin: str, to_mv: float, combo: str):
         parameter = self.execute_account.parameter
-        parameter.loc[coin, "portfolio"] = 1
-        if coin in self.now_position[self.execute_account.parameter_name].index:
+        if coin in self.now_position[self.execute_account.parameter_name].index and abs(to_mv) > self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"]:
             parameter.loc[coin, "position"] *= max(abs(to_mv) / self.now_position[self.execute_account.parameter_name].loc[coin, "MV%"], 1)
+            parameter.loc[coin, "portfolio"] = 1
+            self.logger.info(f"{self.execute_account.parameter_name}已持有币种加仓{coin}@{combo}至{to_mv}")
         else:
             price = self.get_usd_contractsize(coin) if combo.split("-")[0].split("_")[1] == "usd" else self.get_coin_price(coin)
             parameter.loc[coin, "position"] = abs(to_mv) / 100 * self.execute_account.adjEq / price
             parameter.loc[coin, "combo"] = combo
+            parameter.loc[coin, "portfolio"] = 1
             parameter.loc[coin, "is_long"] = 1 if to_mv > 0 else 0
             parameter.loc[coin, ["master_pair", "slave_pair"]] = self.execute_account.get_pair_name(coin, combo)
             parameter.loc[coin, ["master_secret", "slave_secret"]] = self.execute_account.get_secret_name(coin, combo)
+            self.logger.info(f"{self.execute_account.parameter_name}新币种加仓{coin}@{combo}至{to_mv}")
     
     def reduce_single_mv(self):
         now_position = self.now_position[self.execute_account.parameter_name]
@@ -206,16 +211,19 @@ class BuffetOkexNew(object):
                     continue
                 if coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] > values[1]:
                     self.execute_reduce(coin, values[1])
+                    self.logger.info(f"{self.execute_account.parameter_name}中{coin}@{combo}触发单币种超限减仓, 减仓至{values[1]}")
                 
     def reduce_total_mv(self):
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]["total_mv"]
-        plus = now_position["MV%"].sum() - config[self.execute_account.parameter_name][2]
+        total_mv = now_position["MV%"].sum()
+        plus = total_mv - config[self.execute_account.parameter_name][2]
         if plus > 0:
-            remove_mv = now_position["MV%"].sum() - config[self.execute_account.parameter_name][1]
+            remove_mv = config[self.execute_account.parameter_name][1]
             for coin in now_position.index:
-                to_mv = remove_mv / now_position["MV%"].sum()
+                to_mv = remove_mv / total_mv
                 self.execute_reduce(coin = coin, to_mv = to_mv)
+                self.logger.info(f"{self.execute_account.parameter_name}目前总仓位{total_mv}触发单币种超限减仓, 将减仓至{remove_mv}")
 
     def get_add(self) -> dict[str, dict[str, float]]:
         real_add = {}
@@ -224,30 +232,32 @@ class BuffetOkexNew(object):
         for name, add in config["single_mv"].items():
             combo = config["combo"][name] if name in config["combo"].keys() else name
             for coin, values in add.items():
-                if self.check_single_mv(coin, values) or coin in real_add.keys():
+                if self.check_single_mv(coin, values) or coin in real_add.keys() or values[0] == 0:
                     continue
                 if coin not in self.execute_account.parameter.index and coin not in now_position.index:
-                    real_add.update({coin: values[0]})
+                    real_add.update({f"{coin}@{combo}": values[0]})
                 elif coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] < abs(values[0]) and (now_position.loc[coin, "side"] == "long" and values[0] > 0 or now_position.loc[coin, "side"] == "short" and values[0] < 0):
-                    real_add.update({coin: values[0]})
+                    real_add.update({f"{coin}@{combo}": values[0]})
         self.add[self.execute_account.parameter_name] = copy.deepcopy(real_add)
         return real_add
     
     def add_mv(self):
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
-        ava = now_position["MV%"].sum() - config["total_mv"][self.execute_account.parameter_name][0]
+        ava = config["total_mv"][self.execute_account.parameter_name][0] - now_position["MV%"].sum()
         real_add = self.get_add()
         add_sum = pd.DataFrame.from_dict(real_add, orient='index').abs().values.sum()
         wish_add, holding_mv  = 0, 0
-        for coin in real_add.keys():
+        for k in real_add.keys():
+            coin = k.split("@")[0]
             hold = now_position.loc[coin, "MV%"] if coin in now_position.index else 0
-            wish_add += abs(real_add[coin]) - hold
+            wish_add += abs(real_add[k]) - hold
             holding_mv += hold
         add_to = holding_mv + min(wish_add, ava)
-        for coin, wish_mv in real_add.items():
-            to_mv = wish_mv / add_sum * add_to
-            self.execute_add(coin, to_mv)
+        for k, wish_mv in real_add.items():
+            coin, combo = k.split("@")
+            to_mv = - min(abs(wish_mv) / add_sum * add_to, wish_add, ava) if wish_mv < 0 else min(abs(wish_mv) / add_sum * add_to, wish_add, ava)
+            self.execute_add(coin, to_mv, combo)
     
     def calc_up_thresh(self, spreads, threshold=50, up_down=0):
         spreads_avg = np.mean(spreads)
@@ -274,49 +284,36 @@ class BuffetOkexNew(object):
         ret = config[thresh] if thresh in config.keys() else np.nan
         for name in config["thresh"].keys():
             if (name == combo or (name in config["combo"].keys() and config["combo"][name] == combo)) and thresh in config["thresh"][name].keys():
-                ret = config["thresh"][name]
+                ret = config["thresh"][name][thresh]
                 break
         return ret
     
-    def get_open1(self, coin: str) -> float:
-        open1 = np.nan
-        if coin in self.execute_account.parameter.index:
+    def get_expect_thresh(self, coin: str, col: str, spread_name: str, use_thresh: str) -> float:
+        ret = np.nan
+        account = self.execute_account
+        if coin in account.parameter.index:
             combo = self.execute_account.parameter.loc[coin, "combo"]
-            specify_open = self.get_real_thresh(combo, thresh = "open")
-            if specify_open == "":
+            specify_thresh = self.get_real_thresh(combo, thresh = col)
+            if specify_thresh == "":
+                maxloss = float(self.get_real_thresh(combo, thresh="maxloss"))
                 spread = self.get_spreads_data(combo, coin, suffix=self.get_real_thresh(combo, thresh = "future_date"))
-                col = "bid0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "ask0_spread"
-                open1 = self.calc_up_thresh(spread[col], threshold=float(self.get_real_thresh(combo, thresh = "open_thresh")), up_down=0) + float(self.get_real_thresh(combo, thresh = "open_add"))
+                ret = max(self.calc_up_thresh(spread[spread_name], threshold=float(self.get_real_thresh(combo, thresh = use_thresh)), up_down=0) + float(self.get_real_thresh(combo, thresh = "open_add")), maxloss)
             else:
-                open1 = float(specify_open)
-        return open1
+                ret = float(specify_thresh)
+        return ret
+    
+    def get_open1(self, coin: str) -> float:
+        spread_name = "bid0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "ask0_spread"
+        return self.get_expect_thresh(coin, "open", spread_name, use_thresh="open_thresh")
 
     def get_closemaker(self, coin: str) -> float:
-        closemaker = np.nan
-        if coin in self.execute_account.parameter.index:
-            combo = self.execute_account.parameter.loc[coin, "combo"]
-            specify_close = self.get_real_thresh(combo, thresh = "closemaker")
-            if specify_close == "":
-                spread = self.get_spreads_data(combo, coin, suffix=self.get_real_thresh(combo, thresh = "future_date"))
-                col = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
-                closemaker = self.calc_up_thresh(spread[col], threshold=float(self.get_real_thresh(combo, thresh = "close_thresh")), up_down=0) + float(self.get_real_thresh(combo, thresh = "close_add"))
-            else:
-                closemaker = float(specify_close)
-        return closemaker
+        spread_name = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
+        return self.get_expect_thresh(coin, "open", spread_name, use_thresh="close_thresh")
     
     def get_closemaker2(self, coin: str) -> float:
-        account = self.execute_account
-        closemaker2 = np.nan
-        if coin in account.parameter.index:
-            combo = account.parameter.loc[coin, "combo"]
-            spread = self.get_spreads_data(combo, coin, suffix=self.get_real_thresh(combo, thresh = "future_date"))
-            specify_close = self.get_real_thresh(combo, thresh = "closemaker2")
-            if specify_close == "":
-                col = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
-                closemaker2 = self.calc_up_thresh(spread[col], threshold=float(self.get_real_thresh(combo, thresh = "close_thresh")), up_down=0) + float(self.get_real_thresh(combo, thresh = "close_add")) - float(self.get_real_thresh(combo, thresh = "cm2_change"))
-            else:
-                closemaker2 = float(specify_close)
-        return closemaker2
+        spread_name = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
+        combo = self.execute_account.parameter.loc[coin, "combo"] if coin in self.execute_account.parameter.index else ""
+        return self.get_expect_thresh(coin, "open", spread_name, use_thresh="close_thresh") + float(self.get_real_thresh(combo, thresh = "cm2_change"))
     
     def get_open_close(self) -> pd.DataFrame:
         """处理开关仓阈值
@@ -325,13 +322,12 @@ class BuffetOkexNew(object):
         for coin in parameter.index:
             level = parameter.loc[coin, "portfolio"]
             combo = parameter.loc[coin, "combo"]
-            maxloss = float(self.get_real_thresh(combo, thresh="maxloss"))
-            parameter.loc[coin, "open"] = max(self.get_open1(coin), maxloss) if level == 1 else 2
-            parameter.loc[coin, "closemaker"] = max(self.get_closemaker(coin), maxloss) if level == -1 else float(self.get_real_thresh(combo, thresh="close"))
-            parameter.loc[coin, "closemaker2"] = max(self.get_closemaker2(coin), maxloss) if level == -2 or self.get_real_thresh(combo, thresh="closemaker2") != "" else max(parameter.loc[coin, "closemaker"] - float(self.get_real_thresh(combo, thresh="cm2_change")), maxloss)
-            parameter.loc[coin, "open2"] = max(parameter.loc[coin, "open"] + 1, maxloss)
-            parameter.loc[coin, "closetaker"] = max(parameter.loc[coin, "closemaker"] + 0.001, maxloss) if self.get_real_thresh(combo, thresh="closetaker") == "" else float(self.get_real_thresh(combo, thresh="closetaker") == "")
-            parameter.loc[coin, "closetaker2"] = max(parameter.loc[coin, "closemaker2"] + 0.001, maxloss) if self.get_real_thresh(combo, thresh="closetaker2") == "" else float(self.get_real_thresh(combo, thresh="closetaker2") == "")
+            parameter.loc[coin, "open"] = self.get_open1(coin) if level == 1 else 2
+            parameter.loc[coin, "closemaker"] = self.get_closemaker(coin) if level == -1 else float(self.get_real_thresh(combo, thresh="close"))
+            parameter.loc[coin, "closemaker2"] = self.get_closemaker2(coin) if level == -2 or self.get_real_thresh(combo, thresh="closemaker2") != "" else parameter.loc[coin, "closemaker"] + float(self.get_real_thresh(combo, thresh="cm2_change"))
+            parameter.loc[coin, "open2"] = parameter.loc[coin, "open"] + 1
+            parameter.loc[coin, "closetaker"] = parameter.loc[coin, "closemaker"] + 0.001 if self.get_real_thresh(combo, thresh="closetaker") == "" else float(self.get_real_thresh(combo, thresh="closetaker") == "")
+            parameter.loc[coin, "closetaker2"] = parameter.loc[coin, "closemaker2"] + 0.001 if self.get_real_thresh(combo, thresh="closetaker2") == "" else float(self.get_real_thresh(combo, thresh="closetaker2") == "")
         self.arrange_parameter()
         return parameter
     
@@ -443,7 +439,7 @@ class BuffetOkexNew(object):
         towrite = io.BytesIO()
         writer = pd.ExcelWriter(towrite, engine='openpyxl')
         for sheet_name, parameter in self.parameter.items():
-            parameter["timestamp"] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes=5)
+            parameter["timestamp"] = datetime.datetime.utcnow() + datetime.timedelta(hours = 8, minutes=3)
             parameter.to_excel(excel_writer=writer, sheet_name=sheet_name)
         writer.close()
         upload_time = datetime.datetime.utcnow().strftime("%Y_%m_%d_%H_%M_%S")
@@ -465,7 +461,7 @@ class BuffetOkexNew(object):
         """
         self.init_accounts()
         self.get_parameter()
-        if is_save:
+        if is_save and len(self.parameter):
             self.save_parameter()
         if upload:
             self.upload_parameter()
