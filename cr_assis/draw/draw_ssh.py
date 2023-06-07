@@ -203,8 +203,8 @@ def line_doubleY(result, right_columns, left_columns = [], x_axis_label = "", y_
     for col in left_columns:
         range_num.loc["min", col] = min(result[col].dropna().values)
         range_num.loc["max", col] = max(result[col].dropna().values)
-    p1.y_range = Range1d(start = float(min(range_num.loc["min"].values))*0.95,
-                                end = float(max(range_num.loc["max"].values))*1.05)
+    p1.y_range = Range1d(start = float(min(range_num.loc["min"].values)),
+                                end = float(max(range_num.loc["max"].values)))
     
     for col in left_columns:
         p1.line(result.index, result[col], legend_label=col, line_color=colors[num],name = col, line_width = 2)
@@ -217,8 +217,8 @@ def line_doubleY(result, right_columns, left_columns = [], x_axis_label = "", y_
         range_num.loc["min", col] = min(result[col].dropna().values)
         range_num.loc["max", col] = max(result[col].dropna().values)
     p1.extra_y_ranges = {
-        y_column2_range:Range1d(start = float(min(range_num.loc["min"].dropna().values))*0.95,
-                                end = float(max(range_num.loc["max"].dropna().values))*1.05)
+        y_column2_range:Range1d(start = float(min(range_num.loc["min"].dropna().values)),
+                                end = float(max(range_num.loc["max"].dropna().values)))
                         }
     p1.add_layout(LinearAxis(y_range_name = y_column2_range),'right')
     for col in right_columns:
