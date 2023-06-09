@@ -1,4 +1,4 @@
-import datetime, requests, datetime, json, hashlib, hmac, base64
+import datetime, requests, datetime, json, hashlib, hmac, base64, os
 import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
