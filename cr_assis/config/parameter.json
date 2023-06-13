@@ -1,20 +1,20 @@
 {
     "fitfi": {
+        "level": -1,
+        "side": "long",
+        "uplimit":1,
+        "accounts": ["test_cr003"]
+    },
+    "aidoge": {
         "level": 1,
         "side": "long",
         "uplimit":1,
-        "accounts": ["cr_cr003"]
-    },
-    "kishu": {
-        "level": 1,
-        "side": "long",
-        "uplimit":0.5,
-        "accounts": ["cr_cr003"]
+        "accounts": ["test_cr003"]
     },
     "slp": {
         "level": 0,
         "side": "long",
         "uplimit":0.5,
-        "accounts": ["cr_cr003"]
+        "accounts": ["test_cr003"]
     }
 }

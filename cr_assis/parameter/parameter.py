@@ -4,7 +4,7 @@ import numpy as np
 import datetime, os, json
 from github import Github
 
-cr003 = AccountOkex(deploy_id = "cr_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
+cr003 = AccountOkex(deploy_id = "test_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
 file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
 git_file = "parameter_ssh"
 if not os.path.exists(file_path):
@@ -51,7 +51,7 @@ for account in accounts:
                 spreads = account.get_spreads(coin = coin, combo = "okex_spot-okex_usdt_swap", start = "now() - 2h")
                 open1 = np.mean(spreads["bid0_spread"]) + add if portfolio[coin]["side"] == "long" else np.mean(spreads["ask0_spread"]) + add
         elif level == -1 and account.parameter_name in portfolio[coin]["accounts"] and coin in holding_position.index.values and side == portfolio[coin]["side"]:
-            spreads = account.get_spreads(coin = coin, hours = hours)
+            spreads = account.get_spreads(coin = coin, combo = "okex_spot-okex_usdt_swap")
             cm = np.mean(spreads["ask0_spread"]) + add if portfolio[coin]["side"] == "long" else np.mean(spreads["bid0_spread"]) + add
         ct = cm + 0.002
         open2 = open1 + 1

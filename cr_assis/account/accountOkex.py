@@ -102,7 +102,7 @@ class AccountOkex(AccountBase):
             else:
                 dataname_reverse = f'''spread_orderbook_{self.exchange_contract}_{kind_slave}_{coin}{contract_slave}__orderbook_{self.exchange_contract}_spot_{coin}_usdt'''
                 if dataname_reverse in database:
-                    a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= now() - time >= {start} and time <= {end}"
+                    a = f"select time, 1/ask0_spread as ask0_spread, 1/bid0_spread as bid0_spread from {dataname_reverse} where time >= {start} and time <= {end}"
                 else:
                     is_exist = False
         else:
@@ -139,13 +139,24 @@ class AccountOkex(AccountBase):
             """
         data = self._send_complex_query(sql = a)
         data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
-        data.drop_duplicates(subset= ["pair"], keep = "first", inplace = True)
+        if len(data) == 0:
+            a = f"""
+            select ex_field, secret_id,long, long_open_price, settlement, short, short_open_price, pair from position 
+            where client = '{self.client}' and username = '{self.username}' and 
+            time > {the_time} - {timestamp} and time < {the_time}
+            and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC
+            """
+            data = self._send_complex_query(sql = a)
+            data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
+        data.drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "first", inplace = True)
         return data
     
     def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:
         data = raw_data[(raw_data["ex_field"] == "futures") & (raw_data["coin"] == coin)].copy()
         data["col"] = data["pair"].apply(lambda x: x.split("-")[1] if type(x) == str else None)
         data = data[data["col"] == col.split("-")[0]].copy()
+        data["is_future"] = data["pair"].apply(lambda x: str.isnumeric(x.split("-")[-1]))
+        data = data[data["is_future"] == True].copy()
         return data
     
     def gather_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> float:
@@ -213,6 +224,12 @@ class AccountOkex(AccountBase):
         ret = self.database.get_redis_data(key = f"{self.exchange_position}/{coin.lower()}-usdt")
         return float(ret[b'ask0_price']) if b'ask0_price' in ret.keys() else np.nan
     
+    def is_ccy_exposure(self, array: pd.Series, contractsize: float) -> bool:
+        other_array = array.drop("usdt").sort_values()
+        not_spot = other_array.sum() > self.exposure_number * contractsize * 5 or other_array[0] + other_array[-1] > self.exposure_number * contractsize * 2
+        is_spot = abs(other_array[0]) >= self.exposure_number * contractsize and abs(other_array[-1]) >= self.exposure_number * contractsize
+        return not_spot and is_spot
+    
     def tell_exposure(self) -> pd.DataFrame:
         data = self.now_position.copy() if hasattr(self, "now_position") else self.empty_position.copy()
         for coin in data.index:
@@ -221,8 +238,8 @@ class AccountOkex(AccountBase):
             array.drop(["diff", "diff_U"], inplace = True)
             array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
             tell1 = np.isnan(data.loc[coin, "diff"])
-            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1], array.index[-2]] else False
-            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != "BTC" or "usdt" not in [array.index[0], array.index[-1], array.index[-2]] else False
+            tell2 = abs(data.loc[coin, "diff"]) > self.exposure_number * contractsize * 6 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
+            tell3 = abs(array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
             data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data
@@ -264,21 +281,22 @@ class AccountOkex(AccountBase):
         self.get_now_position() if not hasattr(self, "now_position") else None
         for coin in set(self.now_position.index) | set([self.ccy]):
             self.now_price.loc[coin] = self.database.get_redis_okex_price(coin = coin.lower(), suffix="usdt")
-            
+    
+    def tell_ccy_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
+        other = data.drop("usdt").sort_values()
+        ret = self.tell_master(other, contractsize)
+        if "" in ret.values() and not self.now_position.loc[self.ccy, "is_exposure"]:
+            ret = {"master":other[abs(other) == abs(other).max()].index[0], "slave": "usdt"}
+        return ret
+    
     def tell_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
         data = data.sort_values()
-        tell1 = (abs(data[0] + data[-1]) <= contractsize * self.exposure_number if data.name != "BTC" or "usdt" not in [data.index[0], data.index[-1]] else True) and data[0] * data[-1] < 0
-        tell2 = abs(data[1] + data[-1]) > contractsize * self.exposure_number or data[1] * data[-1] > 0
-        tell3 = abs(data[0] + data[-2]) > contractsize * self.exposure_number or data[0] * data[-2] > 0
+        tell1 = abs(data[0] + data[-1]) <= contractsize * self.exposure_number and data[0] * data[-1] < 0
+        tell2 = abs(data[1] + data[-1]) >= contractsize * self.exposure_number or data[1] * data[-1] > 0
+        tell3 = abs(data[0] + data[-2]) >= contractsize * self.exposure_number or data[0] * data[-2] > 0
         result = [data.index[0], data.index[-1]] if tell1 and tell2 and tell3 else ["", ""]
-        if data.name != "BTC" or "usdt" not in result:
-            ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
-                    "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
-        else:
-            ret = {
-                "master" : result[0] if result[0] != "usdt" else result[1],
-                "slave": result[0] if result[0] == "usdt" else result[1]
-            }
+        ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
+                "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
         return ret
     
     def transfer_pair(self, pair: str) -> str:
@@ -300,7 +318,7 @@ class AccountOkex(AccountBase):
         num = 0
         for coin in data.index:
             contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
-            ret = self.tell_master(data = data.loc[coin], contractsize = contractsize)
+            ret = self.tell_master(data = data.loc[coin], contractsize = contractsize) if coin != self.ccy else self.tell_ccy_master(data.loc[coin], contractsize)
             if ret["master"] == "" or ret["slave"] == "":
                 continue
             else:
@@ -316,9 +334,5 @@ class AccountOkex(AccountBase):
         position.drop(position[(position["master_secret"] == self.parameter_name) | (position["master_secret"] == self.parameter_name)].index, inplace= True)
         position.sort_values(by = "MV%", ascending= False, inplace= True)
         position.index = range(len(position))
-        if len(data) > 0:
-            self.position = position.copy()
-        else:
-            if not hasattr(self, "origin_position") or len(self.origin_position) == 0:
-                self.position = None
+        self.position = position.copy()
         return position
