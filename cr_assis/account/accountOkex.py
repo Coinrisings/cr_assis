@@ -148,13 +148,15 @@ class AccountOkex(AccountBase):
             """
             data = self._send_complex_query(sql = a)
             data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
-        data.drop_duplicates(subset= ["pair"], keep = "first", inplace = True)
+        data.drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "first", inplace = True)
         return data
     
     def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:
         data = raw_data[(raw_data["ex_field"] == "futures") & (raw_data["coin"] == coin)].copy()
         data["col"] = data["pair"].apply(lambda x: x.split("-")[1] if type(x) == str else None)
         data = data[data["col"] == col.split("-")[0]].copy()
+        data["is_future"] = data["pair"].apply(lambda x: str.isnumeric(x.split("-")[-1]))
+        data = data[data["is_future"] == True].copy()
         return data
     
     def gather_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> float:
@@ -236,8 +238,8 @@ class AccountOkex(AccountBase):
             array.drop(["diff", "diff_U"], inplace = True)
             array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
             tell1 = np.isnan(data.loc[coin, "diff"])
-            tell2 = data.loc[coin, "diff"] > self.exposure_number * contractsize * 6 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
-            tell3 = (array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
+            tell2 = abs(data.loc[coin, "diff"]) > self.exposure_number * contractsize * 6 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
+            tell3 = abs(array[0] + array[-1]) > self.exposure_number * contractsize * 2 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
             data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data

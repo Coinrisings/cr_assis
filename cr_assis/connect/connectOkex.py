@@ -1,4 +1,4 @@
-import ccxt, requests, os
+import ccxt, requests, os, datetime, base64, hashlib, hmac
 from cr_monitor.position.disacount_data import DisacountData
 import pandas as pd
 import numpy as np
@@ -21,6 +21,21 @@ class ConnectOkex(object):
         self.tier_cswap: dict[str, pd.DataFrame] = {}
         self.tier_ufuture: dict[str, pd.DataFrame] = {}
         self.tier_cfuture: dict[str, pd.DataFrame] = {}
+    
+    def handle_account_get_equery(self, query: str, secret: str, api_key: str, passphrase: str) -> requests.Response:
+        timestamp = datetime.datetime.now().astimezone(datetime.timezone.utc).isoformat(timespec='milliseconds').replace("+00:00", "Z")
+        message = timestamp + "GET" + query
+        signature = base64.b64encode(hmac.new(bytes(secret, "utf-8"), bytes(message, "utf-8"), digestmod=hashlib.sha256).digest())
+        headers = {
+            "accept": "application/json",
+            "content-type": "application/json",
+            "OK-ACCESS-KEY": api_key,
+            "OK-ACCESS-SIGN": signature,
+            "OK-ACCESS-TIMESTAMP": timestamp,
+            "OK-ACCESS-PASSPHRASE": passphrase
+        }
+        url = f"https://www.okx.com{query}"
+        return requests.get(url, headers=headers)
     
     def load_local_contractsize(self):
         data = pd.read_csv(self.contractsize_path, index_col= 0)

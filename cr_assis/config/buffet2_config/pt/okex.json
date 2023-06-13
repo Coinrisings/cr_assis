@@ -4,9 +4,16 @@
         "test_otest5": [200, 210, 220]
     },
     "single_mv" : {
-        "ssfd": {"btc": [10, 20]}
+        "ssfd": {"btc": [0, 0]},
+        "ssf": {"fil": [50, 60],
+                "doge": [30, 50],
+                "op": [20, 30],
+                "arb": [5, 10],
+                "aidoge": [10, 15]},
+        "dt": {"ada": [15, 20],
+                "xrp": [35, 50]}
     },
     "thresh": {
-        "test_otest5": {"all": {"close_add": -0.005}, "btc": {"open": 0.995, "close": 1.1}}
+        "test_otest5": {"btc": {"closemaker": 0.999}}
     }
 }
