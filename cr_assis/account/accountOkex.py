@@ -286,7 +286,7 @@ class AccountOkex(AccountBase):
         other = data.drop("usdt").sort_values()
         ret = self.tell_master(other, contractsize)
         if "" in ret.values() and not self.now_position.loc[self.ccy, "is_exposure"]:
-            ret = {"master":other[abs(other) == abs(other).max()].index[0], "slave": "usdt"}
+            ret = {"master":other[abs(other) == abs(other).max()].index[0], "slave": "usdt"} if abs(other).max() > self.exposure_number * contractsize else {"master": "", "slave": ""}
         return ret
     
     def tell_master(self, data: pd.Series, contractsize: float) -> dict[str, str]:
