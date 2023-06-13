@@ -138,11 +138,12 @@ class ConnectOkex(object):
     
     def get_tier_swap(self, coin: str, contract: str) -> pd.DataFrame:
         name = name = f"{coin.upper()}-{contract}"
-        data = self.get_tier(instType = "SWAP", 
+        ret = self.get_tier(instType = "SWAP", 
                 tdMode = "cross",
                 instFamily= name,
                 instId= name,
-                tier="")["data"]
+                tier="")
+        data = ret["data"] if "data" in ret.keys() else []
         tier = self.handle_origin_tier(data)
         return tier
     
