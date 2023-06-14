@@ -1,18 +1,18 @@
-import datetime, requests, datetime, json, hashlib, hmac, base64, os
+import datetime, requests, datetime, json, os
 import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
 dataokex = ConnectOkex()
-account = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
+account = AccountOkex(deploy_id="test_cr003@pt_okex_btc")
 ret = account.get_account_position()
 
 sql = f"/api/v5/account/balance"
 secret = "F1CDA54959C8CA368E8FE00701CE5CAF"
 api_key = "b54d6744-6eb2-4683-9e3f-cc08df499fbd"
 passphrase = "2tOs1I7cn1gR8Ft"
-response = dataokex.handle_account_get_equery(sql, secret, api_key, passphrase)
+response = dataokex.handle_account_get_query(sql, secret, api_key, passphrase)
 ret = response.json()
 data = ret["data"][0]
 adjEq = float(data["adjEq"])
@@ -23,7 +23,7 @@ print(f"mm: {mm}")
 print(f"mr: {mr}")
 
 sql = f"/api/v5/account/positions"
-response = dataokex.handle_account_get_equery(sql, secret, api_key, passphrase)
+response = dataokex.handle_account_get_query(sql, secret, api_key, passphrase)
 ret = response.json()
 
 mm_contract = {}
@@ -32,7 +32,7 @@ for info in ret["data"]:
 position = ret
 
 sql = f"/api/v5/account/account-position-risk"
-response = dataokex.handle_account_get_equery(sql, secret, api_key, passphrase)
+response = dataokex.handle_account_get_query(sql, secret, api_key, passphrase)
 ret = response.json()
 liability = pd.DataFrame(columns = ["eq", "mmr", "price", "mm"])
 for info in ret["data"][0]["balData"]:
