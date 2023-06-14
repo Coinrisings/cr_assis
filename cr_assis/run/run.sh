@@ -1,2 +1,2 @@
 /opt/anacaonda3/bin/python3 "/home/ssh/jupyter/cr_assis/cr_assis/run/run_update.py"
-/opt/anacaonda3/bin/python3 "/home/ssh/jupyter/cr_monitor/cr_monitor/run/run_monitor.py"
+/opt/anacaonda3/bin/python3 "/home/ssh/jupyter/cr_assis/cr_assis/run/run_updateOkexTickers.py
