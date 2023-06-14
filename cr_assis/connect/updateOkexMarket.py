@@ -42,7 +42,7 @@ class UpdateOkexMarket(object):
         df = pd.DataFrame(data)
         if "ts" in df.columns:
             df.sort_values(by = "ts", inplace= True)
-            df.index = df["ts"].apply(lambda x: self.transfer_ts_utc(x))
+            df["timestamp"] = df["ts"].apply(lambda x: self.transfer_ts_utc(x))
             df["dt"] = df["ts"].apply(lambda x: self.transfer_ts_utc8(x))
         return df
     
@@ -65,9 +65,9 @@ class UpdateOkexMarket(object):
     
     def update_coin_interest(self, coin: str):
         coin = coin.upper()
-        save_path = self.save_path + self.interest_path + f'/origin' if os.path.exists(self.save_path) else f"""{os.environ["HOME"]}/data/{self.interest_path}/origin"""
+        save_path = self.save_path + self.interest_path + f'/origin/{coin}' if os.path.exists(self.save_path) else f"""{os.environ["HOME"]}/data/{self.interest_path}/origin/{coin}"""
         os.makedirs(save_path) if not os.path.exists(save_path) else None
-        start = int(self.get_last_ts(path = f"{save_path}/{coin}"))
+        start = int(self.get_last_ts(path = f"{save_path}"))
         ts = int(datetime.datetime.timestamp(datetime.datetime.now()) * 1000)
         data = []
         ret = {"data": [1]}
@@ -80,7 +80,7 @@ class UpdateOkexMarket(object):
             data = data + ret['data']
             ts = ret["data"][-1]["ts"] if len(ret["data"]) > 0 else start
         df = self.handle_origin_data(data)
-        self.save_as_month(df, save_path)
+        self.save_as_month(df, f"{save_path}")
         return df
     
     def update_all_interest(self):
