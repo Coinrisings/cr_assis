@@ -4,9 +4,15 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
-dataokex = ConnectOkex()
-account = AccountOkex(deploy_id="test_cr003@pt_okex_btc")
-ret = account.get_account_position()
+from cr_assis.connect.updateOkexMarket import UpdateOkexMarket
+from cr_assis.api.okex.marketApi import MarketAPI
+from cr_assis.api.okex.publicApi import PublicAPI
+u = UpdateOkexMarket()
+ret = u.update_all_interest()
+
+api = MarketAPI()
+response = api.get_lending_summary()
+ret = response.json() if response.status_code == 200 else {"data": []}
 
 sql = f"/api/v5/account/balance"
 secret = "F1CDA54959C8CA368E8FE00701CE5CAF"
