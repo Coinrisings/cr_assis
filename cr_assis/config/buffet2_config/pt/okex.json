@@ -1,17 +1,10 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv": {
-        "test_otest5": [200, 210, 220]
+        "test_cr003": [100, 120, 130]
     },
     "single_mv" : {
-        "ssfd": {"btc": [0, 0]},
-        "ssf": {"fil": [50, 60],
-                "doge": [30, 50],
-                "op": [20, 30],
-                "arb": [5, 10],
-                "aidoge": [10, 15]},
-        "dt": {"ada": [15, 20],
-                "xrp": [35, 50]}
+        "ssf": {"aidoge": [100, 120]}
     },
     "thresh": {
         "test_otest5": {"btc": {"closemaker": 0.999}}

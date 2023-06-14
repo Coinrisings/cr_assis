@@ -22,7 +22,7 @@ class ConnectOkex(object):
         self.tier_ufuture: dict[str, pd.DataFrame] = {}
         self.tier_cfuture: dict[str, pd.DataFrame] = {}
     
-    def handle_account_get_equery(self, query: str, secret: str, api_key: str, passphrase: str) -> requests.Response:
+    def handle_account_get_query(self, query: str, secret: str, api_key: str, passphrase: str) -> requests.Response:
         timestamp = datetime.datetime.now().astimezone(datetime.timezone.utc).isoformat(timespec='milliseconds').replace("+00:00", "Z")
         message = timestamp + "GET" + query
         signature = base64.b64encode(hmac.new(bytes(secret, "utf-8"), bytes(message, "utf-8"), digestmod=hashlib.sha256).digest())
