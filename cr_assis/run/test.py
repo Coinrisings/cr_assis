@@ -8,7 +8,7 @@ from cr_assis.connect.updateOkexMarket import UpdateOkexMarket
 from cr_assis.api.okex.marketApi import MarketAPI
 from cr_assis.api.okex.publicApi import PublicAPI
 u = UpdateOkexMarket()
-ret = u.update_all_interest()
+ret = u.update_coin_interest(coin = "XLM")
 
 api = MarketAPI()
 response = api.get_lending_summary()

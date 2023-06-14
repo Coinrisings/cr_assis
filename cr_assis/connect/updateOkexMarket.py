@@ -28,7 +28,7 @@ class UpdateOkexMarket(object):
         """
         files = glob.glob(f"{path}/*.csv") if os.path.exists(path) else []
         files.sort()
-        df = pd.read_csv(files[-1]) if len(files) > 0 else self.fake_df
+        df = pd.read_csv(files[-1], index_col=0) if len(files) > 0 else self.fake_df
         df = df.sort_values(by = "ts") if "ts" in df.columns else self.fake_df
         return df["ts"].values[-1]
     
@@ -65,7 +65,7 @@ class UpdateOkexMarket(object):
     
     def update_coin_interest(self, coin: str):
         coin = coin.upper()
-        save_path = self.save_path + self.interest_path + f'/origin/{coin}' if os.path.exists(self.save_path) else f"""{os.environ["HOME"]}/data/{self.interest_path}/origin/{coin}"""
+        save_path = self.save_path + self.interest_path + f'/origin' if os.path.exists(self.save_path) else f"""{os.environ["HOME"]}/data/{self.interest_path}/origin"""
         os.makedirs(save_path) if not os.path.exists(save_path) else None
         start = int(self.get_last_ts(path = f"{save_path}/{coin}"))
         ts = int(datetime.datetime.timestamp(datetime.datetime.now()) * 1000)
