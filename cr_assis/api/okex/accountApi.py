@@ -3,10 +3,9 @@ import cr_assis.api.okex.consts as c
 
 class AccountAPI(Client):
 
-    def __init__(self, name: str) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self.name: str = name
-        self.load_account_api()
+        self.name: str = ""
 
     def get_position_risk(self, instType=None):
         params = {'instType': instType}

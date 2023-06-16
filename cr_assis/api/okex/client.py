@@ -13,7 +13,7 @@ class Client(object):
         self.name: str = ""
     
     def load_account_api(self) -> None:
-        with open(f"{os.environ['HOME']}/.cr_assis/account_api.yml", "rb") as f:
+        with open(f"{os.environ['HOME']}/.cr_assis/account_okex_api.yml", "rb") as f:
             data: list[dict] = yaml.load(f, Loader= yaml.SafeLoader)
         for info in data:
             if "name" in info.keys() and info["name"] == self.name:

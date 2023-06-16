@@ -2,58 +2,18 @@ import datetime, requests, datetime, json, os, time, hashlib, hmac
 import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
-from cr_assis.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.connect.updateOkexMarket import UpdateOkexMarket
-from cr_assis.connect.updateGateWallet import UpdateGateWallet
-from cr_assis.api.okex.marketApi import MarketAPI
-from cr_assis.api.okex.publicApi import PublicAPI
 from cr_assis.api.okex.accountApi import AccountAPI
+from cr_assis.wallet.okexWallet import OkexWallet
+from cr_assis.eva.evaOkexWallet import EvaOkexWallet
 
-from cr_monitor.mr.mrOkex import MrOkex
-m = MrOkex()
-m.price_range = [1]
-m.run_account_mr(account = AccountOkex("anta_anta001@pt_okex_btc"))
-
-# u = UpdateGateWallet("/Users/chelseyshao/.cr_assis")
-# ret = u.send_requests()
-# def gen_sign(method, url, query_string=None, payload_string=None):
-#     key =  "3da6aac98115eebc2b5c71fcc39a4293"      # api_key
-#     secret = "c8ae2bcef4056ee142b67e8ad782361e1d6c264393587191f2252ab57204e25f"     # api_secret
-#     t = time.time()
-#     m = hashlib.sha512()
-#     m.update((payload_string or "").encode('utf-8'))
-#     hashed_payload = m.hexdigest()
-#     s = '%s\n%s\n%s\n%s\n%s' % (method, url, query_string or "", hashed_payload, t)
-#     sign = hmac.new(secret.encode('utf-8'), s.encode('utf-8'), hashlib.sha512).hexdigest()
-#     return {'KEY': key, 'Timestamp': str(t), 'SIGN': sign}
-
-# def get_wallet_balance():
-#     host = "https://api.gateio.ws"
-#     prefix = "/api/v4"
-#     headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
-#     url = '/wallet/total_balance'
-#     query_param = ''
-#     # for `gen_sign` implementation, refer to section `Authentication` above
-#     sign_headers = gen_sign('GET', prefix + url, query_param)
-#     headers.update(sign_headers)
-#     r = requests.request('GET', host + prefix + url, headers=headers)
-#     print(r.json())
-
-# a = get_wallet_balance()
-
-
-# u = UpdateOkexMarket()
-# ret = u.update_coin_interest(coin = "XLM")
-
-# api = MarketAPI()
-# response = api.get_lending_summary()
-# ret = response.json() if response.status_code == 200 else {"data": []}
-
-# api = AccountAPI(name = "hf_okex01")
-# response = api.get_bills_details(ccy = "USDT")
-# ret = response.json()
-api = AccountAPI(name = "anta_anta001")
+wallet = EvaOkexWallet()
+start = datetime.datetime(2023,6,16,0,0,0)
+end = datetime.datetime(2023,6,16,17,0,0)
+wallet.read_total_summary(start, end)
+api = AccountAPI()
+api.name = "hf_okex01"
+api.load_account_api()
 
 response = api.get_account_balance()
 balance = response.json()
