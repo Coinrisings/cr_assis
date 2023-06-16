@@ -201,8 +201,8 @@ def line_doubleY(result, right_columns, left_columns = [], x_axis_label = "", y_
         left_columns = columns
     range_num = pd.DataFrame(columns = left_columns, index = ["min", "max"])
     for col in left_columns:
-        range_num.loc["min", col] = min(result[col].dropna().values)
-        range_num.loc["max", col] = max(result[col].dropna().values)
+        range_num.loc["min", col] = min(result[col].dropna().values) if not np.isnan(result[col]).sum() == len(result[col]) else 0
+        range_num.loc["max", col] = max(result[col].dropna().values) if not np.isnan(result[col]).sum() == len(result[col]) else 1
     p1.y_range = Range1d(start = float(min(range_num.loc["min"].values)),
                                 end = float(max(range_num.loc["max"].values)))
     
@@ -214,8 +214,8 @@ def line_doubleY(result, right_columns, left_columns = [], x_axis_label = "", y_
     range_num = pd.DataFrame(columns = right_columns, index = ["min", "max"])
     y_column2_range = 'settle_range'
     for col in right_columns:
-        range_num.loc["min", col] = min(result[col].dropna().values)
-        range_num.loc["max", col] = max(result[col].dropna().values)
+        range_num.loc["min", col] = min(result[col].dropna().values) if not np.isnan(result[col]).sum() == len(result[col]) else 0
+        range_num.loc["max", col] = max(result[col].dropna().values) if not np.isnan(result[col]).sum() == len(result[col]) else 1
     p1.extra_y_ranges = {
         y_column2_range:Range1d(start = float(min(range_num.loc["min"].dropna().values)),
                                 end = float(max(range_num.loc["max"].dropna().values)))

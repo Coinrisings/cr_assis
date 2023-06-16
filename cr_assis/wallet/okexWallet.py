@@ -7,7 +7,7 @@ class OkexWallet(object):
     
     def __init__(self) -> None:
         self.account_api = AccountAPI()
-        self.file_path = "/mnt/efs/fs1/data_ssh/mm/okex/total" if os.path.exists("/mnt/efs/fs1/data_ssh/mm/okex") else os.environ["HOME"] + "/data/mm/okex/total"
+        self.file_path = "/mnt/efs/fs1/data_ssh/mm/okex/total" if os.path.exists("/mnt/efs/fs1/data_ssh/mm/okex/total") else os.environ["HOME"] + "/data/mm/okex/total"
     
     def get_accounts(self) -> None:
         with open(f"{os.environ['HOME']}/.cr_assis/account_okex_api.yml", "rb") as f:

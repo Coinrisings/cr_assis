@@ -8,7 +8,7 @@ from bokeh.models.widgets import Panel, Tabs
 class EvaOkexWallet(EvaGateWallet):
     
     def __init__(self):
-        self.file_path = "/mnt/efs/fs1/data_ssh/mm/okex/total" if os.path.exists("/mnt/efs/fs1/data_ssh/mm/okex") else os.environ["HOME"] + "/data/mm/okex/total"
+        self.file_path = "/mnt/efs/fs1/data_ssh/mm/okex/total" if os.path.exists("/mnt/efs/fs1/data_ssh/mm/okex/total") else os.environ["HOME"] + "/data/mm/okex/total"
         self.get_accounts()
     
     def get_accounts(self) -> None:
@@ -23,9 +23,11 @@ class EvaOkexWallet(EvaGateWallet):
             total_summary = self.read_data(path = f"{self.file_path}/{account}", start = start, end = end)
             self.total_summary = total_summary.drop("position_value", axis = 1) if "position_value" in total_summary.columns else total_summary
             p = draw_ssh.line_doubleY(self.total_summary, right_columns=["mv%"], play = False) if is_play and len(self.total_summary) > 0 else None
-            p.yaxis[0].formatter = NumeralTickFormatter(format="0,0")
-            p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
-            tab = Panel(child = p, title = account)
-            tabs.append(tab)
-        t = Tabs(tabs = tabs)
-        show(t)
+            if p != None:
+                p.yaxis[0].formatter = NumeralTickFormatter(format="0,0")
+                p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
+                tab = Panel(child = p, title = account)
+                tabs.append(tab)
+        if len(tabs) > 0:
+            t = Tabs(tabs = tabs)
+            show(t)

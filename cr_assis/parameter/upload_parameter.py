@@ -20,5 +20,5 @@ def upload_parameter(local_file: str, git_file: str, folder: str):
 
 local_file = "/Users/chelseyshao/Downloads/parameter_ssh.xlsx"
 git_file = "parameter_ssh"
-folder = "ssf"
+folder = "dt"
 upload_parameter(local_file, git_file, folder)

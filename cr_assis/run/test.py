@@ -3,18 +3,21 @@ import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.api.okex.accountApi import AccountAPI
-from cr_assis.wallet.okexWallet import OkexWallet
+from cr_assis.api.gate.accountApi import AccountAPI
+from cr_assis.wallet.gateWallet import GateWallet
 from cr_assis.eva.evaOkexWallet import EvaOkexWallet
-
-wallet = EvaOkexWallet()
+a = GateWallet()
+a.update_wallet()
+from cr_assis.eva.evaGateWalletNew import EvaGateWallet
+wallet = EvaGateWallet()
 start = datetime.datetime(2023,6,16,0,0,0)
-end = datetime.datetime(2023,6,16,17,0,0)
+end = datetime.datetime(2023,6,17,19,0,0)
 wallet.read_total_summary(start, end)
-api = AccountAPI()
-api.name = "hf_okex01"
-api.load_account_api()
 
+api = AccountAPI()
+api.name = "hf_gate03"
+api.load_account_api()
+response = api.get_futures_usdt_balance()
 response = api.get_account_balance()
 balance = response.json()
 data = balance["data"][0]
