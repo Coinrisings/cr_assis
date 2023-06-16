@@ -4,12 +4,13 @@ import numpy as np
 import datetime, os, json
 from github import Github
 
-cr003 = AccountOkex(deploy_id = "test_cr003@ssf_okexv5_spot_okexv5_uswap_btc")
+otest2 = AccountOkex(deploy_id = "test_otest2@dt_okex_cswap_okex_uswap_btc")
+otest2.folder = "dt"
 file_path = f"/Users/chelseyshao/Documents/SSH/coinrising/DT/parameter/{datetime.date.today()}"
 git_file = "parameter_ssh"
 if not os.path.exists(file_path):
     os.makedirs(file_path)
-accounts = [cr003]
+accounts = [otest2]
 cols = ["account", "contract", "portfolio_level", "open", "closemaker", "position", "closetaker","open2", "closemaker2","position2",
 	"closetaker2", "fragment", "fragment_min", "funding_stop_open", "funding_stop_close", "Position_multiple", "timestamp",
 	"is_long", "chase_tick", "master_pair", "slave_pair"]
@@ -23,7 +24,7 @@ fragment = 200
 fragment_min = 10
 loss_open = 0.001
 profit_close = 0.005
-open1 = 1.0007
+open1 = 0.9997
 closemaker = 1.005
 with open("/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/parameter.json", "r") as f:
     portfolio = json.load(f)
@@ -33,10 +34,8 @@ for account in accounts:
     holding_position = account.position if hasattr(account, "position") else pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%"])
     holding_position.set_index("coin", inplace= True)
     folder = account.folder
-    master_pair = account.position["master_pair"].values[0]
-    slave_pair = account.position["slave_pair"].values[0]
-    master_pair = master_pair.replace(master_pair.split("-")[0], "")
-    salve_pair = slave_pair.replace(master_pair.split("-")[0], "")
+    master_pair = "-usd-swap"
+    slave_pair = '-usdt-swap'
     for coin in set(holding_position.index.values) | set(portfolio.keys()):
         if coin not in holding_position.index.values and account.parameter_name not in portfolio[coin]["accounts"]:
             continue

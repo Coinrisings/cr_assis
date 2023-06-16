@@ -4,8 +4,8 @@ import numpy as np
 
 class UpdateGateWallet(object):
     
-    def __init__(self):
-        self.file_path = "/mnt/efs/fs1/data_ssh/mm/capital/gate"
+    def __init__(self, file_path = "/mnt/efs/fs1/data_ssh/mm/capital/gate"):
+        self.file_path = file_path
         self.now = datetime.datetime.utcnow().replace(microsecond=0)
         self.load_key()
         self.query_ret: list[dict[str, str]] = []
