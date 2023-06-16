@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 NAME = 'cr_assis'
 
-VERSION = '0.0.1'
+VERSION = '0.1.0'
 
 REQUIRES = [
     'pymongo~=3.13',
@@ -17,8 +17,8 @@ REQUIRES = [
     'pymongo==3.13.0',
     'ccxt==3.0.68',
     'pandas>=2.0.0',
-    'numpy>=1.24.2'
-    
+    'numpy>=1.24.2',
+    'matplotlib>=3.7.1'
 ]
 
 setup(

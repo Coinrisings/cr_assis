@@ -24,6 +24,7 @@ class EvaOkexWallet(EvaGateWallet):
             self.total_summary = total_summary.drop("position_value", axis = 1) if "position_value" in total_summary.columns else total_summary
             p = draw_ssh.line_doubleY(self.total_summary, right_columns=["mv%"], play = False) if is_play and len(self.total_summary) > 0 else None
             p.yaxis[0].formatter = NumeralTickFormatter(format="0,0")
+            p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
             tab = Panel(child = p, title = account)
             tabs.append(tab)
         t = Tabs(tabs = tabs)
