@@ -18,7 +18,8 @@ REQUIRES = [
     'ccxt==3.0.68',
     'pandas>=2.0.0',
     'numpy>=1.24.2',
-    'matplotlib>=3.7.1'
+    'matplotlib>=3.7.1',
+    'binance-futures-connector>=3.3.1'
 ]
 
 setup(
