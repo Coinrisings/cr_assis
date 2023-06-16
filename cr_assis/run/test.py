@@ -5,14 +5,10 @@ from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.gate.accountApi import AccountAPI
 from cr_assis.wallet.gateWallet import GateWallet
+from cr_assis.wallet.binanceWallet import BinanceWallet
 from cr_assis.eva.evaOkexWallet import EvaOkexWallet
-a = GateWallet()
-a.update_wallet()
-from cr_assis.eva.evaGateWalletNew import EvaGateWallet
-wallet = EvaGateWallet()
-start = datetime.datetime(2023,6,16,0,0,0)
-end = datetime.datetime(2023,6,17,19,0,0)
-wallet.read_total_summary(start, end)
+u = BinanceWallet()
+u.update_wallet()
 
 api = AccountAPI()
 api.name = "hf_gate03"
