@@ -32,8 +32,8 @@ class AccountOkex(AccountBase):
         self.contractsize_uswap : dict[str, float] = {}
         self.cashBal : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
-        self.exposure_number = 1
-        self.is_master = {"usd-future":0, "usd-swap":1, "usdc-swap":2, "usdt":3,"usdt-future":4, "usdt-swap":5,  "": np.inf}
+        self.exposure_number = 0.6
+        self.is_master = {"usd-future":0, "usd-swap":1, "usdt":2, "usdc-swap":3, "usdt-future":4, "usdt-swap":5,  "": np.inf}
         self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
                         "usdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
         self.exchange_master, self.exchange_slave = "okex", "okex"

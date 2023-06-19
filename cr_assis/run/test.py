@@ -3,13 +3,38 @@ import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.api.gate.accountApi import AccountAPI
+from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.wallet.gateWallet import GateWallet
 from cr_assis.wallet.binanceWallet import BinanceWallet
 from cr_assis.eva.evaOkexWallet import EvaOkexWallet
-u = BinanceWallet()
-u.update_wallet()
+otest5 = AccountOkex(deploy_id="test_otest5@pt_okex_btc")
+ret = otest5.get_now_parameter()
+print(ret.loc[0, "_comments"]["timestamp"])
 
+
+api = AccountAPI()
+api.name = "hf_okex01"
+api.load_account_api()
+end = int(datetime.datetime.timestamp(datetime.datetime.now()) * 1000)
+start = int(datetime.datetime.timestamp(datetime.datetime.now() + datetime.timedelta(days = -90)) * 1000)
+ts = end
+data = []
+while ts >= start:
+    response = api.get_bills_details(end=ts)
+    if response.status_code == 200:
+        ret = response.json()["data"]
+        data += ret
+        ts = int(ret[-1]["ts"])
+    elif response.status_code == 429:
+        time.sleep(0.1)
+    else:
+        print(response.status_code)
+        print(response.json())
+        break
+df = pd.DataFrame(data)
+df["dt"] = df["ts"].apply(lambda x: datetime.datetime.fromtimestamp(float(x)/1000))
+df.sort_values(by = "dt", inplace = True)
+df.set_index("dt", inplace = True)
 api = AccountAPI()
 api.name = "hf_gate03"
 api.load_account_api()

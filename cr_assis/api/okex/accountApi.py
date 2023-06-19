@@ -24,7 +24,7 @@ class AccountAPI(Client):
         params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
         return self._requests(c.BILLS_DETAIL, params)
 
-    def get_bills_details(self, instType=None, ccy=None, mgnMode=None, ctType=None, type=None, subType=None, after=None, before=None,
+    def get_bills_details(self, instType=None, ccy=None, mgnMode=None, ctType=None, type=None, subType=None, after=None, before=None, begin=None, end = None,
                         limit=None):
         params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
         return self._requests(c.BILLS_ARCHIVE, params)

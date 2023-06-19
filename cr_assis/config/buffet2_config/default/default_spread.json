@@ -31,5 +31,6 @@
     "maxloss": 0.999,
     "open_thresh": 30,
     "close_thresh": 30,
-    "future_date": "230630"
+    "future_date": "230630",
+    "spread_start": "now() - 2h"
 }
