@@ -1,4 +1,4 @@
-from .buffetOkexNew import BuffetOkexNew
+from cr_assis.buffet2.buffetOkexNew import BuffetOkexNew
 import copy, datetime
 import pandas as pd
 import numpy as np

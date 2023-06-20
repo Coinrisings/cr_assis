@@ -33,6 +33,7 @@ class AccountOkex(AccountBase):
         self.cashBal : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
         self.exposure_number = 1
+        self.ignore_mv = 0.5
         self.is_master = {"usd-future":0, "usd-swap":1, "usdt":2, "usdc-swap":3, "usdt-future":4, "usdt-swap":5,  "": np.inf}
         self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
                         "usdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
@@ -331,7 +332,7 @@ class AccountOkex(AccountBase):
                 position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[ret["master"]]}', f'{self.parameter_name}{self.secret_id[ret["slave"]]}']
                 position.loc[num, "combo"] = self.get_coin_combo(coin, position.loc[num, "master_pair"], position.loc[num, "slave_pair"])
                 num += 1
-        position.drop(position[(position["master_secret"] == self.parameter_name) | (position["master_secret"] == self.parameter_name)].index, inplace= True)
+        position.drop(position[((position["master_secret"] == self.parameter_name) | (position["slave_secret"] == self.parameter_name)) & (position["MV%"] < self.ignore_mv)].index, inplace= True)
         position.sort_values(by = "MV%", ascending= False, inplace= True)
         position.index = range(len(position))
         self.position = position.copy()

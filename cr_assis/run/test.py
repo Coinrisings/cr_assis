@@ -5,8 +5,16 @@ from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.accountApi import AccountAPI
 
-bg001 = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
-bg001.get_account_position(the_time="'2023-06-19 12:00:00'")
+account = AccountOkex(deploy_id="test_otest2@pt_okex_btc")
+# account.get_account_position()
+ret = account.get_now_parameter()
+print(ret.loc[0, "_comments"]["timestamp"])
+position = account.get_now_position().drop(["diff", "diff_U", "is_exposure", "usdt"], axis = 1)
+print(position)
+open_price = account.get_open_price().drop("usdt", axis = 1)
+value = (position * open_price).values.sum()
+print(value)
+
 
 api = AccountAPI()
 api.name = "hf_okex01"

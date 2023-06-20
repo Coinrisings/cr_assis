@@ -1,7 +1,7 @@
 {
-    "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_spread.json",
+    "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_spread_binance.json",
     "total_mv": {
-        "test_otest5": [
+        "test_lxy003": [
             200,
             220,
             230

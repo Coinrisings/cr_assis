@@ -57,7 +57,7 @@ class InitAccounts(object):
         for deploy_id in deploy_ids:
             parameter_name, strategy = deploy_id.split("@")
             client, _ = parameter_name.split("_")
-            if not (self.ignore_test and client in ["test", "lxy"]) and "pt" == strategy.split("_")[0] and "binance" == strategy.split("_")[1]:
+            if not (self.ignore_test and client in ["test", "lxy"]) and ("pt" == strategy.split("_")[0] or "dt" == strategy.split("_")[0]) and "binance" == strategy.split("_")[1]:
                 accounts[parameter_name] = AccountBinance(deploy_id = deploy_id)
         self.accounts = accounts.copy()
         return accounts
