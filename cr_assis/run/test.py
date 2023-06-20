@@ -4,13 +4,9 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.accountApi import AccountAPI
-from cr_assis.wallet.gateWallet import GateWallet
-from cr_assis.wallet.binanceWallet import BinanceWallet
-from cr_assis.eva.evaOkexWallet import EvaOkexWallet
-otest5 = AccountOkex(deploy_id="test_otest5@pt_okex_btc")
-ret = otest5.get_now_parameter()
-print(ret.loc[0, "_comments"]["timestamp"])
 
+bg001 = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
+bg001.get_account_position(the_time="'2023-06-19 12:00:00'")
 
 api = AccountAPI()
 api.name = "hf_okex01"

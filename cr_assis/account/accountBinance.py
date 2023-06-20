@@ -33,3 +33,33 @@ class AccountBinance(AccountOkex):
         self.exchange_master, self.exchange_slave = "binance", "binance"
         self.path_orders = [f'{self.client}__{self.parameter_name}@binance_swap_usd', f'{self.client}__{self.parameter_name}@binance_swap_usdt']
         self.path_ledgers = [f'{self.client}__{self.parameter_name}@binance_swap_usd', f'{self.client}__{self.parameter_name}@binance_swap_usdt']
+    
+    def tell_exposure(self) -> pd.DataFrame:
+        data = self.now_position.copy() if hasattr(self, "now_position") else self.empty_position.copy()
+        for coin in data.index:
+            contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
+            array = data.loc[coin].sort_values()
+            array.drop(["diff", "diff_U"], inplace = True)
+            array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
+            tell1 = np.isnan(data.loc[coin, "diff"])
+            tell2 = np.abs(data.loc[coin, "diff_U"]) >300                                                               # 单币所有业务敞口之和大于300u
+            tell3 = np.abs((array[0] + array[-1])) * self.get_coin_price(coin) >300                                     # 单币的敞口大于100u
+            data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
+        data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
+        return data
+    
+    
+    def tell_master(self, data: pd.Series, contractsize: float):
+        data = data.sort_values()
+        coin = data.name
+        price=self.get_coin_price(coin)
+        
+        # 只要有一个条件不满足，认为账户没有这个币
+        tell1 = abs(data[0] + data[-1])*price <=300  and data[0] * data[-1] < 0       
+        tell2 = abs(data[1] + data[-1])*price >= 10  or data[1] * data[-1] > 0        
+        tell3 = abs(data[0] + data[-2])*price >= 10  or data[0] * data[-2] > 0          
+        result = [data.index[0], data.index[-1]] if tell1 and tell2 and tell3 else ["", ""]
+        print(coin,tell1,tell2,tell3)
+        ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
+                "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+        return ret
