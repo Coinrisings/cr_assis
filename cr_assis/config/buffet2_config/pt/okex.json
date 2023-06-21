@@ -1,8 +1,6 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv": {
-        "bg_001": [110, 120, 130],
-        "anta_anta001": [100, 120, 130],
         "bm_bm001": [100, 120, 130]
     },
     "single_mv" : {
