@@ -313,24 +313,30 @@ class AccountOkex(AccountBase):
         self.get_equity()
         data = self.get_now_position(timestamp=timestamp, the_time=the_time)
         position = pd.DataFrame(columns = ["coin", "side", "position", "MV", "MV%", "master_pair", "slave_pair", "master_secret", "slave_secret", "combo"])
-        data.drop(data[data["is_exposure"]].index, inplace= True)
+        # data.drop(data[data["is_exposure"]].index, inplace= True)
         data.drop(["diff", "diff_U", "is_exposure"], axis=1, inplace=True)
         num = 0
         for coin in data.index:
             contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
             ret = self.tell_master(data = data.loc[coin], contractsize = contractsize) if coin != self.ccy else self.tell_ccy_master(data.loc[coin], contractsize)
+            position.loc[num, "coin"] = coin.lower()
             if ret["master"] == "" or ret["slave"] == "":
-                continue
+                array = data.loc[coin].sort_values()
+                result =[array.index[0], array.index[-1]]
+                maybe = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
+                "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+                position.loc[num, "side"] = "long" if data.loc[coin, maybe["master"]] > 0 else "short"
+                position.loc[num, "position"] = abs(data.loc[coin, maybe["master"]]) if maybe["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[coin, maybe["master"]])
+                position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if maybe["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
             else:
-                position.loc[num, "coin"] = coin.lower()
                 position.loc[num, "side"] = "long" if data.loc[coin, ret["master"]] > 0 else "short"
                 position.loc[num, "position"] = abs(data.loc[coin, ret["master"]]) if ret["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[coin, ret["master"]])
                 position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if ret["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
-                position.loc[num, "MV%"] = round(position.loc[num, "MV"] / self.adjEq * 100, 4)
-                position.loc[num, ["master_pair", "slave_pair"]] = [f'{position.loc[num, "coin"]}-{ret["master"]}', f'{position.loc[num, "coin"]}-{ret["slave"]}']
-                position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[ret["master"]]}', f'{self.parameter_name}{self.secret_id[ret["slave"]]}']
-                position.loc[num, "combo"] = self.get_coin_combo(coin, position.loc[num, "master_pair"], position.loc[num, "slave_pair"])
-                num += 1
+            position.loc[num, "MV%"] = round(position.loc[num, "MV"] / self.adjEq * 100, 4)
+            position.loc[num, ["master_pair", "slave_pair"]] = [f'{position.loc[num, "coin"]}-{ret["master"]}', f'{position.loc[num, "coin"]}-{ret["slave"]}']
+            position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[ret["master"]]}', f'{self.parameter_name}{self.secret_id[ret["slave"]]}']
+            position.loc[num, "combo"] = self.get_coin_combo(coin, position.loc[num, "master_pair"], position.loc[num, "slave_pair"])
+            num += 1
         position.drop(position[((position["master_secret"] == self.parameter_name) | (position["slave_secret"] == self.parameter_name)) & (position["MV%"] < self.ignore_mv)].index, inplace= True)
         position.sort_values(by = "MV%", ascending= False, inplace= True)
         position.index = range(len(position))

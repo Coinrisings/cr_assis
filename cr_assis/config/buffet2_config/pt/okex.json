@@ -4,10 +4,9 @@
         "bm_bm001": [100, 120, 130]
     },
     "single_mv" : {
-        "ssf": {"aidoge": [20, 30]}
     },
     "thresh": {
-        "ssf": {"aidoge": {"funding_open": 0.0015, "close": 1.005}},
+        "ssf": {"aidoge": {"funding_open": 0.0015, "close": 1.005, "closemaker": 1}},
         "dt": {"bsv": {"close": 1.0005}}
     }
 }
