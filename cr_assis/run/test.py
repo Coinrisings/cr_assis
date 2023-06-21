@@ -4,6 +4,10 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.accountApi import AccountAPI
+from cr_assis.connect.updateBitgetMain import UpdateBitgetMain
+update = UpdateBitgetMain(file_path="/Users/chelseyshao/data/mm/capital/bitget")
+update.handle_ret()
+
 
 account = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
 account.get_account_position()
