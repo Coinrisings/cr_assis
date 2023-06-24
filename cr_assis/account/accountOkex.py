@@ -325,6 +325,8 @@ class AccountOkex(AccountBase):
                 result =[array.index[0], array.index[-1]]
                 maybe = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
                 "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+                if coin == self.ccy and "usdt" in maybe.values():
+                    continue
                 position.loc[num, "side"] = "long" if data.loc[coin, maybe["master"]] > 0 else "short"
                 position.loc[num, "position"] = abs(data.loc[coin, maybe["master"]]) if maybe["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[coin, maybe["master"]])
                 position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if maybe["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
