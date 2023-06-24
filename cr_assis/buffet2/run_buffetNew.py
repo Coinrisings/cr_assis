@@ -3,4 +3,4 @@ from cr_assis.load import *
 
 bft = BuffetOkexNew()
 bft.json_path = "/Users/chelseyshao/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/pt"
-bft.run_buffet(is_save = True, upload= True)
+bft.run_buffet(is_save = True, upload= False)

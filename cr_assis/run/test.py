@@ -4,7 +4,10 @@ import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from research.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.api.okex.accountApi import AccountAPI
+from cr_assis.api.okex.marketApi import MarketAPI
+api = MarketAPI()
+response = api.get_tickers(instType= "SWAP")
+ret = response.json() if response.status_code == 200 else {"data": []}
 
 account = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
 account.get_account_position()
