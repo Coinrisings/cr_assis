@@ -7,7 +7,8 @@
     },
     "single_mv" : {
         "dt": {"crv": [0, 0]},
-        "ssf": {"icp": [0, 0]}
+        "ssf": {"icp": [0, 0], "doge": [10, 20]},
+        "bu": {"btc": [0, 0]}
     },
     "thresh": {
         "ssf": {"aidoge": {"funding_open": 0.0015, "close": 1.005, "closemaker": 1}}

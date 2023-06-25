@@ -29,7 +29,7 @@ setup(
     description='This is a `cr_assis` of the setup',  # 简单描述
     author='ssh',  # 作者
     author_email='ssh21927@gmail.com',  # 作者邮箱
-    url='https://github.com/Coinrisings/research',  # 包的主页
+    url='https://github.com/SSH-C12138/cr_assis.git',  # 包的主页
     install_requires=REQUIRES,
     packages=find_packages(),
     package_data={'': ['*.json']},
