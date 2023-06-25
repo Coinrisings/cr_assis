@@ -29,7 +29,9 @@ class SsfoPnl(object):
 
     def get_fpnl(self) -> dict:
         fpnl = {}
+        ipnl = {}
         day_fpnl = {}
+        day_ipnl = {}
         for account in self.accounts:
             account.get_equity() if not hasattr(account, "adjEq") else None
             account.end = self.end_time
@@ -40,7 +42,10 @@ class SsfoPnl(object):
                     account.get_fpnl()
                 else:
                     account.fpnl = pd.DataFrame(columns = ["total"])
-                day_fpnl[day] = account.fpnl["total"].sum() / account.adjEq
+                day_fpnl[day] = account.fpnl["funding_fee"].sum() / account.adjEq
+                day_ipnl[day] = account.fpnl["interest"].sum() / account.adjEq
             fpnl[account.parameter_name] = day_fpnl.copy()
+            ipnl[account.parameter_name] = day_ipnl.copy()
         self.fpnl = fpnl
-        return fpnl
+        self.ipnl = ipnl
+        return fpnl, ipnl
