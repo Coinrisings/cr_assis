@@ -4,11 +4,9 @@ from cr_assis.load import *
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.connect.connectData import ConnectData
 from cr_assis.account.accountOkex import AccountOkex
-from pymongo import MongoClient
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
-import pytz
 
 class OkexPnl(object):
     
