@@ -7,6 +7,7 @@ from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
+from bokeh.models.widgets import Panel, Tabs
 
 class OkexPnl(object):
     
@@ -15,8 +16,10 @@ class OkexPnl(object):
         self.trade = TradeAPI()
         self.dataokex = ConnectOkex()
         self.database = ConnectData()
+        self.combo = "okex_usd_swap-okex_usdt_swap"
         self.ccy = "BTC"
-        self.interval = "8H"
+        self.interval = "1H"
+        self.mv = {}
         self.exchange = "okex"
         self.slip_unit = 10000
         self.real_uswap = 0.0002
@@ -79,6 +82,10 @@ class OkexPnl(object):
         self.bills_data = data
         return data
     
+    def get_pnl(self, name: str, start: datetime.datetime, end: datetime.datetime, is_play = True) -> pd.DataFrame:
+        df = self.get_long_bills(name, start, end)
+        ret = self.handle_bills(df, is_play)
+    
     def get_slip(self, name: str, start: datetime.datetime, end: datetime.datetime, is_play = True) -> pd.DataFrame:
         start -= datetime.timedelta(hours = 8)
         end -= datetime.timedelta(hours = 8)
@@ -138,7 +145,7 @@ class OkexPnl(object):
                 parameter[coin] = df
         self.is_reach = {}
         for coin in parameter.keys():
-            spreads[coin] = account.get_spreads(coin, combo = "okex_usd_swap-okex_usdt_swap", start = f"'{start+datetime.timedelta(hours = -8)}'", end = f"'{end+datetime.timedelta(hours = -8)}'")
+            spreads[coin] = account.get_spreads(coin, combo = self.combo, start = f"'{start+datetime.timedelta(hours = -8)}'", end = f"'{end+datetime.timedelta(hours = -8)}'")
             spreads[coin].index = spreads[coin]["time"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(hours = 8))
             result[coin] = pd.merge(spreads[coin], parameter[coin], left_index=True, right_index=True, how="outer").fillna(method="ffill").dropna()
             result[coin]["is_reach"] = (result[coin]["bid0_spread"] >= result[coin]["bid"]) | (result[coin]["ask0_spread"] >= result[coin]["ask"])
@@ -161,6 +168,7 @@ class OkexPnl(object):
                 break
         df = pd.DataFrame(data).drop_duplicates()
         df["dt"] = df["uTime"].apply(lambda x: datetime.datetime.fromtimestamp(float(x)/1000))
+        df = df[(df["dt"] >= self.ts_to_dt(start)) & (df["dt"] <= end)].copy()
         df["coin"] = df["instId"].apply(lambda x: x.split("-")[0].upper())
         df["is_maker"] = True
         df["is_trade"] = df["state"] != "canceled"
@@ -174,7 +182,26 @@ class OkexPnl(object):
             self.order[coin]["is_trade"] = self.is_trade[coin]["is_trade"].apply(lambda x: True if x > 0 else False)
         return df
 
-    def get_rate(self, deploy_id: str, start: datetime.datetime, end: datetime.datetime) -> dict:
+    def get_mv(self, coin: str, name: str,start: datetime.datetime, end: datetime.datetime) -> None:
+        client, username = name.split("_")
+        a = f"""
+        SELECT mean(long) + mean(short) as mv FROM "position" WHERE time > '{start + datetime.timedelta(hours = -8)}' and time < '{end + datetime.timedelta(hours = -8)}' 
+        and username = '{username}' and client = '{client}' and pair = '{coin.lower()}-usd-swap' GROUP BY time({self.interval.lower()})
+        """
+        position = self.database._send_influx_query(sql = a, database = "account_data")
+        a = f"""
+        SELECT mean(usdt) as adjEq FROM "balance_v2" WHERE time > '{start + datetime.timedelta(hours = -8)}' and time < '{end + datetime.timedelta(hours = -8)}'
+        and username = '{username}' and client = '{client}' and balance_id != None GROUP BY time({self.interval.lower()}) 
+        """
+        equity = self.database._send_influx_query(sql = a, database = "account_data")
+        result = pd.merge(position, equity, on = "time", how="outer").fillna(method="ffill")
+        result["dt"] = result["time"].apply(lambda x: datetime.datetime.strptime(x, "%Y-%m-%dT%H:%M:%SZ") + datetime.timedelta(hours = 8))
+        result.set_index("dt", inplace=True)
+        result["mv"] = result["mv"] * 10 if coin.upper() != "BTC" else result["mv"] * 100
+        result["mv%"] = result["mv"] / result["adjEq"]
+        return result
+    
+    def get_rate(self, deploy_id: str, start: datetime.datetime, end: datetime.datetime, is_play = True) -> dict:
         self.rate = {}
         self.count = {}
         self.get_deal(deploy_id, start, end)
@@ -182,4 +209,15 @@ class OkexPnl(object):
         for coin in set(self.is_reach.keys()) & set(self.order.keys()):
             self.count[coin] = pd.merge(self.is_reach[coin], self.order[coin], left_index= True, right_index= True)
             self.rate[coin] = self.count[coin].resample(self.interval).mean()
+            self.mv[coin] = self.get_mv(coin, deploy_id.split("@")[0], start, end)
+            self.rate[coin] = pd.merge(self.rate[coin], self.mv[coin][["mv%"]], left_index=True, right_index=True)
+        if is_play:
+            tabs = []
+            for coin in self.rate.keys():
+                p = draw_ssh.line_doubleY(self.rate[coin], right_columns=["mv%"], title = deploy_id.split("@")[0], play = False)
+                p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
+                tab = Panel(child = p, title = coin)
+                tabs.append(tab)
+            t = Tabs(tabs = tabs)
+            show(t)
         return self.rate

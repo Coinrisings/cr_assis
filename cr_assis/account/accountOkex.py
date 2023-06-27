@@ -148,7 +148,7 @@ class AccountOkex(AccountBase):
             """
             data = self._send_complex_query(sql = a)
         data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
-        data.drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "last", inplace = True)
+        data = data.sort_values(by = "time").drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "last")
         return data
     
     def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:
@@ -226,7 +226,7 @@ class AccountOkex(AccountBase):
     
     def is_ccy_exposure(self, array: pd.Series, contractsize: float) -> bool:
         other_array = array.drop("usdt").sort_values()
-        not_spot = other_array.sum() > self.exposure_number * contractsize * 5 or other_array[0] + other_array[-1] > self.exposure_number * contractsize * 2
+        not_spot = abs(other_array.sum()) > self.exposure_number * contractsize * 5 or abs(other_array[0] + other_array[-1]) > self.exposure_number * contractsize * 2
         is_spot = abs(other_array[0]) >= self.exposure_number * contractsize and abs(other_array[-1]) >= self.exposure_number * contractsize
         return not_spot and is_spot
     

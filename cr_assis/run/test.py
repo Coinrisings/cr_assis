@@ -11,9 +11,14 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
-pnl = BinancePnl()
-df = pnl.get_long_bills(name = "test_lxy003", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,27,0,0,0))
 
+# pnl = OkexPnl()
+# rate = pnl.get_rate(deploy_id = "test_otest5@pt_okex_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0))
+
+
+pnl = BinancePnl()
+# mv = pnl.get_mv(coin = "btc", name = "test_lxy003", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,27,0,0,0))
+df = pnl.get_rate(deploy_id= "test_lxy003@dt_binance_cswap_binance_uswap_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,27,0,0,0))
 
 pnl = OkexPnl()
 rate = pnl.get_rate(deploy_id = "test_otest5@pt_okex_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0))
