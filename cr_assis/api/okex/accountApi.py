@@ -28,7 +28,7 @@ class AccountAPI(Client):
                         limit=None):
         params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
         return self._requests(c.BILLS_ARCHIVE, params)
-
+    
     def get_account_config(self):
         return self._requests(c.ACCOUNT_CONFIG)
 

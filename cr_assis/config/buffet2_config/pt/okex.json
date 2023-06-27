@@ -2,15 +2,16 @@
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv": {
         "bg_001": [100, 120, 130],
-        "anta_anta001": [100, 120, 130],
-        "bm_bm001": [100, 120, 130]
+        "bm_bm001": [100, 120, 130],
+        "test_otest5": [0, 0, 0],
+        "anta_anta001": [0, 120, 130]
     },
     "single_mv" : {
-        "dt": {"crv": [0, 0]},
-        "ssf": {"icp": [0, 0], "doge": [10, 20]},
+        "ssf": {"doge": [20, 30], "ape": [0, 0],"ordi": [10, 20], "aidoge": [17, 30]},
         "bu": {"btc": [0, 0]}
     },
     "thresh": {
-        "ssf": {"aidoge": {"funding_open": 0.0015, "close": 1.005, "closemaker": 1}}
+        "anta_anta001": {"all": {"open": 2}},
+        "ssf": {"aidoge": {"open": 0.999, "funding_open": 0.0015, "close": 1.01}, "ape": {"fragment_min": 0.1}}
     }
 }

@@ -121,7 +121,7 @@ class BuffetOkexNew(object):
             self.logger.warning(f"{account.parameter_name}:获取equity错误!")
             is_nan = True
         # 仓位获取，获取不到跳过
-        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0 or account.parameter_name in account.position["master_secret"].values or (hasattr(account, "position") and len(account.origin_position) == 0):
+        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0 or account.parameter_name in account.position["master_secret"].values or (len(account.position) == 0 and len(account.origin_position) == 0):
             self.logger.warning(f"{account.parameter_name}:最近10分钟position数据缺失或者有敞口")
             is_nan = True
         # mr获取，获取不到跳过
@@ -485,19 +485,4 @@ class BuffetOkexNew(object):
             self.save_parameter()
         if upload:
             self.upload_parameter()
-        # try:
-        #     self.init_accounts()
-        #     self.get_parameter()
-        # except Exception as e:
-        #     self.log_bug(e)
-        # if is_save:
-        #     try:
-        #         self.save_parameter()
-        #     except Exception as e:
-        #         self.log_bug(e)
-        # if upload:
-        #     try:
-        #         self.upload_parameter()
-        #     except Exception as e:
-        #         self.log_bug(e)
         self.logger.handlers.clear()

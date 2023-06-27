@@ -1,13 +1,30 @@
-import datetime, requests, datetime, json, os, time, hashlib, hmac
+import datetime, datetime, time
 import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
 from research.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.marketApi import MarketAPI
-api = MarketAPI()
-response = api.get_tickers(instType= "SWAP")
-ret = response.json() if response.status_code == 200 else {"data": []}
+from cr_assis.api.okex.accountApi import AccountAPI
+from cr_assis.pnl.okexPnl import OkexPnl
+from cr_assis.draw import draw_ssh
+from bokeh.models import NumeralTickFormatter
+from bokeh.plotting import show
+
+pnl = OkexPnl()
+rate = pnl.get_rate(deploy_id = "test_otest5@pt_okex_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0))
+df = pnl.get_long_bills(name = "test_otest5", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime.now())
+ret = pnl.handle_bills(df, is_play=False)
+ret = pnl.get_slip(name = "test_otest5", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0), is_play= False)
+result1 = pnl.bills_data[["dt", "cum_pnl", "fake_cum_pnl"]].copy()
+result1.set_index("dt",inplace=True)
+result2 = pnl.slip[["dt", "slip_page"]].copy()
+result2.set_index("dt", inplace=True)
+result = pd.merge(result1, result2, left_index = True, right_index=True, how="outer")
+result = result.fillna(method = "ffill")
+p = draw_ssh.line_doubleY(result, right_columns=["slip_page"],play=False)
+p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
+show(p)
 
 account = AccountOkex(deploy_id="bm_bm001@pt_okex_btc")
 account.get_account_position()

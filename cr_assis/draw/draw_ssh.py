@@ -72,10 +72,10 @@ def line(result, x_axis_label = "", y_axis_label = "", title = "", x_axis_type =
     source = ColumnDataSource(data = data)
     if len(tips) == 0 and len(formatters) == 0 and len(tags) == 0:
         if x_axis_type == "datetime":
-            hover = HoverTool(tooltips=[('datetime','@x{%Y-%m-%d %H:%M:%S}'),('value','$y{0.0000}'),('name','$name')],
+            hover = HoverTool(tooltips=[('datetime','@x{%Y-%m-%d %H:%M:%S}'),('value','$y{0.000000}'),('name','$name')],
                         formatters={"@x": "datetime"})
         elif x_axis_type == "linear":
-            hover = HoverTool(tooltips=[('x', '$x{0.0000}'), ('value','$y{0.0000}'),('name','$name')],
+            hover = HoverTool(tooltips=[('x', '$x{0.0000}'), ('value','$y{0.000000}'),('name','$name')],
                         formatters={"@x": "printf"})
     else:
         hover = HoverTool(tooltips = tips, formatters = formatters)
@@ -162,10 +162,10 @@ def line_doubleY(result, right_columns, left_columns = [], x_axis_label = "", y_
     source = ColumnDataSource(data = data)
     if len(tips) == 0 and len(formatters) == 0 and len(tags) == 0:
         if x_axis_type == "datetime":
-            hover = HoverTool(tooltips=[('datetime','@x{%Y-%m-%d %H:%M:%S}'),('value','$y{0.0000}'),('name','$name')],
+            hover = HoverTool(tooltips=[('datetime','@x{%Y-%m-%d %H:%M:%S}'),('value','$y{0.000000}'),('name','$name')],
                           formatters={"@x": "datetime"})
         elif x_axis_type == "linear":
-            hover = HoverTool(tooltips=[('x', '$x{0.0000}'), ('value','$y{0.0000}'),('name','$name')],
+            hover = HoverTool(tooltips=[('x', '$x{0.0000}'), ('value','$y{0.000000}'),('name','$name')],
                           formatters={"@x": "printf"})
     else:
         hover = HoverTool(tooltips = tips, formatters = formatters)
