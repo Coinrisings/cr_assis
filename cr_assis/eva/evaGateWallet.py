@@ -2,6 +2,7 @@ import datetime, os
 import pandas as pd
 import numpy as np
 from cr_assis.draw import draw_ssh
+from cr_assis.eva  import eva
 from bokeh.models.widgets import Panel, Tabs
 from bokeh.plotting import figure,show
 from bokeh.models import NumeralTickFormatter
@@ -13,6 +14,10 @@ class EvaGateWallet(object):
         self.max_loss = 0.5
         self.max_mv = 0.2
         self.title_name = {"total_pnl": "所有子账户累计交易盈亏总额", "total_capital": "所有子账户子账户资金加总", "total_equity": "所有子账户净值","dnw_sum": "所有子账户累计转入-累计转出", "total_mv": "头寸大小统计"}
+    
+    def get_btc_price(self, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
+        ret = eva.get_klines(exchange = "okex", coin = "btc", contract = "spot", start = start, end = end)
+        return ret
     
     def read_total_summary(self, start: datetime.datetime, end: datetime.datetime, is_play = True):
         total_summary = self.read_data(path = f"{self.file_path}/total", start = start, end = end)
