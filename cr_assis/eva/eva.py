@@ -377,8 +377,6 @@ def get_klines(exchange, coin, contract, start:datetime.datetime, end:datetime.d
             df = pd.read_csv(path + date + ".csv")
             data = pd.concat([data, df])
         except:
-            if log:
-                print(f"{exchange} {coin} {contract} {date} klines data NA")
             pass
     if dt:
         data["dt"] = data["time"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%d %H:%M:%S') + datetime.timedelta(hours = 8))

@@ -25,6 +25,7 @@ class EvaOkexWallet(EvaGateWallet):
             self.total_summary = total_summary.drop("position_value", axis = 1) if "position_value" in total_summary.columns else total_summary
             p = draw_ssh.line_doubleY(self.total_summary, right_columns=["mv%"], play = False) if is_play and len(self.total_summary) > 0 else None
             kline = self.get_btc_price(start, end)
+            kline.set_index("dt", inplace = True)
             p.extra_y_ranges['y3'] = Range1d(start = min(kline["open"].astype(float).values), end = max(kline["open"].astype(float).values))
             p.add_layout(LinearAxis(y_range_name = 'y3'),'right')
             p.line(kline.index, kline["open"], legend_label="kline", line_color="green",name = "kline", y_range_name='y3', line_width = 2)
