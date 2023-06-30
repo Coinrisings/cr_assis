@@ -14,7 +14,7 @@
     },
     "funding_open": 0.002,
     "funding_close": 0.005,
-    "chase_tick": 1,
+    "chase_tick": 0,
     "close": 1.005,
     "open": "",
     "closemaker": "",
