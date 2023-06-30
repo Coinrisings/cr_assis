@@ -14,7 +14,7 @@ class EvaGateWallet(object):
         self.file_path = "/mnt/efs/fs1/data_ssh/mm/capital/gate"
         self.max_loss = 0.5
         self.max_mv = 0.2
-        self.title_name = {"total_pnl": "所有子账户累计交易盈亏总额", "total_capital": "所有子账户子账户资金加总", "total_equity": "所有子账户净值","dnw_sum": "所有子账户累计转入-累计转出", "total_mv": "头寸大小统计"}
+        self.title_name = {"total_pnl": "所有子账户累计交易盈亏总额", "total_capital": "所有子账户子账户资金加总", "total_equity": "所有子账户净值","dnw_sum": "所有子账户累计转入-累计转出", "total_mv": "头寸大小统计", "open": "开盘价", "close": "收盘价"}
     
     def get_btc_price(self, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
         ts = int(datetime.datetime.timestamp(end)) * 1000
@@ -57,8 +57,15 @@ class EvaGateWallet(object):
     def draw_result_tabs(self, result: pd.DataFrame):
         tabs = []
         for col in result.columns:
-            p = draw_ssh.line(result[[col]], play = False)
-            p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col != "total_mv" else NumeralTickFormatter(format="0.0000%")
+            if result.shape[1] == 1:
+                p = draw_ssh.line(result[[col]], play = False)
+                p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col != "total_mv" else NumeralTickFormatter(format="0.0000%")
+            elif result.shape[1] == 2:
+                p = draw_ssh.line_doubleY(result[[col]], right_columns=list(result.columns)[-1],play = False)
+                p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col not in  ["open", "close"] else NumeralTickFormatter(format="0.00")
+                p.yaxis[1].formatter = NumeralTickFormatter(format="0,0") if col not in  ["open", "close"] else NumeralTickFormatter(format="0.00")
+            else:
+                continue
             tab = Panel(child = p, title = self.title_name[col])
             tabs.append(tab)
         t = Tabs(tabs = tabs)

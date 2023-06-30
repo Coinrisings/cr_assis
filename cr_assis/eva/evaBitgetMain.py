@@ -10,6 +10,6 @@ class EvaBitGetMain(EvaGateWallet):
     
     def read_total_summary(self, start: datetime, end: datetime, is_play=True):
         super().read_total_summary(start, end, is_play = False)
-        kline = self.get_btc_price(start, end)
-        self.total_summary = pd.merge(self.total_summary, kline.set_index("dt")[["close"]], left_index= True ,right_index= True, how="outer")
+        kline = self.get_btc_price(start, end).set_index("dt")
+        self.total_summary = pd.merge(self.total_summary, kline[["close"]], left_index= True ,right_index= True, how="outer")
         self.draw_result_tabs(self.total_summary) if is_play else None
