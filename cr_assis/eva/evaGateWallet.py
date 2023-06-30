@@ -57,15 +57,17 @@ class EvaGateWallet(object):
     def draw_result_tabs(self, result: pd.DataFrame):
         tabs = []
         for col in result.columns:
-            if result.shape[1] == 1:
+            if col not in ["total_equity"]:
                 p = draw_ssh.line(result[[col]], play = False)
                 p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col != "total_mv" else NumeralTickFormatter(format="0.0000%")
-            elif result.shape[1] == 2:
-                p = draw_ssh.line_doubleY(result[[col]], right_columns=list(result.columns)[-1],play = False)
-                p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col not in  ["open", "close"] else NumeralTickFormatter(format="0.00")
-                p.yaxis[1].formatter = NumeralTickFormatter(format="0,0") if col not in  ["open", "close"] else NumeralTickFormatter(format="0.00")
             else:
-                continue
+                kline = self.get_btc_price(result.index[0], result.index[0])
+                kline["dt"] = kline["dt"].apply(lambda x: x.replace(tzinfo=None))
+                kline.set_index("dt", inplace=True)
+                data = pd.merge(result[[col]], kline["open"], left_index=True, right_index=True, how="outer")
+                p = draw_ssh.line_doubleY(data, right_columns=["open"], play = False)
+                p.yaxis[0].formatter = NumeralTickFormatter(format="0,0") if col != "total_mv" else NumeralTickFormatter(format="0.0000%")
+                p.yaxis[1].formatter = NumeralTickFormatter(format="0.00")
             tab = Panel(child = p, title = self.title_name[col])
             tabs.append(tab)
         t = Tabs(tabs = tabs)
