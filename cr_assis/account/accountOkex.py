@@ -148,7 +148,7 @@ class AccountOkex(AccountBase):
             """
             data = self._send_complex_query(sql = a)
         data.dropna(subset = ["secret_id"], inplace= True) if "secret_id" in data.columns else None
-        data = data.sort_values(by = "time").drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "last")
+        data = data.sort_values(by = "time").drop_duplicates(subset= ["pair", "ex_field", "secret_id"], keep = "last") if len(data) > 0 else data
         return data
     
     def find_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> pd.DataFrame:

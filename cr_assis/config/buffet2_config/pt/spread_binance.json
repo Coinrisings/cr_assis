@@ -1,13 +1,10 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_spread_binance.json",
     "total_mv": {
+        "test_lxy002": [200, 220, 230]
     },
     "single_mv": {
         "dt": {
-            "btc": [
-                100,
-                120
-            ],
             "eth": [
                 100,
                 120

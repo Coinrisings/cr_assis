@@ -116,6 +116,10 @@ class BuffetOkexNew(object):
         account.get_account_position()
         account.get_mgnRatio()
         is_nan = False
+        if account.__class__.__name__ == "AccountBinance":
+            for coin in ["BNB", "BTC"]:
+                if coin in account.now_position.index:
+                    account.now_position.drop(coin, inplace=True)
         # 权益获取，获取不到跳过
         if not hasattr(account, "adjEq") or np.isnan(account.adjEq):
             self.logger.warning(f"{account.parameter_name}:获取equity错误!")
