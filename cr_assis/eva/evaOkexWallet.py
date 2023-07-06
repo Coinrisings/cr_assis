@@ -21,6 +21,7 @@ class EvaOkexWallet(EvaGateWallet):
         accounts = self.accounts if accounts == [] else accounts
         tabs = []
         accounts_panle = {}
+        self.origin_total = {}
         for account in accounts:
             total_summary = self.read_data(path = f"{self.file_path}/{account}", start = start, end = end)
             self.total_summary = total_summary.drop("position_value", axis = 1) if "position_value" in total_summary.columns else total_summary
@@ -30,6 +31,7 @@ class EvaOkexWallet(EvaGateWallet):
             accounts_panle[account].extra_y_ranges['y3'] = Range1d(start = min(kline["open"].astype(float).values), end = max(kline["open"].astype(float).values))
             accounts_panle[account].add_layout(LinearAxis(y_range_name = 'y3'),'right')
             accounts_panle[account].line(kline.index, kline["open"], legend_label="kline", line_color="green",name = "kline", y_range_name='y3', line_width = 2)
+            self.origin_total[account] = pd.merge(self.total_summary, kline, left_index=True, right_index=True, how = "outer")
             if accounts_panle[account] != None:
                 accounts_panle[account].yaxis[0].formatter = NumeralTickFormatter(format="0,0")
                 accounts_panle[account].yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
