@@ -11,13 +11,15 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
-from cr_assis.eva.evaGateWallet import EvaGateWallet
-eva = EvaGateWallet()
-kline = eva.get_btc_price(datetime.datetime(2022,4,16,16,0,0), datetime.datetime(2024,6,17,17,0,0))
 
-import requests
-a = AccountBinance("test_lxy002@dt_binance_cswap_binance_uswap_btc")
-a.get_account_position()
+account = AccountOkex(deploy_id="test_hfok01@pt_okex_btc")
+account.get_account_position()
+position = account.get_now_position().drop(["diff", "diff_U", "is_exposure", "usdt"], axis = 1)
+print(position)
+open_price = account.get_open_price().drop("usdt", axis = 1)
+value = (position * open_price).values.sum()
+print(value)
+
 # pnl = OkexPnl()
 # rate = pnl.get_rate(deploy_id = "test_otest5@pt_okex_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0))
 
@@ -45,13 +47,5 @@ p = draw_ssh.line_doubleY(result, right_columns=["slip_page"],play=False)
 p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
 show(p)
 
-account = AccountOkex(deploy_id="test_hfok01@pt_okex_btc")
-account.get_account_position()
-ret = account.get_now_parameter()
-print(ret.loc[0, "_comments"]["timestamp"])
-position = account.get_now_position().drop(["diff", "diff_U", "is_exposure", "usdt"], axis = 1)
-print(position)
-open_price = account.get_open_price().drop("usdt", axis = 1)
-value = (position * open_price).values.sum()
-print(value)
+
 

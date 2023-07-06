@@ -1,5 +1,5 @@
 from .evaGateWallet import EvaGateWallet
-import os, datetime, yaml
+import os, datetime, yaml, copy
 from cr_assis.load import *
 from cr_assis.draw import draw_ssh
 from bokeh.plotting import figure,show
@@ -33,7 +33,7 @@ class EvaOkexWallet(EvaGateWallet):
                 p.yaxis[0].formatter = NumeralTickFormatter(format="0,0")
                 p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
                 p.yaxis[2].formatter = NumeralTickFormatter(format="0.00")
-                tab = Panel(child = p, title = account)
+                tab = Panel(child = copy.deepcopy(p), title = account)
                 tabs.append(tab)
         if len(tabs) > 0:
             t = Tabs(tabs = tabs)
