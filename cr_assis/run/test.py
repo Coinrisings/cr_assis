@@ -11,6 +11,11 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
+from cr_assis.eva.evaGateWalletNew import EvaGateWallet
+gate = EvaGateWallet()
+start = datetime.datetime(2023,7,5,0,0,0)
+end = datetime.datetime(2023,7,17,17,0,0)
+gate.read_total_summary(start, end, accounts = [])
 
 account = AccountOkex(deploy_id="test_hfok01@pt_okex_btc")
 account.get_account_position()

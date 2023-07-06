@@ -294,8 +294,12 @@ def line_triY(result, left_columns, right_columns = [], x_axis_label = "", y_axi
     for col in left_columns:
         range_num.loc["min", col] = min(result[col].dropna().values) if not len(result[col].astype(float).dropna()) == 0 else 0
         range_num.loc["max", col] = max(result[col].dropna().values) if not len(result[col].astype(float).dropna()) == 0 else 1
-    p1.y_range = Range1d(start = float(min(range_num.loc["min"].values)),
-                                end = float(max(range_num.loc["max"].values)))
+        if range_num.loc["min", col] != range_num.loc["max", col]:
+            p1.y_range = Range1d(start = float(range_num.loc["min", col]),
+                                        end = float(range_num.loc["max", col]))
+        else:
+            p1.y_range = Range1d(start = float(range_num.loc["min", col]),
+                                end = (float(range_num.loc["max", col])+1))
     
     for col in left_columns:
         p1.line(result.index, result[col], legend_label=col, line_color=colors[num],name = col, line_width = 2)
@@ -308,7 +312,12 @@ def line_triY(result, left_columns, right_columns = [], x_axis_label = "", y_axi
         y_column2_range = str(num)
         range_num.loc["min", col] = min(result[col].dropna().values) if not len(result[col].astype(float).dropna()) == 0 else 0
         range_num.loc["max", col] = max(result[col].dropna().values) if not len(result[col].astype(float).dropna()) == 0 else 1
-        p1.extra_y_ranges[y_column2_range] = Range1d(start = range_num.loc["min", col],end = range_num.loc["max", col])
+        if range_num.loc["min", col] != range_num.loc["max", col]:
+            p1.extra_y_ranges[y_column2_range] = Range1d(start = float(range_num.loc["min", col]),
+                                        end = float(range_num.loc["max", col]))
+        else:
+            p1.extra_y_ranges[y_column2_range] = Range1d(start = float(range_num.loc["min", col]),
+                                end = (float(range_num.loc["max", col])+1))
         p1.add_layout(LinearAxis(y_range_name = y_column2_range),'right')
         p1.line(result.index, result[col], legend_label=col, line_color=colors[num],name = col, y_range_name=y_column2_range, line_width = 2)
         num = num + 1
