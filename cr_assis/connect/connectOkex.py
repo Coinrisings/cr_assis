@@ -260,3 +260,29 @@ class ConnectOkex(object):
         else:
             mmr = np.nan
         return mmr
+    
+    def get_tiers(self, coin: str, contract: str) -> pd.DataFrame:
+        coin = coin.upper()
+        contract = contract.replace("_", "-")
+        if contract in ["usdt-swap", "-usdt-swap"]:
+            ret = self.get_tier_uswap(coin)
+        elif contract in ["usd-swap", "-usd-swap"]:
+            ret = self.get_tier_cswap(coin)
+        elif contract in ["usdc-swap", "-usdc-swap"]:
+            ret = self.get_tier_usdc(coin)
+        else:
+            ret = pd.DataFrame()
+        return ret
+    
+    def get_contractsize(self, coin: str, contract: str) -> float:
+        coin = coin.upper()
+        contract = contract.replace("_", "-")
+        if contract in ["usdt-swap", "-usdt-swap"]:
+            size = self.get_contractsize_uswap(coin)
+        elif contract in ["usd-swap", "-usd-swap"]:
+            size = self.get_contractsize_cswap(coin)
+        elif contract in ["usdc-swap", "-usdc-swap"]:
+            size = self.get_contractsize_usdc(coin)
+        else:
+            size = np.nan
+        return size
