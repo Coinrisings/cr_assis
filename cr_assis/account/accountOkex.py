@@ -328,7 +328,12 @@ class AccountOkex(AccountBase):
                 if coin == self.ccy and "usdt" in maybe.values():
                     continue
                 position.loc[num, "side"] = "long" if data.loc[coin, maybe["master"]] > 0 else "short"
-                position.loc[num, "position"] = abs(data.loc[coin, maybe["master"]]) if maybe["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[coin, maybe["master"]])
+                if maybe["master"].split("-")[0] != "usd":
+                    position.loc[num, "position"] = abs(data.loc[coin, maybe["master"]])
+                elif maybe["master"] in self.usd_position.columns:
+                    position.loc[num, "position"] = abs(self.usd_position.loc[coin, maybe["master"]])
+                else:
+                    position.loc[num, "position"] = np.nan
                 position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if maybe["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
             else:
                 position.loc[num, "side"] = "long" if data.loc[coin, ret["master"]] > 0 else "short"
@@ -340,6 +345,7 @@ class AccountOkex(AccountBase):
             position.loc[num, "combo"] = self.get_coin_combo(coin, position.loc[num, "master_pair"], position.loc[num, "slave_pair"])
             num += 1
         position.drop(position[((position["master_secret"] == self.parameter_name) | (position["slave_secret"] == self.parameter_name)) & (position["MV%"] < self.ignore_mv)].index, inplace= True)
+        position.drop(position[(position["coin"] == self.ccy.lower()) & (position["combo"].isnull())].index, inplace= True)
         position.sort_values(by = "MV%", ascending= False, inplace= True)
         position.index = range(len(position))
         self.position = position.copy()
