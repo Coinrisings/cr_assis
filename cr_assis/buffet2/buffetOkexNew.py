@@ -335,7 +335,7 @@ class BuffetOkexNew(object):
     def get_closemaker2(self, coin: str) -> float:
         spread_name = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
         combo = self.execute_account.parameter.loc[coin, "combo"] if coin in self.execute_account.parameter.index else ""
-        ret = max(self.get_expect_thresh(coin, "closemaker2", spread_name, use_thresh="close_thresh") + float(self.get_real_thresh(coin, combo, thresh = "cm2_change")), float(self.get_real_thresh(coin, combo, thresh="maxloss"))) if self.get_real_thresh(coin, combo, thresh = "closemaker2") == "" else self.get_real_thresh(coin, combo, thresh = "closemaker2")
+        ret = max(self.get_expect_thresh(coin, "closemaker2", spread_name, use_thresh="close_thresh") + float(self.get_real_thresh(coin, combo, thresh = "cm2_change")), float(self.get_real_thresh(coin, combo, thresh="maxloss"))) if self.get_real_thresh(coin, combo, thresh = "closemaker2") == "" else float(self.get_real_thresh(coin, combo, thresh = "closemaker2"))
         return ret
     
     def get_open_close(self) -> pd.DataFrame:

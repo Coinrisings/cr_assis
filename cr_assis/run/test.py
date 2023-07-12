@@ -1,4 +1,4 @@
-import datetime, datetime, time
+import datetime, datetime, time, os
 import pandas as pd
 import numpy as np
 from cr_assis.account.accountOkex import AccountOkex
@@ -11,11 +11,15 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
-from cr_assis.eva.evaGateWalletNew import EvaGateWallet
-gate = EvaGateWallet()
-start = datetime.datetime(2023,7,5,0,0,0)
-end = datetime.datetime(2023,7,17,17,0,0)
-gate.read_total_summary(start, end, accounts = [])
+
+acc = AccountBinance("test_hf02@pt_binance_usdt_portfolio")
+ret = acc.get_spreads(coin = "xrp", combo = "binance_spot-binance_usdt_swap")
+
+api = AccountAPI()
+api.name = "bm_bm001"
+api.load_account_api()
+response = api.get_account_balance()
+ret = response.json()["data"]
 
 account = AccountOkex(deploy_id="test_hfok01@pt_okex_btc")
 account.get_account_position()

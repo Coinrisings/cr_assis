@@ -10,3 +10,7 @@ class AccountAPI(Client):
     
     def get_futures_usdt_balance(self) -> requests.Response:
         return self._requests(c.PREFIX + c.FUTURES_USDT_INFO)
+    
+    def get_futures_usdt_mytrades(self, params = {}) -> requests.Response:
+        
+        return self._requests(c.PREFIX + c.FUTURES_USDT_TRADE)
