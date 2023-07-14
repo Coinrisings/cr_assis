@@ -7,4 +7,4 @@ ts = (datetime.datetime.utcnow() + datetime.timedelta(hours = 8)).strftime("%Y-%
 daily.mr_okex.price_range = [1]
 result = daily.get_account_mr()
 data = pd.DataFrame.from_dict(daily.account_mr)
-data.loc[[1]].rename(index = {1: ts}).to_csv("/mnt/efs/fs1/data_ssh/cal_mr/okex2.csv", mode = "a", header= (not os.path.isfile(f"/mnt/efs/fs1/data_ssh/cal_mr/okex2.csv")))
+data.loc[[1]].rename(index = {1: ts}).to_csv("/mnt/efs/fs1/data_ssh/cal_mr/okex3.csv", mode = "a", header= (not os.path.isfile(f"/mnt/efs/fs1/data_ssh/cal_mr/okex3.csv")))
