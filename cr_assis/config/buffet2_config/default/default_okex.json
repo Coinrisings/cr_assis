@@ -12,7 +12,7 @@
         "fsu":"okex_usd_swap-okex_usdt_future",
         "fsuu":"okex_usdt_future-okex_usdt_swap"
     },
-    "funding_open":0.0001,
+    "funding_open":0.001,
     "funding_close":0.005,
     "chase_tick":1,
     "close":1.003,

@@ -4,9 +4,7 @@
         "test_otest5": [100, 120, 130]
     },
     "single_mv" : {
-        "ssfc": {"eth": [-50, 60]},
-        "okex_usdc_swap-okex_spot": {"btc": [-50, 60]},
-        "dt": {"btc": [50, 60]}
+        "okex_usdc_swap-okex_spot": {"btc": [-100, 160]}
     },
     "thresh": {
         "test_otest5": {"all": {"closemaker": 0.999, "open": 0.999}}
