@@ -8,6 +8,7 @@ from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
 from bokeh.models.widgets import Panel, Tabs
+import pytz
 
 class OkexPnl(object):
     
@@ -36,10 +37,10 @@ class OkexPnl(object):
                 return mongo_uri
     
     def dt_to_ts(self, dt: datetime.datetime) -> int:
-        return int(datetime.datetime.timestamp(dt) * 1000)
+        return int(datetime.datetime.timestamp(dt.astimezone(pytz.timezone("Asia/ShangHai"))) * 1000)
 
     def ts_to_dt(self, ts: str | float) -> datetime.datetime:
-        return datetime.datetime.fromtimestamp(float(ts) / 1000)
+        return datetime.datetime.fromtimestamp(float(ts) / 1000).astimezone(pytz.timezone("Asia/ShangHai"))
     
     def get_long_bills(self, name: str, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
         self.api.name = name
@@ -64,7 +65,7 @@ class OkexPnl(object):
         data.sort_values(by = "ts", inplace=True)
         data.index = range(len(data))
         data[["bal", "balChg", "fee", "pnl", "price", "sz"]] = data[["bal", "balChg", "fee", "pnl", "price", "sz"]].astype(float)
-        for i in data.index:
+        for i in data[data["type"] == "2"].index:
             if data.loc[i, "ccy"] in ["USDT", "USD", "USDK", "BUSD", "USDC"]:
                 data.loc[i, "balChg_U"] = data.loc[i, "balChg"]
                 data.loc[i, "fake_fee"] = - data.loc[i, "sz"] * self.dataokex.get_contractsize_uswap(data.loc[i, "coin"]) * data.loc[i, "price"] * self.fake_uswap

@@ -1,12 +1,12 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv": {
-        "test_otest5": [100, 120, 130]
+        "test_otest8": [100, 120, 130]
     },
     "single_mv" : {
-        "okex_usdc_swap-okex_spot": {"btc": [-100, 160]}
+        "ssf": {"eth": [50, 160], "ltc": [50, 160]}
     },
     "thresh": {
-        "test_otest5": {"all": {"closemaker": 0.999, "open": 0.999}}
+        "test_otest8": {"all": {"closemaker": 0.999, "open": 0.999}}
     }
 }
