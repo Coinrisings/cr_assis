@@ -39,7 +39,7 @@ class OkexPnl(object):
     def dt_to_ts(self, dt: datetime.datetime) -> int:
         return int(datetime.datetime.timestamp(dt.astimezone(pytz.timezone("Asia/ShangHai"))) * 1000)
 
-    def ts_to_dt(self, ts: str | float) -> datetime.datetime:
+    def ts_to_dt(self, ts) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(float(ts) / 1000).astimezone(pytz.timezone("Asia/ShangHai"))
     
     def get_long_bills(self, name: str, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
