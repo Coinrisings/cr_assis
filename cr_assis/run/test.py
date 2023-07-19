@@ -18,7 +18,6 @@ from cr_assis.pnl.okexEquity import OkexEquity
 e = OkexEquity()
 e.run_equity(deploy_id="test_otest2@pt_okex_btc", start = datetime.datetime(2023,7,19,12,0,0),end = datetime.datetime.now(), plot_width = 1400, plot_height = 400,)
 
-
 def get_okex_bills(name: str, start: datetime.datetime, end: datetime.datetime, adl = False) -> pd.DataFrame:
     api = AccountAPI()
     api.name = name

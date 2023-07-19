@@ -149,7 +149,7 @@ class BuffetOkexNew(object):
         """初始化parameter
         """
         account = self.execute_account
-        now_pos = account.position[(account.position["MV"] > self.config[account.parameter_name]["select_u"]) & (account.position["MV%"] > self.config[account.parameter_name]["select_ratio"])].copy().set_index("coin")
+        now_pos = account.position[(account.position["MV"] > self.config[account.parameter_name]["select_u"]) | (account.position["MV%"] > self.config[account.parameter_name]["select_ratio"])].copy().set_index("coin")
         self.now_position[account.parameter_name] = now_pos.copy()
         parameter = pd.DataFrame(columns=self.parameter_cols, index = now_pos.index)
         if len(now_pos) > 0:

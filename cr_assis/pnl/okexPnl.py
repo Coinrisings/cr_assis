@@ -64,16 +64,16 @@ class OkexPnl(object):
         data["coin"] = data["instId"].apply(lambda x: x.split("-")[0])
         data.sort_values(by = "ts", inplace=True)
         data.index = range(len(data))
-        data[["bal", "balChg", "fee", "pnl", "price", "sz"]] = data[["bal", "balChg", "fee", "pnl", "price", "sz"]].astype(float)
+        data[["bal", "balChg", "fee", "pnl", "px", "sz"]] = data[["bal", "balChg", "fee", "pnl", "px", "sz"]].astype(float)
         for i in data[data["type"] == "2"].index:
             if data.loc[i, "ccy"] in ["USDT", "USD", "USDK", "BUSD", "USDC"]:
                 data.loc[i, "balChg_U"] = data.loc[i, "balChg"]
-                data.loc[i, "fake_fee"] = - data.loc[i, "sz"] * self.dataokex.get_contractsize_uswap(data.loc[i, "coin"]) * data.loc[i, "price"] * self.fake_uswap
+                data.loc[i, "fake_fee"] = - data.loc[i, "sz"] * self.dataokex.get_contractsize_uswap(data.loc[i, "coin"]) * data.loc[i, "px"] * self.fake_uswap
                 data.loc[i, "fake_balChg_U"] = data.loc[i, "pnl"] + data.loc[i, "fake_fee"]
             else:
-                data.loc[i, "balChg_U"] = data.loc[i, "balChg"] * data.loc[i, "price"]
+                data.loc[i, "balChg_U"] = data.loc[i, "balChg"] * data.loc[i, "px"]
                 data.loc[i, "fake_fee"] = - data.loc[i, "sz"] * self.dataokex.get_contractsize_cswap(data.loc[i, "coin"]) * self.fake_cswap
-                data.loc[i, "fake_balChg_U"] = data.loc[i, "pnl"] * data.loc[i, "price"] + data.loc[i, "fake_fee"]
+                data.loc[i, "fake_balChg_U"] = data.loc[i, "pnl"] * data.loc[i, "px"] + data.loc[i, "fake_fee"]
         data["cum_pnl"] = data["balChg_U"].cumsum()
         data["fake_cum_pnl"] = data["fake_balChg_U"].cumsum()
         if is_play:
