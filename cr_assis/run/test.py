@@ -16,7 +16,7 @@ from bokeh.plotting import show
 
 from cr_assis.pnl.okexEquity import OkexEquity
 e = OkexEquity()
-e.run_equity(deploy_id="test_otest2@pt_okex_btc", start = datetime.datetime(2023,7,18,0,0,0),end = datetime.datetime.now())
+e.run_equity(deploy_id="test_otest2@pt_okex_btc", start = datetime.datetime(2023,7,19,12,0,0),end = datetime.datetime.now(), plot_width = 1400, plot_height = 400,)
 
 
 def get_okex_bills(name: str, start: datetime.datetime, end: datetime.datetime, adl = False) -> pd.DataFrame:
@@ -72,15 +72,6 @@ position = get_okex_position("bg_bg003")
 equity, balance = get_okex_balance("bg_bg003")
 df = get_okex_bills("bg_bg003", start = datetime.datetime(2023,7,13,0,0,0), end = datetime.datetime(2023,7,13,4,0,0,0), adl = False)
 
-
-
-# pnl = OkexPnl()
-# rate = pnl.get_rate(deploy_id = "test_otest5@pt_okex_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,26,0,0,0))
-
-
-# pnl = BinancePnl()
-# # mv = pnl.get_mv(coin = "btc", name = "test_lxy003", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,27,0,0,0))
-# df = pnl.get_rate(deploy_id= "test_lxy003@dt_binance_cswap_binance_uswap_btc", start = datetime.datetime(2023,6,22,0,0,0), end = datetime.datetime(2023,6,27,0,0,0))
 
 deploy_id = "test_hfok01@pt_okex_btc"
 name = deploy_id.split("@")[0]

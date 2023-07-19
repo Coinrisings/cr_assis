@@ -45,8 +45,8 @@ class OkexEquity(object):
         ret = self.pnl.handle_bills(result, is_play=False)
         return ret[(ret["dt"] >= self.start) & (ret["dt"] <= self.end)].copy()
     
-    def run_equity(self, deploy_id: str, start: datetime.datetime, end: datetime.datetime, is_play = True) -> pd.DataFrame:
-        self.deploy_id, self.start, self.end = deploy_id, start.astimezone(pytz.timezone("Asia/ShangHai")), end.astimezone(pytz.timezone("Asia/ShangHai"))
+    def run_equity(self, deploy_id: str, start: datetime.datetime, end: datetime.datetime, is_play = True, plot_width = 900, plot_height = 600,) -> pd.DataFrame:
+        self.deploy_id, self.start, self.end = deploy_id, start.replace(tzinfo=pytz.timezone("Asia/ShangHai")), end.replace(tzinfo=pytz.timezone("Asia/ShangHai"))
         self.get_account_info()
         position = self.get_position()
         equity = self.get_equity()
@@ -56,7 +56,7 @@ class OkexEquity(object):
         result = pd.merge(ret.set_index("dt")[["cum_pnl", "fake_cum_pnl"]], equity, right_index = True, left_index = True, how = "outer").fillna(method="ffill")
         result[["cum_pnl", "fake_cum_pnl"]] = result[["cum_pnl", "fake_cum_pnl"]].fillna(0)
         result["fake_equity"] = result["equity"] + (result["fake_cum_pnl"] - result["cum_pnl"]) / result["price"]
-        p1 = draw_ssh.line(result[["equity", "fake_equity"]].dropna(how = "any"), play = False)
+        p1 = draw_ssh.line(result[["equity", "fake_equity"]].dropna(how = "any"), play = False, plot_width = plot_width, plot_height = plot_height)
         y_column2_range = 'settle_range'
         p1.extra_y_ranges = {y_column2_range:Range1d(start = float(min(position["mv%"])), end = float(max(position["mv%"])))}
         p1.add_layout(LinearAxis(y_range_name = y_column2_range),'right')
