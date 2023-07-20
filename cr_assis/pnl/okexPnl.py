@@ -169,7 +169,6 @@ class OkexPnl(object):
                 break
         df = pd.DataFrame(data).drop_duplicates()
         df["dt"] = df["uTime"].apply(lambda x: datetime.datetime.fromtimestamp(float(x)/1000))
-        df = df[(df["dt"] >= self.ts_to_dt(start)) & (df["dt"] <= end)].copy()
         df["coin"] = df["instId"].apply(lambda x: x.split("-")[0].upper())
         df["is_maker"] = True
         df["is_trade"] = df["state"] != "canceled"
