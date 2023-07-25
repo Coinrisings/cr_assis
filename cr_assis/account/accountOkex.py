@@ -1,5 +1,6 @@
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.connectData import ConnectData
+from cr_assis.api.okex.marketApi import MarketAPI
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -29,6 +30,8 @@ class AccountOkex(AccountBase):
         self.client, self.username = self.parameter_name.split("_")
         self.database = ConnectData()
         self.markets = ccxt.okex().load_markets()
+        self.market_api = MarketAPI()
+        self.tickers : dict[str, dict]= {}
         self.contractsize_uswap : dict[str, float] = {}
         self.cashBal : dict[str, float] = {}
         self.contractsize_cswap : dict[str, float] = {"BTC": 100, "ETH": 10, "FIL": 10, "LTC": 10, "DOGE": 10, "ETC": 10}
@@ -221,9 +224,21 @@ class AccountOkex(AccountBase):
             data.loc[coin, "diff_U"] = data.loc[coin, "diff"] * self.get_coin_price(coin)
         return data
     
+    def get_tickers(self, instType = "SPOT") -> dict:
+        """get market last tickers from okex api
+        Args:
+            instType (str, optional): It should be in SPOT, SWAP, FUTURES or OPTION. Defaults to "SPOT".
+        """
+        response = self.market_api.get_tickers(instType)
+        ret = response.json() if response.status_code == 200 else {"data": []}
+        data = {i["instId"]: i for i in ret["data"]}
+        self.tickers[instType] = data
+        return data
+    
     def get_coin_price(self, coin: str) -> float:
-        ret = self.database.get_redis_data(key = f"{self.exchange_position}/{coin.lower()}-usdt")
-        return float(ret[b'ask0_price']) if b'ask0_price' in ret.keys() else np.nan
+        self.get_tickers() if "SPOT" not in self.tickers.keys() else None
+        ret = float(self.tickers["SPOT"][f"{coin.upper()}-USDT"]["last"]) if f"{coin.upper()}-USDT" in self.tickers["SPOT"].keys() else np.nan
+        return ret
     
     def is_ccy_exposure(self, array: pd.Series, contractsize: float) -> bool:
         other_array = array.drop("usdt").sort_values()

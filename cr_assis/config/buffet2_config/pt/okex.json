@@ -1,23 +1,14 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv":{
-        "bg_bg003":[150,155,160],
-        "bg_001":[150,155,160],
-        "wzok_001":[150,155,160],
-        "wzok_002":[150,155,160]
+        "test_cr003": [100, 120, 130]
     },
     "single_mv":{
         "ssf":{
-
-        },
-        "dt":{
-
-        },
-        "ssfd": {
-            "bch": [0, 0]
+            "aidoge": [100, 130]
         }
     },
     "thresh":{
-        "ssfd" : {"bch": {"closemaker": 0.9991}}
+        "ssf" : {"aidoge": {"open": 0.999, "close": 1.01}}
     }
 }
