@@ -3,7 +3,7 @@ from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import ccxt, copy
+import ccxt, copy, datetime
 
 class AccountOkex(AccountBase):
     """Account Information only in Okex
@@ -115,6 +115,7 @@ class AccountOkex(AccountBase):
             return_data = self.database._send_influx_query(sql = a, database = "spreads", is_dataFrame= True)
             if len(return_data) > 0:
                 spreads_data = return_data
+                spreads_data["dt"] = spreads_data["time"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
         return spreads_data
         
     def get_contractsize_cswap(self, coin: str) ->float:
