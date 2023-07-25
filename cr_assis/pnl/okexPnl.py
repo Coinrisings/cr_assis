@@ -161,7 +161,7 @@ class OkexPnl(object):
         ts = self.dt_to_ts(end)
         data = []
         while ts >= start:
-            response = self.trade.orders_history_archive(instType="SWAP", end = ts)
+            response = self.trade.orders_history_archive(instType="SPOT", end = ts)
             ret = response.json()["data"] if response.status_code == 200 else {"data": []}
             data += ret
             ts = int(ret[-1]["uTime"]) if len(ret) > 0 else ts

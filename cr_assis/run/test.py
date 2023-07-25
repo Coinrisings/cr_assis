@@ -14,8 +14,7 @@ from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
 pnl = OkexPnl()
-ret = pnl.get_orders(name = "test_otest2", start = datetime.datetime(2023,7,20,12,0,0),end = datetime.datetime.now())
-
+ret = pnl.get_slip(name = "bg_bg003", start = datetime.datetime(2023,7,15,0,0,0),end = datetime.datetime.now())
 
 from cr_assis.pnl.okexEquity import OkexEquity
 e = OkexEquity()
