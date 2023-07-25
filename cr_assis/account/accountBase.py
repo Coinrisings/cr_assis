@@ -334,7 +334,7 @@ class AccountBase(object):
         equity = np.nan
         ccy = self.principal_currency.lower()
         a = f"""
-        select {ccy} as equity, balance_id from balance_v2 where username = '{self.username}' and client = '{self.client}' and time >= {the_time} - {interval} and time <= {the_time}
+        select {ccy} as equity, balance_id from balance_v2 where username = '{self.username}' and client = '{self.client}' and time >= {the_time} - {interval} and time <= {the_time} and balance_id = '{self.balance_id}'
         """
         ret = self.database._send_influx_query(a, database = "account_data")
         if "balance_id" in ret.columns:

@@ -13,6 +13,11 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
+
+pnl = OkexPnl()
+ret = pnl.get_slip(name = "test_hfok01", start = datetime.datetime(2023,7,24,17,18,0), end = datetime.datetime(2023,7,24,18,7,0))
+# ret = pnl.get_long_bills(name = "test_hfok01", start = datetime.datetime(2023,7,24,17,18,0), end = datetime.datetime(2023,7,24,18,7,0))
+
 account = AccountOkex("bg_001@pt_okex_btc")
 a = datetime.datetime.now()
 account.get_account_position()
