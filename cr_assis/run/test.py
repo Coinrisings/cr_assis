@@ -13,15 +13,32 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
+from cr_assis.account.accountOkex import AccountBase
+a = AccountBase("jr_gate@ssf_gate_spot_gate_uswap_u")
+ret = a.get_coin_price("aidoge")
 
-pnl = OkexPnl()
-ret = pnl.get_slip(name = "test_hfok01", start = datetime.datetime(2023,7,24,17,18,0), end = datetime.datetime(2023,7,24,18,7,0))
-# ret = pnl.get_long_bills(name = "test_hfok01", start = datetime.datetime(2023,7,24,17,18,0), end = datetime.datetime(2023,7,24,18,7,0))
-
-account = AccountOkex("bg_001@pt_okex_btc")
-a = datetime.datetime.now()
-account.get_account_position()
-print(datetime.datetime.now() - a)
+from urllib.parse import urljoin, urlencode
+import requests, json, time, hashlib, hmac
+apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
+secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
+servertime = requests.get("https://api.binance.com/api/v1/time")
+BASE_URL = "https://papi.binance.com"
+headers = {
+    'X-MBX-APIKEY': apikey
+}
+servertimeobject = json.loads(servertime.text)
+servertimeint = servertimeobject['serverTime']
+PATH = '/papi/v1/margin/marginInterestHistory'
+timestamp = int(time.time() * 1000)
+params = {
+    # "incomeType": "FUNDING_FEE",
+    "asset": "BNB", 
+    'timestamp': timestamp
+}
+query_string = urlencode(params)
+params['signature'] = hmac.new(secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+url = urljoin(BASE_URL, PATH)
+r = requests.get(url, headers=headers, params=params)
 
 def get_okex_bills(name: str, start: datetime.datetime, end: datetime.datetime, adl = False) -> pd.DataFrame:
     api = AccountAPI()

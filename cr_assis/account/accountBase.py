@@ -7,6 +7,7 @@ from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
 from bokeh.plotting import show
 from bokeh.models.widgets import Panel, Tabs
+from cr_assis.api.gate.marketApi import MarketAPI
 
 class AccountBase(object):
     
@@ -16,6 +17,7 @@ class AccountBase(object):
         self.script_path = str(Path( __file__ ).parent.parent.absolute())
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
+        self.tickers: dict[str, dict] = {}
     
     
     def load_mongo_url(self) -> str:
@@ -234,8 +236,23 @@ class AccountBase(object):
         data = data.dropna(axis = 0, how = "all")
         data.index = range(len(data))
         self.position = data.copy()
-        
-    def get_coin_price(self, coin, kind = "") -> float:
+    
+    def get_tickers(self) -> dict:
+        response = MarketAPI().get_spot_tickers()
+        ret = response.json()
+        self.tickers = {info["currency_pair"]: info for info in ret}
+        return self.tickers
+    
+    def get_coin_price(self, coin: str, kind = "") -> float:
+        """get coin spot price from gate api
+        Args:
+            coin (str): the coin name, like "btc"
+        """
+        self.get_tickers() if len(self.tickers) == 0 else None
+        price = float(self.tickers[f"{coin.upper()}_USDT"]["last"]) if f"{coin.upper()}_USDT" in self.tickers.keys() else np.nan
+        return price
+    
+    def get_contract_price(self, coin, kind = "") -> float:
         """kind: exchange + contract type, for example "okex_spot", "okex_usdt_swap" """
         
         if kind == "":

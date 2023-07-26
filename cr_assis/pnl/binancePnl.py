@@ -146,3 +146,24 @@ class BinancePnl(OkexPnl):
             self.order[coin]["is_maker"] = self.is_maker[coin]["is_maker"].apply(lambda x: True if x > 0 else False)
             self.order[coin]["is_trade"] = self.is_trade[coin]["is_trade"].apply(lambda x: True if x > 0 else False)
         return df
+    
+    def get_uswap_funding(self, name: str, start_ts: str, end_ts: str) -> pd.DataFrame:
+        self.load_api_uswap(name)
+        ts = end_ts
+        data = []
+        while ts >= start_ts:
+            try:
+                response = self.api_uswap.get_income_history(incomeType = "FUNDING_FEE", recvWindow=2000, limit = 100, endTime = ts)
+            except:
+                time.sleep(1)
+            data += response
+            ts = response[0]["updateTime"]
+            if len(response) > 0:
+                ts = response[0]["updateTime"]
+            else:
+                break
+    
+    def get_funding_income(self, name: str, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
+        start_ts, end_ts = self.dt_to_ts(start_ts), self.dt_to_ts(end_ts)
+        self.get_uswap_funding(name, start_ts, end_ts)
+        

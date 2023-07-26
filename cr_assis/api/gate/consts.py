@@ -9,3 +9,6 @@ POST = "POST"
 # account
 FUTURES_USDT_INFO='/futures/usdt/accounts'
 FUTURES_USDT_TRADE='/futures/usdt/my_trades'
+
+#market
+SPOT_TICKERS='/spot/tickers'
