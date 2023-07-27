@@ -262,6 +262,7 @@ class AccountOkex(AccountBase):
     
     def get_now_position(self, timestamp="10m", the_time="now()") -> pd.DataFrame:
         the_time = f"'{the_time}'" if "now()" not in the_time and "'" not in the_time else the_time
+        self.usd_position: pd.DataFrame = pd.DataFrame(columns = ["usd-swap"])
         self.origin_position = self.get_influx_position(timestamp = timestamp, the_time=the_time)
         self.now_position: pd.DataFrame = self.gather_position()
         self.now_position = self.calculate_exposure()
