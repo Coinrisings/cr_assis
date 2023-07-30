@@ -42,8 +42,8 @@ class SsfoPnl(object):
                     account.get_fpnl()
                 else:
                     account.fpnl = pd.DataFrame(columns = ["total"])
-                day_fpnl[day] = account.fpnl["funding_fee"].sum() / account.adjEq
-                day_ipnl[day] = account.fpnl["interest"].sum() / account.adjEq
+                day_fpnl[day] = account.fpnl["funding_fee"].sum() / account.adjEq if "funding_fee" in account.fpnl.columns else np.nan
+                day_ipnl[day] = account.fpnl["interest"].sum() / account.adjEq if "interest" in account.fpnl.columns else 0
             fpnl[account.parameter_name] = day_fpnl.copy()
             ipnl[account.parameter_name] = day_ipnl.copy()
         self.fpnl = fpnl

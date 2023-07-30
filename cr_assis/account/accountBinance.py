@@ -34,7 +34,6 @@ class AccountBinance(AccountOkex):
         self.is_master = {"usd-future":0, "usd-swap":1, "busd-swap":2, "usdt":3,"usdt-future":4, "usdt-swap":5,  "": np.inf}
 
         if 'portfolio' in deploy_id:
-            print(deploy_id)
             self.secret_id = {"usd-future": "@binance:futures_usd", "usd-swap": "@binance:swap_usd", "busd-swap": "@binance:swap_usdt",
                             "usdt": "@binance:margin", "usdt-future": "@binance:futures_usdt", "usdt-swap": "@binance:swap_usdt", "": ""}
         else:
