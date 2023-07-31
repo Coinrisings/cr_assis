@@ -1,14 +1,15 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv":{
-        "colin_001": [1, 2, 3]
+        "test_otest8": [200, 250, 300]
     },
     "single_mv":{
         "ssf":{
-            "fil": [1, 2]
+            "beth": [100, 120],
+            "eth": [50, 60]
         }
     },
     "thresh":{
-        "ssf" : {"fil": {"open":2, "closemaker": 2, "close": 2}}
+        "all" : {"beth": {"open":2, "closemaker":2}}
     }
 }

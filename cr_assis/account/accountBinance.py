@@ -4,7 +4,7 @@ from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import ccxt, copy
+import ccxt, copy, requests
 
 class AccountBinance(AccountOkex):
     
@@ -74,4 +74,20 @@ class AccountBinance(AccountOkex):
         # print(coin,tell1,tell2,tell3)
         ret = {"master": result[0] if self.is_master[result[0]] < self.is_master[result[1]] else result[1],
                 "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
+        return ret
+    
+    def get_tickers(self, instType = "SPOT") -> dict:
+        """get market last tickers from binance api
+        Args:
+            instType (str, optional): It should be in SPOT, SWAP, FUTURES or OPTION. Defaults to "SPOT".
+        """
+        response = requests.get("https://api.binance.com/api/v3/ticker/24hr")
+        ret = response.json() if response.status_code == 200 else {"data": []}
+        data = {i["symbol"]: i for i in ret}
+        self.tickers[instType] = data
+        return data
+    
+    def get_coin_price(self, coin: str) -> float:
+        self.get_tickers() if "SPOT" not in self.tickers.keys() else None
+        ret = float(self.tickers["SPOT"][f"{coin.upper()}USDT"]["lastPrice"]) if f"{coin.upper()}USDT" in self.tickers["SPOT"].keys() else np.nan
         return ret

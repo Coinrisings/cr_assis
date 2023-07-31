@@ -37,7 +37,7 @@ class OkexPnl(object):
                 return mongo_uri
     
     def dt_to_ts(self, dt: datetime.datetime) -> int:
-        return int(datetime.datetime.timestamp(dt.repalce(tzinfo = None).astimezone(pytz.timezone("Asia/ShangHai"))) * 1000)
+        return int(datetime.datetime.timestamp(dt.replace(tzinfo = None).astimezone(pytz.timezone("Asia/ShangHai"))) * 1000)
 
     def ts_to_dt(self, ts) -> datetime.datetime:
         return datetime.datetime.fromtimestamp(float(ts) / 1000).astimezone(pytz.timezone("Asia/ShangHai"))
