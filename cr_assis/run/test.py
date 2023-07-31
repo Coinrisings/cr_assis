@@ -3,7 +3,7 @@ import pandas as pd
 import numpy as np
 from cr_assis.connect.connectData import ConnectData
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.account.accountOkex import AccountOkex
+from research.account.accountOkex import AccountOkex
 from cr_assis.account.accountBinance import AccountBinance
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.marketApi import MarketAPI

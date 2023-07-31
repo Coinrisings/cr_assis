@@ -15,17 +15,17 @@ class BuffetOkexNew(object):
         self.markets = ccxt.okex().load_markets()
         self.json_path = f"{os.environ['HOME']}/parameters/buffet2_config/pt"
         self.save_path = f"{os.environ['HOME']}/data/buffet2.0"
-        self.accounts : dict[str, AccountOkex]
+        self.accounts = {}
         self.is_long = {"long": 1, "short": 0}
         self.exchange_position = "okexv5"
         self.exchange_save = "okex"
-        self.now_position: dict[str, pd.DataFrame] = {}
-        self.add :dict = {}
+        self.now_position = {}
+        self.add = {}
         self.token_path = f"{os.environ['HOME']}/.git-credentials"
-        self.parameter: dict[str, pd.DataFrame] = {}
-        self.coin_price: dict[str, float] = {}
-        self.usd_contractsize: dict[str, float] = {}
-        self.spreads: dict[str, dict[str, pd.DataFrame]] = {}
+        self.parameter = {}
+        self.coin_price = {}
+        self.usd_contractsize = {}
+        self.spreads = {}
         self.contractsize_path: str = os.environ['HOME'] + '/parameters/config_buffet/dt/contractsize.csv'
         self.parameter_cols = ['account', 'coin', 'portfolio', 'open', 'closemaker', 'position', 'closetaker', 'open2', 'closemaker2', 'position2', 'closetaker2', 'fragment',
                             'fragment_min', 'funding_stop_open', 'funding_stop_close', 'position_multiple', 'timestamp', 'is_long', 'chase_tick', 'master_pair', 'slave_pair', "master_secret", "slave_secret", "combo"]
@@ -67,6 +67,8 @@ class BuffetOkexNew(object):
             with open(file, "r") as f:
                 data = json.load(f)
             ret = self.load_config_default(data) if set(data.keys()) == self.config_keys and len(data["total_mv"]) > 0 else {}
+            if ret == {}:
+                self.logger.warning(f"{file}因为key对不上或者total_mv填写错误所以没有加载默认config")
         except:
             ret = {}
             self.logger.warning(f"{file} 加载出错")
@@ -81,21 +83,26 @@ class BuffetOkexNew(object):
     def load_config_default(self, config: dict) -> None:
         try:
             path = os.environ["HOME"]+config["default_path"]
+            self.logger.info(f"实际default路径为{path}")
             with open(path, "r") as f:
                 data = json.load(f)
             config.update(data)
             ret = self.connect_account_config(config) if set(data.keys()) == self.default_keys else {}
+            if ret == {}:
+                self.logger.warning(f"{config}因为default文件的key对不上所以没有和账户绑定成功")
         except:
             ret = {}
             self.logger.warning(f"{config}的default加载错误")
         return ret
     
     def load_config(self) -> None:
-        self.config: dict[str, dict] = {}
+        self.config = {}
         files = glob.glob(f"{self.json_path}/*.json")
+        self.logger.info(f"获取到{self.json_path}路径下的所有json文件为{files}")
         for file in files:
+            self.logger.info(f"开始读取{file}文件")
             self.config.update(self.check_config(file))
-            
+        self.logger.info(f"最终config指定需要出参的账户有{self.config.keys()}")
     
     def load_logger(self) -> None:
         Log_Format = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -110,46 +117,66 @@ class BuffetOkexNew(object):
         formatter = logging.Formatter(Log_Format)
         handler.setFormatter(formatter)
         logger.addHandler(handler)
+        handler = logging.StreamHandler()
+        handler.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(Log_Format)
+        handler.setFormatter(formatter)
+        logger.addHandler(handler)
         self.logger = logger
+
     
     def check_account(self, account: AccountOkex) -> bool:
         account.get_account_position()
         account.get_mgnRatio()
         is_nan = False
-        if account.__class__.__name__ == "AccountBinance":
-            for coin in ["BNB", "BTC"]:
-                if coin in account.now_position.index:
-                    account.now_position.drop(coin, inplace=True)
         # 权益获取，获取不到跳过
         if not hasattr(account, "adjEq") or np.isnan(account.adjEq):
-            self.logger.warning(f"{account.parameter_name}:获取equity错误!")
+            self.logger.warning(f"{account.parameter_name}:获取equity错误")
             is_nan = True
         # 仓位获取，获取不到跳过
-        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0 or account.parameter_name in account.position["master_secret"].values or (len(account.position) == 0 and len(account.origin_position) == 0):
+        if not hasattr(account, "position") or not hasattr(account, "now_position") or account.now_position["is_exposure"].sum() >0 or account.parameter_name in account.position["master_secret"].values or (hasattr(account, "position") and len(account.origin_position) == 0):
             self.logger.warning(f"{account.parameter_name}:最近10分钟position数据缺失或者有敞口")
+            self.logger.info(account.position.to_dict())
+            self.logger.info(account.now_position.to_dict())
+            self.logger.info(account.origin_position.to_dict())
             is_nan = True
         # mr获取，获取不到跳过
         if not hasattr(account, "mr") or len(account.mr) == 0:
-            self.logger.warning(f"{account.parameter_name}:没有获取到当前的mr。")
+            self.logger.warning(f"{account.parameter_name}:没有获取到当前的mr")
             is_nan = True
         return is_nan
     
-    def init_accounts(self) -> dict[str, AccountOkex]:
+    def init_accounts(self):
         """初始化所有orch打开的账户 删除获取不到position、adjEq和mr的账户
         """
         self.load_config()
         init = InitAccounts(ignore_test=False)
         self.accounts = init.init_accounts_okex()
         names = set(self.accounts.keys())
+        self.logger.info(f"orch打开的deploy_id有{init.deploy_ids}")
+        self.logger.info(f"初始化orch打开的融合okex账户有{names}")
         for name in names:
-            self.accounts.pop(name, None) if name not in self.config.keys() or self.check_account(account = self.accounts[name]) else None
+            if name not in self.config.keys():
+                self.accounts.pop(name, None)
+                self.logger.info(f"{name}因为不在config指定出参中而被删除")
+            elif self.check_account(account = self.accounts[name]):
+                self.accounts.pop(name, None)
+                self.logger.info(f"{name}因为check_account没有通过而被删除")
+            else:
+                self.logger.info(f"{name}config指定需要出参并且check_account通过")
+        self.logger.info(f"最终确定需要出参的账户有{self.accounts.keys()}")
         return self.accounts
     
     def init_parameter(self) -> pd.DataFrame:
         """初始化parameter
         """
+        self.logger.info(f"开始初始化{self.execute_account.parameter_name}的parameter")
         account = self.execute_account
-        now_pos = account.position[(account.position["MV"] > self.config[account.parameter_name]["select_u"]) | (account.position["MV%"] > self.config[account.parameter_name]["select_ratio"])].copy().set_index("coin")
+        select_u = self.get_real_thresh(coin = "btc", combo = "ssf", thresh="select_u")
+        select_ratio = self.get_real_thresh(coin = "btc", combo = "ssf", thresh="select_ratio")
+        self.logger.info(f"select_u: {select_u}, select_ratio: {select_ratio}")
+        now_pos = account.position[(account.position["MV"] > select_u) & (account.position["MV%"] > select_ratio)].copy().set_index("coin")
+        self.logger.info(f"{self.execute_account.parameter_name}剔除忽略的mv后仓位为{now_pos.to_dict()}")
         self.now_position[account.parameter_name] = now_pos.copy()
         parameter = pd.DataFrame(columns=self.parameter_cols, index = now_pos.index)
         if len(now_pos) > 0:
@@ -161,6 +188,7 @@ class BuffetOkexNew(object):
         else:
             self.logger.info(f"{account.parameter_name}:新账户, 初始化parameter, 参数默认为空")
         account.parameter = parameter
+        self.logger.info(f"{self.execute_account.parameter_name} parameter初始化结束")
         
     def check_single_mv(self, coin: str, values: list) -> bool:
         is_error = True
@@ -208,6 +236,7 @@ class BuffetOkexNew(object):
             self.logger.info(f"{self.execute_account.parameter_name}新币种加仓{coin}@{combo}至{to_mv}")
     
     def reduce_single_mv(self):
+        self.logger.info(f"{self.execute_account.parameter_name}开始执行单币种mv减仓")
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
         for name, reduce in config["single_mv"].items():
@@ -216,22 +245,30 @@ class BuffetOkexNew(object):
                 if self.check_single_mv(coin, values):
                     continue
                 if coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] > values[1]:
-                    self.execute_reduce(coin, values[1])
                     self.logger.info(f"{self.execute_account.parameter_name}中{coin}@{combo}触发单币种超限减仓, 减仓至{values[1]}")
-                
+                    self.execute_reduce(coin, values[1])
+        self.logger.info(f"{self.execute_account.parameter_name}单币种mv减仓结束")
+        
     def reduce_total_mv(self):
+        self.logger.info(f"{self.execute_account.parameter_name}开始执行总仓位mv减仓")
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]["total_mv"]
         total_mv = now_position["MV%"].sum()
         plus = total_mv - config[self.execute_account.parameter_name][2]
+        self.logger.info(f"{self.execute_account.parameter_name}现在总仓位为{total_mv}")
+        self.logger.info(f"{self.execute_account.parameter_name}config中触发减仓的阈值为{config[self.execute_account.parameter_name][2]}")
+        self.logger.info(f"{self.execute_account.parameter_name}超过仓位要求上限{plus}")
         if plus > 0:
             remove_mv = config[self.execute_account.parameter_name][1]
+            self.logger.info(f"{self.execute_account.parameter_name}目前总仓位{total_mv}触发总仓位超限减仓, 将减仓至{remove_mv}")
             for coin in now_position.index:
                 to_mv = remove_mv / total_mv
                 self.execute_reduce(coin = coin, to_mv = to_mv)
-                self.logger.info(f"{self.execute_account.parameter_name}目前总仓位{total_mv}触发总仓位超限减仓, 将减仓至{remove_mv}")
+        else:
+            self.logger.info(f"{self.execute_account.parameter_name}目前总仓位{total_mv}没有触发总仓位超限减仓")
+        self.logger.info(f"{self.execute_account.parameter_name}总仓位mv减仓结束")
 
-    def get_add(self) -> dict[str, dict[str, float]]:
+    def get_add(self):
         real_add = {}
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
@@ -241,18 +278,28 @@ class BuffetOkexNew(object):
                 if self.check_single_mv(coin, values) or coin in real_add.keys() or values[0] == 0:
                     continue
                 if (coin.upper() == "ETH" and "beth" in now_position.index) or (coin.upper() == "BETH" and "eth" in now_position.index):
+                    self.logger.info(f"因为{self.execute_account.parameter_name}仓位里有beth or eth所以不能加仓{coin}")
                     continue
                 if coin not in self.execute_account.parameter.index and coin not in now_position.index:
                     real_add.update({f"{coin}@{combo}": values[0]})
+                    self.logger.info(f"{coin}@{combo}是新币可以直接加仓")
                 elif coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] < abs(values[0]) and (now_position.loc[coin, "side"] == "long" and values[0] > 0 or now_position.loc[coin, "side"] == "short" and values[0] < 0):
                     real_add.update({f"{coin}@{combo}": values[0]})
+                    self.logger.info(f"{coin}@{combo}已经在{self.execute_account.parameter_name}持仓中并且方向和combo相同可以加仓")
+                else:
+                    self.logger.info(f"{coin}@{combo}已经在{self.execute_account.parameter_name}持仓中但是方向和combo与持仓矛盾或者持仓超过可加仓上限不加仓")
         self.add[self.execute_account.parameter_name] = copy.deepcopy(real_add)
+        self.logger.info(f"{self.execute_account.parameter_name}经过数据比较希望加仓的情况为{real_add}")
         return real_add
     
     def add_mv(self):
+        self.logger.info(f"{self.execute_account.parameter_name}开始执行加仓")
         now_position = self.now_position[self.execute_account.parameter_name]
         config = self.config[self.execute_account.parameter_name]
         ava = config["total_mv"][self.execute_account.parameter_name][0] - now_position["MV%"].sum()
+        self.logger.info(f"{self.execute_account.parameter_name}现在总仓位为{now_position['MV%'].sum()}")
+        self.logger.info(f"{self.execute_account.parameter_name}config中加仓上限为{config['total_mv'][self.execute_account.parameter_name][0]}")
+        self.logger.info(f"{self.execute_account.parameter_name}剩余可加仓位为{ava}")
         real_add = self.get_add()
         add_sum = pd.DataFrame.from_dict(real_add, orient='index').abs().values.sum()
         wish_add, holding_mv  = 0, 0
@@ -266,9 +313,13 @@ class BuffetOkexNew(object):
         for k, wish_mv in real_add.items():
             coin, combo = k.split("@")
             to_mv = - min(abs(wish_mv) / add_sum * add_to, abs(wish_mv), ava + hold[coin]) if wish_mv < 0 else min(abs(wish_mv) / add_sum * add_to, abs(wish_mv), ava + hold[coin])
+            self.logger.info(f"{coin}@{combo}在{self.execute_account.parameter_name}持仓mv为{hold[coin]}, 账户剩余可加ava{ava}, 希望加仓wish_mv{wish_mv}, 总共想要加仓add_sum{add_sum}, 总共想要加仓到add_to{add_to}")
+            self.logger.info(f"因此, {coin}@{combo}在{self.execute_account.parameter_name}中最终计算出来真正会加仓到min(abs(wish_mv) / add_sum * add_to{abs(wish_mv) / add_sum * add_to}, abs(wish_mv){abs(wish_mv)}, ava + hold[coin]{ava + hold[coin]})为{to_mv}")
             self.execute_add(coin, to_mv, combo)
+        self.logger.info(f"{self.execute_account.parameter_name}加仓结束")
     
     def calc_up_thresh(self, spreads, threshold=50, up_down=0):
+        self.logger.info(f"calc_up_thresh中spreads数据长度为{len(spreads)}, threshhold为{threshold}")
         spreads_avg = np.mean(spreads)
         spreads_minus_mean = spreads - spreads_avg
         up_amp = spreads_minus_mean.iloc[np.where(spreads_minus_mean > 0)]
@@ -318,12 +369,17 @@ class BuffetOkexNew(object):
         if coin in account.parameter.index:
             combo = self.execute_account.parameter.loc[coin, "combo"]
             specify_thresh = self.get_real_thresh(coin, combo, thresh = col)
+            self.logger.info(f"{account.parameter_name}获取的{coin}@{combo}的{col}阈值为{specify_thresh}")
             if specify_thresh == "":
+                self.logger.info(f"{account.parameter_name}没有指定{coin}@{combo}的{col}阈值")
                 maxloss = float(self.get_real_thresh(coin, combo, thresh="maxloss"))
+                self.logger.info(f"{account.parameter_name}中{coin}@{combo}的maxloss为{maxloss}")
                 spread = self.get_spreads_data(combo, coin, suffix=self.get_real_thresh(coin, combo, thresh = "future_date"))
                 ret = max(self.calc_up_thresh(spread[spread_name], threshold=float(self.get_real_thresh(coin, combo, thresh = use_thresh)), up_down=0) + float(self.get_real_thresh(coin, combo, thresh = f"{use_thresh.split('_')[0]}_add")), maxloss)
             else:
+                self.logger.info(f"{account.parameter_name}指定了{coin}@{combo}的{col}阈值为{specify_thresh}")
                 ret = float(specify_thresh)
+        self.logger.info(f"{account.parameter_name}中{coin}@{combo}的{col}返回值最终确定为{ret}")
         return ret
     
     def get_open1(self, coin: str) -> float:
@@ -337,7 +393,7 @@ class BuffetOkexNew(object):
     def get_closemaker2(self, coin: str) -> float:
         spread_name = "ask0_spread" if self.execute_account.parameter.loc[coin, "is_long"] else "bid0_spread"
         combo = self.execute_account.parameter.loc[coin, "combo"] if coin in self.execute_account.parameter.index else ""
-        ret = max(self.get_expect_thresh(coin, "closemaker2", spread_name, use_thresh="close_thresh") + float(self.get_real_thresh(coin, combo, thresh = "cm2_change")), float(self.get_real_thresh(coin, combo, thresh="maxloss"))) if self.get_real_thresh(coin, combo, thresh = "closemaker2") == "" else float(self.get_real_thresh(coin, combo, thresh = "closemaker2"))
+        ret = max(self.get_expect_thresh(coin, "closemaker2", spread_name, use_thresh="close_thresh") + float(self.get_real_thresh(coin, combo, thresh = "cm2_change")), float(self.get_real_thresh(coin, combo, thresh="maxloss"))) if self.get_real_thresh(coin, combo, thresh = "closemaker2") == "" else self.get_real_thresh(coin, combo, thresh = "closemaker2")
         return ret
     
     def get_open_close(self) -> pd.DataFrame:
@@ -347,6 +403,7 @@ class BuffetOkexNew(object):
         for coin in parameter.index:
             level = parameter.loc[coin, "portfolio"]
             combo = parameter.loc[coin, "combo"]
+            self.logger.info(f"{coin}@{combo}在{self.execute_account.parameter_name}中的level为{level}")
             parameter.loc[coin, "open"] = self.get_open1(coin) if level == 1 else 2
             parameter.loc[coin, "closemaker"] = self.get_closemaker(coin) if level == -1 else float(self.get_real_thresh(coin, combo, thresh="close"))
             parameter.loc[coin, "closemaker2"] = self.get_closemaker2(coin) if level == -2 or self.get_real_thresh(coin, combo, thresh="closemaker2") != "" else parameter.loc[coin, "closemaker"] + float(self.get_real_thresh(coin, combo, thresh="cm2_change"))
@@ -362,6 +419,7 @@ class BuffetOkexNew(object):
         for coin in account.parameter.index:
             hold = position.loc[coin, "position"] if coin in position.index else 0
             account.parameter.loc[coin, "position2"] = 2 * max(hold, account.parameter.loc[coin, "position"])
+            self.logger.info(f"{account.parameter_name}中{coin}的持仓数量为{hold}, parameter中position为{account.parameter.loc[coin, 'position']}")
     
     def get_fragment(self) -> pd.DataFrame:
         account = self.execute_account
@@ -420,6 +478,7 @@ class BuffetOkexNew(object):
             is_save (bool, optional): save parameter. Defaults to True.
         """
         for name, account in self.accounts.items():
+            self.logger.info(f"{name}开始出参")
             self.execute_account = account
             self.init_parameter()
             self.reduce_single_mv()
@@ -429,6 +488,7 @@ class BuffetOkexNew(object):
                 self.add_mv() if self.now_position[account.parameter_name]["MV%"].sum() < self.config[account.parameter_name]["total_mv"][account.parameter_name][0] else self.reduce_total_mv()
             self.get_open_close()
             self.parameter[name] = account.parameter
+            self.logger.info(f"{name}出参结束")
     
     def load_github(self) -> Repository:
         """加载github parameters仓库
