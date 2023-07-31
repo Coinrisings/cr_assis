@@ -1,14 +1,14 @@
 {
     "default_path": "/Documents/GitHub/cr_assis/cr_assis/config/buffet2_config/default/default_okex.json", 
     "total_mv":{
-        "test_cr003": [100, 120, 130]
+        "colin_001": [1, 2, 3]
     },
     "single_mv":{
         "ssf":{
-            "aidoge": [100, 130]
+            "fil": [1, 2]
         }
     },
     "thresh":{
-        "ssf" : {"aidoge": {"open": 0.999, "close": 1.01}}
+        "ssf" : {"fil": {"open":2, "closemaker": 2, "close": 2}}
     }
 }

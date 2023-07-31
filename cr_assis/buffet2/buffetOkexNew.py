@@ -240,6 +240,8 @@ class BuffetOkexNew(object):
             for coin, values in add.items():
                 if self.check_single_mv(coin, values) or coin in real_add.keys() or values[0] == 0:
                     continue
+                if (coin.upper() == "ETH" and "beth" in now_position["coin"].values) or (coin.upper() == "BETH" and "eth" in now_position["coin"].values):
+                    continue
                 if coin not in self.execute_account.parameter.index and coin not in now_position.index:
                     real_add.update({f"{coin}@{combo}": values[0]})
                 elif coin in now_position.index and now_position.loc[coin, "combo"] == combo and now_position.loc[coin, "MV%"] < abs(values[0]) and (now_position.loc[coin, "side"] == "long" and values[0] > 0 or now_position.loc[coin, "side"] == "short" and values[0] < 0):

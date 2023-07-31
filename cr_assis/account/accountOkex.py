@@ -61,9 +61,15 @@ class AccountOkex(AccountBase):
         master, slave = self.get_pair_suffix_contract(master), self.get_pair_suffix_contract(slave)
         return master.replace("future", future), slave.replace("future", future)
     
+    def transfer_beth_swap(self, contract: str) -> str:
+        contract = contract.replace("_", "-").lower()
+        if contract.split("-")[0].lower() == "beth" and contract.lower() != "beth-usdt":
+            contract.replace("beth", "eth")
+        return contract
+    
     def get_pair_name(self, coin: str, combo: str) -> tuple[str, str]:
         master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
-        return coin+master_suffix.replace("_", "-"), coin+slave_suffix.replace("_", "-")
+        return self.transfer_beth_swap(coin+master_suffix), self.transfer_beth_swap(coin+slave_suffix)
     
     def get_secret_name(self, coin: str, combo: str) -> tuple[str, str]:
         master_suffix, slave_suffix = self.get_pair_suffix(combo, "future")
@@ -240,23 +246,43 @@ class AccountOkex(AccountBase):
         ret = float(self.tickers["SPOT"][f"{coin.upper()}-USDT"]["last"]) if f"{coin.upper()}-USDT" in self.tickers["SPOT"].keys() else np.nan
         return ret
     
-    def is_ccy_exposure(self, array: pd.Series, contractsize: float) -> bool:
-        other_array = array.drop("usdt").sort_values()
-        not_spot = abs(other_array.sum()) > self.exposure_number * contractsize * 5 or abs(other_array[0] + other_array[-1]) > self.exposure_number * contractsize * 2
-        is_spot = abs(other_array[0]) >= self.exposure_number * contractsize and abs(other_array[-1]) >= self.exposure_number * contractsize
+    def is_ccy_exposure(self) -> bool:
+        other_array = self.exposure_array.drop("usdt").sort_values()
+        not_spot = abs(other_array.sum()) > self.exposure_number * self.exposure_contractsize * 5 or abs(other_array[0] + other_array[-1]) > self.exposure_number * self.exposure_contractsize * 2
+        is_spot = abs(other_array[0]) >= self.exposure_number * self.exposure_contractsize and abs(other_array[-1]) >= self.exposure_number * self.exposure_contractsize
         return not_spot and is_spot
+    
+    def is_eth_exposure(self) -> bool:
+        tell1 = np.isnan(self.exposure_array["diff"])
+        n = 0
+        for i in ["BETH", "ETH"]:
+            n += self.now_position.loc[i, "diff"] if i in self.now_position.index else 0
+        tell2 = n > self.exposure_number * self.exposure_contractsize * 6
+        return tell1 or tell2
+    
+    def is_other_exposure(self) -> bool:
+        tell1 = np.isnan(self.exposure_array["diff"])
+        tell2 = abs(self.exposure_array["diff"]) > self.exposure_number * self.exposure_contractsize * 6
+        array = self.exposure_array[list(self.open_price.columns)].sort_values()
+        tell3 = abs(array[0] + array[-1]) > self.exposure_number * self.exposure_contractsize
+        return tell1 or tell2 or tell3
+    
+    def tell_coin_exposure(self, coin: str) -> bool:
+        coin = coin.upper()
+        self.exposure_array = self.now_position.loc[coin]
+        self.exposure_contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
+        if coin == self.ccy:
+            ret = self.is_ccy_exposure()
+        elif coin in ["BETH", "ETH"]:
+            ret = self.is_eth_exposure()
+        else:
+            ret = self.is_other_exposure()
+        return ret
     
     def tell_exposure(self) -> pd.DataFrame:
         data = self.now_position.copy() if hasattr(self, "now_position") else self.empty_position.copy()
         for coin in data.index:
-            contractsize = self.contractsize_uswap[coin] if coin in self.contractsize_uswap.keys() else self.get_contractsize_uswap(coin)
-            array = data.loc[coin].sort_values()
-            array.drop(["diff", "diff_U"], inplace = True)
-            array.drop(["is_exposure"], inplace = True) if "is_exposure" in array.index else None
-            tell1 = np.isnan(data.loc[coin, "diff"])
-            tell2 = abs(data.loc[coin, "diff"]) > self.exposure_number * contractsize * 6 if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
-            tell3 = abs(array[0] + array[-1]) > self.exposure_number * contractsize if coin != self.ccy else self.is_ccy_exposure(array, contractsize)
-            data.loc[coin, "is_exposure"] = tell1 or tell2 or tell3
+            data.loc[coin, "is_exposure"] = self.tell_coin_exposure(coin)
         data = pd.DataFrame(columns = list(self.empty_position.columns) + ["is_exposure"]) if len(data) == 0 else data
         return data
     
@@ -267,9 +293,6 @@ class AccountOkex(AccountBase):
         self.now_position: pd.DataFrame = self.gather_position()
         self.now_position = self.calculate_exposure()
         self.now_position = self.tell_exposure()
-        if self.deploy_id == "bg_001@dt_okex_cswap_okex_uswap_btc":
-            self.now_position["is_exposure"] = False
-            self.now_position["usdt"] = 0
         return self.now_position.copy()
     
     def get_open_price(self) -> pd.DataFrame:

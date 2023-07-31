@@ -13,9 +13,6 @@ from cr_assis.pnl.binancePnl import BinancePnl
 from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
-from cr_assis.account.accountOkex import AccountBase
-a = AccountBase("jr_gate@ssf_gate_spot_gate_uswap_u")
-ret = a.get_coin_price("aidoge")
 
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hashlib, hmac
