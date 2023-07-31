@@ -14,7 +14,7 @@ from cr_assis.draw import draw_ssh
 from bokeh.models import NumeralTickFormatter
 from bokeh.plotting import show
 
-account = AccountOkex(deploy_id="test_otest8@pt_okex_btc")
+account = AccountOkex(deploy_id="wzok_002@pt_okex_btc")
 position = account.get_account_position()
 
 from urllib.parse import urljoin, urlencode

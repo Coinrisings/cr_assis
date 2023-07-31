@@ -334,6 +334,7 @@ class AccountOkex(AccountBase):
         ret = self.tell_master()
         if "" in ret.values() and not self.now_position.loc[self.ccy, "is_exposure"]:
             ret = {"master":self.master_array[abs(self.master_array) == abs(self.master_array).max()].index[0], "slave": "usdt"} if abs(self.master_array).max() > self.exposure_number * self.master_contractsize * 2 else {"master": "", "slave": ""}
+            self.master_array = self.now_position.loc[self.ccy].drop(["diff", "diff_U", "is_exposure"])
         return ret
     
     def tell_master(self) -> dict[str, str]:
