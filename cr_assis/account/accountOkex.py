@@ -258,7 +258,7 @@ class AccountOkex(AccountBase):
         number = []
         for i in ["BETH", "ETH"]:
             n += self.now_position.loc[i, "diff"] if i in self.now_position.index else 0
-            number += list(self.now_position.loc[i, self.open_price.columns].values)
+            number += list(self.now_position.loc[i, self.open_price.columns].values) if i in self.now_position.index else []
         tell2 = abs(n) > self.exposure_number * self.exposure_contractsize * 6
         number.sort()
         tell3 = abs(number[0] + number[-1]) > self.exposure_number * self.exposure_contractsize
