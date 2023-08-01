@@ -1,24 +1,15 @@
-import datetime, time, os
+import datetime, time
 import pandas as pd
-import numpy as np
-from cr_assis.connect.connectData import ConnectData
 from cr_assis.connect.connectOkex import ConnectOkex
-from research.account.accountOkex import AccountOkex
-from cr_assis.account.accountBinance import AccountBinance
+from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
-from cr_assis.api.okex.marketApi import MarketAPI
 from cr_assis.api.okex.accountApi import AccountAPI
-from cr_assis.pnl.okexPnl import OkexPnl
-from cr_assis.pnl.binancePnl import BinancePnl
-from cr_assis.draw import draw_ssh
-from bokeh.models import NumeralTickFormatter
-from bokeh.plotting import show
+from urllib.parse import urljoin, urlencode
+import requests, json, time
 
-account = AccountOkex(deploy_id="wzok_002@pt_okex_btc")
+account = AccountOkex(deploy_id="test_otest8@pt_okex_btc")
 position = account.get_account_position()
 
-from urllib.parse import urljoin, urlencode
-import requests, json, time, hashlib, hmac
 apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
 secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
 servertime = requests.get("https://api.binance.com/api/v1/time")
@@ -92,26 +83,3 @@ def get_okex_balance(name: str):
 position = get_okex_position("bg_bg003")
 equity, balance = get_okex_balance("bg_bg003")
 df = get_okex_bills("bg_bg003", start = datetime.datetime(2023,7,13,0,0,0), end = datetime.datetime(2023,7,13,4,0,0,0), adl = False)
-
-
-deploy_id = "test_hfok01@pt_okex_btc"
-name = deploy_id.split("@")[0]
-start = datetime.datetime(2023,6,29,14,0,0)
-end = datetime.datetime.now()
-pnl = OkexPnl()
-# rate = pnl.get_rate(deploy_id = deploy_id, start = start, end = end)
-# df = pnl.get_long_bills(name = name, start = start, end = end)
-# ret = pnl.handle_bills(df, is_play=False)
-ret = pnl.get_slip(name = name, start = start, end = end, is_play= False)
-result1 = pnl.bills_data[["dt", "cum_pnl", "fake_cum_pnl"]].copy()
-result1.set_index("dt",inplace=True)
-result2 = pnl.slip[["dt", "slip_page"]].copy()
-result2.set_index("dt", inplace=True)
-result = pd.merge(result1, result2, left_index = True, right_index=True, how="outer")
-result = result.fillna(method = "ffill")
-p = draw_ssh.line_doubleY(result, right_columns=["slip_page"],play=False)
-p.yaxis[1].formatter = NumeralTickFormatter(format="0.0000%")
-show(p)
-
-
-
