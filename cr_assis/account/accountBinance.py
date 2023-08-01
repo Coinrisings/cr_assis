@@ -60,12 +60,11 @@ class AccountBinance(AccountOkex):
         return data
     
     
-    def tell_master(self, data: pd.Series, contractsize: float):
+    def tell_master(self):
+        data = self.master_array.copy()
         data = data.sort_values()
         coin = data.name
         price=self.get_coin_price(coin)
-        
-    
         # 只要有一个条件不满足，认为账户没有这个币
         tell1 = abs(data[0] + data[-1])*price <=1000  and data[0] * data[-1] < 0       
         tell2 = abs(data[1] + data[-1])*price >= 10  or data[1] * data[-1] > 0        

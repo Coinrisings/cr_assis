@@ -395,7 +395,10 @@ class AccountOkex(AccountBase):
             position.loc[num, "position"] = abs(self.usd_position.loc[coin, maybe["master"]])
         else:
             position.loc[num, "position"] = np.nan
-        position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if maybe["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
+        if position.loc[num ,"position"] == 0:
+            position.loc[num, "MV"] = 0
+        else:
+            position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if maybe["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
         position.loc[num, "MV%"] = round(position.loc[num, "MV"] / self.adjEq * 100, 4)
         position.loc[num, ["master_pair", "slave_pair"]] = [f'{position.loc[num, "coin"]}-{self.coin_master["master"]}', f'{position.loc[num, "coin"]}-{self.coin_master["slave"]}']
         position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[self.coin_master["master"]]}', f'{self.parameter_name}{self.secret_id[self.coin_master["slave"]]}']
@@ -406,7 +409,10 @@ class AccountOkex(AccountBase):
         position.loc[num, "coin"] = coin.lower()
         position.loc[num, "side"] = "long" if self.now_position.loc[self.execute_coin, self.coin_master["master"]] > 0 else "short"
         position.loc[num, "position"] = abs(self.now_position.loc[self.execute_coin, self.coin_master["master"]]) if self.coin_master["master"].split("-")[0] != "usd" else abs(self.usd_position.loc[self.execute_coin, self.coin_master["master"]])
-        position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if self.coin_master["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
+        if position.loc[num ,"position"] == 0:
+            position.loc[num, "MV"] = 0
+        else:
+            position.loc[num, "MV"] = position.loc[num, "position"] * self.get_coin_price(coin = coin.lower()) if self.coin_master["master"].split("-")[0] != "usd" else position.loc[num, "position"] * self.contractsize_cswap[coin]
         position.loc[num, "MV%"] = round(position.loc[num, "MV"] / self.adjEq * 100, 4)
         position.loc[num, ["master_pair", "slave_pair"]] = [f'{position.loc[num, "coin"]}-{self.coin_master["master"]}', f'{position.loc[num, "coin"]}-{self.coin_master["slave"]}']
         position.loc[num, ["master_secret", "slave_secret"]] = [f'{self.parameter_name}{self.secret_id[self.coin_master["master"]]}', f'{self.parameter_name}{self.secret_id[self.coin_master["slave"]]}']

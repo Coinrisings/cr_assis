@@ -4,11 +4,12 @@ from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.accountApi import AccountAPI
+from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time
 
-account = AccountOkex(deploy_id="test_otest8@pt_okex_btc")
-position = account.get_account_position()
+account = AccountBinance("test_hf01@pt_binance_usdt_portfolio")
+account.get_account_position()
 
 apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
 secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
