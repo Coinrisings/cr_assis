@@ -41,7 +41,7 @@ class AccountOkex(AccountBase):
         self.secret_id = {"usd-future": "@okexv5:futures_usd", "usd-swap": "@okexv5:swap_usd", "usdc-swap": "@okexv5:swap_usdt",
                         "usdt": "@okexv5:spot", "bethusdt": "@okexv5:spot", "usdt-future": "@okexv5:futures_usdt", "usdt-swap": "@okexv5:swap_usdt", "": ""}
         self.exchange_master, self.exchange_slave = "okex", "okex"
-        self.path_orders = [f'{self.parameter_name}@okexv5_swap_usd', f'{self.parameter_name}@okexv5_swap_usdt']
+        self.path_orders = [f'{self.parameter_name}@okexv5_swap_usd', f'{self.parameter_name}@okexv5_swap_usdt', f'{self.parameter_name}@okexv5_spot']
         self.path_ledgers = [f'{self.parameter_name}@okexv5_swap_usd', f'{self.parameter_name}@okexv5_swap_usdt']
     
     def get_contractsize(self, symbol: str) -> float:

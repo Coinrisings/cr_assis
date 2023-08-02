@@ -693,8 +693,7 @@ class AccountBase(object):
         path = "/mnt/efs/fs1/data_center/orders/"
         contracts = []
         for name in self.path_orders:
-            if transfer[self.contract_master] in name or transfer[self.contract_slave] in name:
-                contracts.append(path + name)
+            contracts.append(path + name)
         self.contracts = contracts.copy()
         start_date = start.date()
         end_date = end.date()
