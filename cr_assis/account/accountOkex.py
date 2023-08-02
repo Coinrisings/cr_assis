@@ -247,7 +247,7 @@ class AccountOkex(AccountBase):
         return ret
     
     def is_ccy_exposure(self) -> bool:
-        other_array = self.exposure_array.drop("usdt").sort_values()
+        other_array = self.exposure_array.drop(["usdt", "diff_U", "diff"]).sort_values()
         not_spot = abs(other_array.sum()) > self.exposure_number * self.exposure_contractsize * 5 or abs(other_array[0] + other_array[-1]) > self.exposure_number * self.exposure_contractsize * 2
         is_spot = abs(other_array[0]) >= self.exposure_number * self.exposure_contractsize and abs(other_array[-1]) >= self.exposure_number * self.exposure_contractsize
         return not_spot and is_spot
