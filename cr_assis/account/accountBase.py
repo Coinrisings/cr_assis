@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from cr_assis.draw import draw_ssh
-import datetime, time, os, yaml, json
+import datetime, os, yaml, json, pytz
 from pymongo import MongoClient
 from cr_assis.connect.connectData import ConnectData
 from pathlib import Path
@@ -18,7 +18,9 @@ class AccountBase(object):
         self.mongon_url = self.load_mongo_url()
         self.init_account(self.deploy_id)
         self.tickers: dict[str, dict] = {}
-    
+        self.end: datetime.datetime = datetime.datetime.now().astimezone(pytz.timezone("Asia/Shanghai")).replace(tzinfo = None)
+        self.start: datetime.datetime = self.end + datetime.timedelta(days = -3)
+        self.datacenter = "/mnt/efs/fs1/data_center/orders"
     
     def load_mongo_url(self) -> str:
         with open(f"{os.environ['HOME']}/.cryptobridge/private_key.yml") as f:
@@ -660,89 +662,28 @@ class AccountBase(object):
         return result
     
     def get_dates(self):
-        dates = []
-        start = self.start.date() + datetime.timedelta(days = -1)
-        end = self.end.date()
-        i = start
-        while i <= end:
-            dates.append(str(i))
-            i = i + datetime.timedelta(days = 1)
-        return dates
+        return [str(self.start.date() + datetime.timedelta(days=x)) for x in range((self.end.date()-self.start.date()).days + 1)]
     
-    def get_orders_data(self, log = False):
-        # filename is UTC
-        start = self.start
-        end = self.end
-        username = self.username
-        client = self.client
-        transfer = {}
-        transfer["_spot"] = "spot"
-        transfer["-usdt"] = "spot"
-        transfer["_usdt_swap"] = "swap_usdt"
-        transfer["_usdc_swap"] = "swap_usdt"
-        transfer["_usd_swap"] = "swap_usd"
-        transfer["-usdt-swap"] = "swap_usdt"
-        transfer["-usdc-swap"] = "swap_usdt"
-        transfer["-usd-swap"] = "swap_usd"
-        transfer["_busd_swap"] = "swap_busd"
-        transfer["-busd-swap"] = "swap_busd"
-        transfer["_usd_future"] = "futures_usd"
-        transfer["-usd-future"] = "futures_usd"
-        transfer["_usdt_future"] = "futures_usdt"
-        transfer["-usdt-future"] = "futures_usdt"
-        path = "/mnt/efs/fs1/data_center/orders/"
-        contracts = []
-        for name in self.path_orders:
-            contracts.append(path + name)
-        self.contracts = contracts.copy()
-        start_date = start.date()
-        end_date = end.date()
+    def get_orders_data(self):
         dates = self.get_dates()
         orders = {}
-        
-        for contract in contracts:
+        for name in self.path_orders:
+            contract = f"{self.datacenter}/{name}"
             data = pd.DataFrame()
             for date in dates:
-                try:
-                    df = pd.read_csv(contract + '/' + date + '.csv')
-                except:
-                    if log:
-                        print(f"{self.parameter_name}  {contract}  {date} orders data NA")
+                file_path = contract + '/' + date + '.csv'
+                if os.path.exists(file_path):
+                    df = pd.read_csv(file_path)
+                else:
                     continue
                 df["dt"] = df["update_iso"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
-                df1 = df[df["dt"]<= end]
-                df2 = df1[df1["dt"] >= start]
-                data = pd.concat([data, df2])
+                df = df[(df["dt"]<= self.end) & (df["dt"]<= self.start)].copy()
+                data = pd.concat([data, df])
             data.index = range(len(data))
-            a = contract.split("/")[-1]
-            a = a.split("@")[-1]
-            orders[a] = data.copy()
+            orders[name.split("@")[-1]] = data.copy()
         self.orders = orders.copy()
         return orders
     
-    def get_spot_orders(self, log = False):
-        path = "/mnt/efs/fs1/data_center/orders/"
-        start = self.start
-        end = self.end
-        start_date = start.date()
-        end_date = end.date()
-        dates = self.get_dates()
-        for name in self.path_orders:
-            if name.split("_")[-1] == "spot":
-                path = path + name + "/"
-                break
-        
-        data = pd.DataFrame()
-        for date in dates:
-            try:
-                df = pd.read_csv(path + date + '.csv')
-            except:
-                continue
-            df["dt"] = df["update_iso"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
-            df1 = df[df["dt"]<= end]
-            df2 = df1[df1["dt"] >= start]
-            data = pd.concat([data, df2])
-        return data
     def get_klines_data(self, start, end, exchange, coins, contract, log = False):
         #coins : string list ["ADA", "ATOM" ... ]
         path = "/mnt/efs/fs1/data_center/klines/"
@@ -828,7 +769,7 @@ class AccountBase(object):
         self.klines = klines.copy()
         return klines
     
-    def handle_orders_data(self, play = True):
+    def handle_orders_data(self, play = False):
         orders = self.orders
         contractsize = self.contractsize
         raw = pd.DataFrame()
@@ -946,11 +887,7 @@ class AccountBase(object):
         self.tpnl = data.copy()
         return data
     
-    def get_ledgers(self, log = False):
-        start = self.start
-        end = self.end
-        username = self.username 
-        client = self.client
+    def get_ledgers(self):
         path = "/mnt/efs/fs1/data_center/ledgers/"
         kinds = []
         for name in self.path_ledgers:
@@ -963,8 +900,6 @@ class AccountBase(object):
                     try:
                         df = pd.read_csv(kind + "/" + date + '.csv')
                     except:
-                        if log:
-                            print(f"{username} {client} {date} {kind} ledgers NA")
                         continue
                     data = pd.concat([data, df])
         data = data.drop_duplicates()
@@ -973,9 +908,8 @@ class AccountBase(object):
             self.fpnl = fpnl.copy()
             self.ledgers = data.copy()
             return data
-        data["dt"] = data["update_iso"].apply(lambda x: datetime.datetime(int(x[0:4]), int(x[5:7]),int(x[8:10]),int(x[11:13])) + datetime.timedelta(hours = 8))
-        data = data[data["dt"] >= start].copy()
-        data = data[data["dt"] <= end].copy()
+        data["dt"] =data["update_iso"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
+        data = data[(data["dt"]<= self.end) & (data["dt"]<= self.start)].copy()
         data.index = range(len(data))
         if len(data) >0 :
             for i in data.index:
@@ -987,12 +921,11 @@ class AccountBase(object):
             self.fpnl = fpnl.copy()
         self.ledgers = data.copy()
         return data
-    def get_fpnl(self, log = False):
+    
+    def get_fpnl(self):
         data = self.ledgers.copy()
-        pairs = list(data.pair.unique())
         stable_coins = ["USDT", "USD", "USDC", "USDK", "USDP", "DAI", "BUSD"]
-        data["symbol"].fillna("USDT", inplace = True)
-        data["symbol"] = data["symbol"].str.upper()
+        data["symbol"] = data["symbol"].fillna("USDT").str.upper()
         for i in data.index:
             if data.loc[i, "type"] == "interest":
                 data.loc[i, "coin"] = data.loc[i, "symbol"].upper()
@@ -1029,7 +962,7 @@ class AccountBase(object):
         self.fpnl = fpnl.copy()
         return fpnl
     
-    def get_pnl(self, play = True, number = 34):
+    def get_pnl(self, play = False, number = 34):
         tpnl = self.tpnl
         fpnl = self.fpnl
         coins = list(set(list(tpnl.index) + list(fpnl.index)))
@@ -1085,129 +1018,13 @@ class AccountBase(object):
         self.total_pnl = total_pnl.copy()
         return pnl, total_pnl
     
-    def get_third_pnl(self):
-        cash = {}
-        price = np.nan
-        self.end = datetime.datetime.utcnow() + datetime.timedelta(hours = 8) if not hasattr(self, "end") else self.end
-        self.start = self.end + datetime.timedelta(hours=-24) if not hasattr(self, "start") else self.start
-        for timestamp in [self.start, self.end]:
-            start = timestamp + datetime.timedelta(minutes = -10, hours = -8)
-            end = timestamp + datetime.timedelta(hours = -8)
-            a = f"""
-            select origin from equity_snapshot where client = '{self.client}' and username = '{self.username}' 
-            and symbol = '{self.principal_currency.lower()}' and time <= '{end}' and time >= '{start}' LIMIT 100
-            """
-            df = self.database._send_influx_query(a, database = "account_data", is_dataFrame= True)
-            if len(df) > 0:
-                raw = eval(df.origin.values[-1])
-                cash[timestamp] = eval(raw["eq"]) - eval(raw["upl"])
-                if timestamp == self.end:
-                    price = eval(raw["eqUsd"]) / eval(raw["eq"])
-            else:
-                cash[timestamp] = np.nan
-        profit = cash[self.end] - cash[self.start]
-        third_pnl = {f"{self.principal_currency}":profit, "USDT":profit * price}
-        self.cash = cash.copy()
-        self.third_pnl = third_pnl.copy()
-        return third_pnl
-    
-    def get_second_pnl(self):
-        """get orders data, including swap and spot"""
-        orders = self.orders.copy()
-        data = pd.DataFrame()
-        for key in orders.keys():
-            data = pd.concat([data, orders[key]])
-        spot_orders = self.get_spot_orders()
-        data = pd.concat([data, spot_orders])
-
-        #drop principal coin and usd-swap
-        if "pair" in data.columns:
-            data["coin"] = data["pair"].apply(lambda x: x.split("-")[0].upper())
-            data["not_principal"] = data["coin"].apply(lambda x: True if self.principal_currency.upper() != x else False)
-            data = data[data["not_principal"]].copy()
-            if "pair" in data.columns:
-                data["is_usdt"] = data["pair"].apply(lambda x: True if x.split("-")[1].lower() == "usdt" else False)
-                data = data[data["is_usdt"]].copy()
-            else:
-                second_pnl = pd.DataFrame(columns = ["profit"])
-                self.second_pnl = second_pnl.copy()
-                return second_pnl
-        else:
-            second_pnl = pd.DataFrame(columns = ["profit"])
-            self.second_pnl = second_pnl.copy()
-            return second_pnl
-
-        #calculate profit
-        data.index = range(len(data))
-        for i in data.index:
-            if "swap" in data.loc[i, "pair"]:
-                data.loc[i, "profit"] = eval(eval(data.loc[i, "raw"])["pnl"]) + eval(eval(data.loc[i, "raw"])["fee"])
-            else:
-                if data.loc[i, "side"] in ["openshort", "closelong"]:
-                    data.loc[i, "profit"] = data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
-                elif data.loc[i, "side"] in ["openlong", "closeshort"]:
-                    data.loc[i, "profit"] = - data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
-        self.second_orders = data.copy()
-
-        #get ledgers data and drop usdt-swap
-        ledgers = self.get_ledgers().copy()
-        ledgers = ledgers[ledgers["type"] == "funding_fee"].copy()
-        ledgers = ledgers[ledgers["symbol"] == "usdt"].copy()
-        ledgers["coin"] = ledgers["pair"].apply(lambda x: x.split("-")[0].upper())
-        ledgers = ledgers[ledgers["coin"] != self.principal_currency.upper()].copy()
-        ledgers.index = range(len(ledgers))
-        self.second_ledgers = ledgers.copy()
-
-        #calculate coin profit
-        if "coin" in data.columns:
-            coins = list(set(data.coin.unique()) | set(data.coin.unique()))
-        else:
-            coins = []
-        second_pnl = pd.DataFrame(columns = ["profit"], index = coins)
-        for coin in coins:
-            if coin in data["coin"].values:
-                profit = sum(data[data["coin"] == coin].profit.values)
-            else:
-                profit = 0
-            if coin in ledgers.coin.values:
-                profit += sum(ledgers[ledgers["coin"] == coin].amount.values)
-            second_pnl.loc[coin, "profit"] = profit
-        
-        #calculate princial currency pnl
-        if "third_pnl" not in self.__dict__.keys():
-            self.get_third_pnl()
-        third_pnl = self.third_pnl
-        total_others = sum(second_pnl.profit.values)
-        second_pnl.loc[self.principal_currency, "profit"] = third_pnl["USDT"] - total_others
-        second_pnl.sort_values(by = "profit", ascending = False, inplace = True)
-        self.second_pnl = second_pnl.copy()
-        return second_pnl
-    
-    def run_pnl(self, start, end, play = True, log_time = True):
-        self.start = start
-        self.end = end
-        orders = self.get_orders_data()
+    def run_pnl(self, start: datetime.datetime, end: datetime.datetime, play = False, log_time = False):
+        self.start, self.end = start, end
+        self.get_orders_data()
         trade_data = self.handle_orders_data(play = play)
-        tpnl = self.get_tpnl()
-        ledgers = self.get_ledgers()
-        if len(ledgers) > 0:
-            fpnl = self.get_fpnl()
-        pnl, total_pnl = self.get_pnl(play = play)
-        if self.combo in ["okx_usdt_swap-okx_usd_swap", "okx_usd_swap-okx_usdt_swap"]:
-            third_pnl = self.get_third_pnl()
-            second_pnl = self.get_second_pnl()
+        ledgers = self.get_ledgers().sort_values(by = "dt")
+        self.get_fpnl() if len(ledgers) > 0 else None
+        self.get_pnl(play = play)
         if log_time:
-            if len(trade_data) > 0:
-                trade_data = trade_data.sort_values(by = "dt")
-                tpnl_start = trade_data["dt"].values[0]
-                tpnl_end = trade_data["dt"].values[-1]
-                print(f"tpnl: {tpnl_start}  to {tpnl_end}")
-            else:
-                print(f"orders data is empty")
-            if len(ledgers) > 0:
-                ledgers = ledgers.sort_values(by = "dt")
-                fpnl_start = ledgers["dt"].values[0]
-                fpnl_end = ledgers["dt"].values[-1]
-                print(f"fpnl: {fpnl_start}  to {fpnl_end}")
-            else:
-                print(f"ledgers data is empty")
+            print(f"""tpnl: {trade_data["dt"].values[0]}  to {trade_data["dt"].values[-1]}""") if len(trade_data) > 0 else print(f"orders data is empty")
+            print(f"""fpnl: {ledgers["dt"].values[0]}  to {ledgers["dt"].values[-1]}""") if len(ledgers) > 0 else print(f"ledgers data is empty")
