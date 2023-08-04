@@ -8,9 +8,6 @@ from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time
 
-account = AccountOkex("test_hfok01@pt_okex_btc")
-account.get_account_position()
-
 # apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
 # secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
 # servertime = requests.get("https://api.binance.com/api/v1/time")
