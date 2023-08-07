@@ -761,6 +761,7 @@ class AccountBase(object):
                 data["volume_U"] = data["volume"]
             else:
                 data["volume_U"] = data["volume"] * data["close"]
+            data.sort_values(by = "dt", inplace = True)
             if "dt" in data.columns:
                 data = data[data["dt"]>= start + datetime.timedelta(minutes = -10)].copy()
                 data = data[data["dt"]<= end + datetime.timedelta(minutes = 10)].copy()
@@ -909,7 +910,7 @@ class AccountBase(object):
             self.ledgers = data.copy()
             return data
         data["dt"] =data["update_iso"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
-        data = data[(data["dt"]<= self.end) & (data["dt"]<= self.start)].copy()
+        data = data[(data["dt"]<= self.end) & (data["dt"]>= self.start)].copy()
         data.index = range(len(data))
         if len(data) >0 :
             for i in data.index:
@@ -938,10 +939,12 @@ class AccountBase(object):
         for i in data.index:
             symbol = data.loc[i, "symbol"]
             dt = data.loc[i, "dt"] + datetime.timedelta(seconds = - data.loc[i, "dt"].second)
+            
             if symbol in stable_coins:
                 price = 1
             else:
-                price = float(klines[symbol][klines[symbol]["dt"] == dt].close.values) if "dt" in klines[symbol].columns and dt in klines[symbol]["dt"].values else np.nan
+                target = klines[symbol][(klines[symbol]["dt"] >= dt) & (klines[symbol]["dt"] <= dt+ datetime.timedelta(hours = 2))].sort_values(by = "dt").close.values
+                price = float(target[0]) if len(target) > 0 else np.nan
             data.loc[i, "price"] = price
             amount = data.loc[i, "amount"]
             data.loc[i, "balance_change_U"] = amount * data.loc[i, "price"]
@@ -1022,6 +1025,7 @@ class AccountBase(object):
         self.start, self.end = start, end
         self.get_orders_data()
         trade_data = self.handle_orders_data(play = play)
+        tpnl = self.get_tpnl()
         ledgers = self.get_ledgers().sort_values(by = "dt")
         self.get_fpnl() if len(ledgers) > 0 else None
         self.get_pnl(play = play)

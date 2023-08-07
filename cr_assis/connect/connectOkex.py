@@ -284,6 +284,8 @@ class ConnectOkex(object):
             size = self.get_contractsize_cswap(coin)
         elif contract == "-usdc-swap":
             size = self.get_contractsize_usdc(coin)
+        elif contract == "-usdt":
+            size = 1
         else:
             size = np.nan
         return size
