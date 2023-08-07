@@ -879,12 +879,11 @@ class AccountBase(object):
     def get_tpnl(self):
         trade_data = self.trade_data
         coins = list(trade_data.coin.unique())
-        data = pd.DataFrame(columns = ["total"], index = coins)
-        for col in data.columns:
-            data[col] = 0
+        data = pd.DataFrame(columns = ["spread", "fee","total"], index = coins)
         for coin in coins:
-            a = trade_data
-            data.loc[coin, "total"] = sum(a[a['coin'] == coin]["turnover"].values)
+            data.loc[coin, "spread"],data.loc[coin, "fee"] = sum(trade_data[trade_data['coin'] == coin]["turnover"].values),sum(trade_data[trade_data['coin'] == coin]["fee_U"].values)
+        data = data.fillna(0)
+        data["total"] = data["spread"] + data["fee"]
         self.tpnl = data.copy()
         return data
     

@@ -470,11 +470,11 @@ class AccountOkex(AccountBase):
             ret = np.nan
         return ret
     
-    def get_order_turnover(self, side: str, number: float, avg_price: float) -> float:
+    def get_real_number(self, side: str, number: float) -> float:
         if side.lower() in ["openlong", "closeshort"]:
-            ret = - number * avg_price
+            ret = - number
         elif side.lower() in ["openshort", "closelong"]:
-            ret = number * avg_price
+            ret = number
         else:
             ret = np.nan
         return ret
@@ -493,7 +493,10 @@ class AccountOkex(AccountBase):
         data["is_usd"] = data["pair"].apply(lambda x: True if x.lower().split("-")[1] == "usd" else False)
         data["number"] = data["cum_deal_base"].abs() * data["contractsize"]
         data["number"] = data.apply(lambda x: self.get_usd_number(x["side"], x["number"], x["avg_price"], x["pnl"]) if x["is_usd"] else x["number"], axis = 1)
-        data["turnover"] = data.apply(lambda x: self.get_order_turnover(x["side"], x["number"], x["avg_price"]), axis = 1)
+        data["real_number"] = data.apply(lambda x: self.get_real_number(x["side"], x["number"]), axis = 1)
+        data["turnover"] = data["real_number"] * data["avg_price"]
+        data["fee"], data["feeCcy"] = data["raw"].apply(lambda x: eval(eval(x)["fee"])), data["raw"].apply(lambda x: eval(x)["feeCcy"])
+        data["fee_U"] = data.apply(lambda x: x["fee"] if x["feeCcy"].upper() in ["USDT", "USD", "USDC", "BUSD", "USDK"] else x["fee"] * x["avg_price"], axis = 1)
         data = data.sort_values(by = "dt").reset_index(drop=True)
         if play:
             result = pd.DataFrame(columns = ["turnover"], data = data["turnover"]).cumsum()

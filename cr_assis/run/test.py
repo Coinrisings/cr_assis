@@ -14,6 +14,9 @@ account.start = datetime.datetime(2023,8,3)
 account.end = datetime.datetime(2023,8,4)
 orders = account.get_orders_data()
 trade_data = account.handle_orders_data(play = True)
+tpnl = account.get_tpnl()
+account.get_equity()
+print(tpnl / account.adjEq)
 # apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
 # secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
 # servertime = requests.get("https://api.binance.com/api/v1/time")
