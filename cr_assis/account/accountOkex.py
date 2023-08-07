@@ -463,9 +463,9 @@ class AccountOkex(AccountBase):
     
     def get_usd_number(self, side: str, number: float, avg_price: float, pnl: float) -> float:
         if side.lower() in ["openlong", "closeshort"]:
-            ret = number / avg_price + pnl
+            ret = number / avg_price - pnl
         elif side.lower() in ["openshort", "closelong"]:
-            ret =  number / avg_price - pnl
+            ret =  number / avg_price + pnl
         else:
             ret = np.nan
         return ret
