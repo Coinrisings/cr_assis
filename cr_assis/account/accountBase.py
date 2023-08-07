@@ -662,7 +662,7 @@ class AccountBase(object):
         return result
     
     def get_dates(self):
-        return [str(self.start.date() + datetime.timedelta(days=x)) for x in range((self.end.date()-self.start.date()).days + 1)]
+        return [str(self.end.date() + datetime.timedelta(days=-x)) for x in range((self.end.date()-self.start.date()).days + 2)]
     
     def get_orders_data(self):
         dates = self.get_dates()
@@ -677,8 +677,8 @@ class AccountBase(object):
                 else:
                     continue
                 df["dt"] = df["update_iso"].apply(lambda x: datetime.datetime.strptime(x[:19],'%Y-%m-%dT%H:%M:%S') + datetime.timedelta(hours = 8))
-                df = df[(df["dt"]<= self.end) & (df["dt"]<= self.start)].copy()
                 data = pd.concat([data, df])
+            data = data[(data["dt"] >= self.start) & (data["dt"] <= self.end)].copy()
             data.index = range(len(data))
             orders[name.split("@")[-1]] = data.copy()
         self.orders = orders.copy()
@@ -793,23 +793,10 @@ class AccountBase(object):
             return 
         raw = pd.concat(self.orders.values()).drop_duplicates(subset = ["market_oid"]).sort_values(by = "dt").reset_index(drop = True)
         names = ["dt", "pair", "avg_price", "cum_deal_base","side", "exchange", "field",  "status", "settlement", "market_oid"]
-        data[names] = raw[names]
+        data[names], data["UTC"] = raw[names], raw["update_iso"]
         data["coin"] = data["pair"].apply(lambda x: x.split("-")[0].upper())
-        data["UTC"] = data["update_iso"]
+        data["cum_deal_base"] = data["cum_deal_base"].abs()
         for i in raw.index:
-            data.loc[i, "UTC"] = raw.loc[i, "update_iso"]
-            for name in names:
-                data.loc[i, name] = raw.loc[i, name]
-                if name == "cum_deal_base":
-                    data.loc[i, name] = abs(raw.loc[i, name])
-            if type(data.loc[i, "side"]) != type("a"):
-                if np.isnan(data.loc[i, "side"]):
-                    side = eval(raw.loc[i, "raw"])["side"]
-                    if side == "closeshort":
-                        side = "openlong"
-                    elif side == "closelong":
-                        side = "openshort"
-                    data.loc[i, "side"] = side
             if data.loc[i, "field"] == "swap" and "ok" in data.loc[i, "exchange"]:
                 coin = data.loc[i, "pair"].split("-")[0]
                 kind = data.loc[i, "pair"].split("-")[1].lower()

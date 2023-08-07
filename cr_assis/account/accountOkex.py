@@ -1,10 +1,14 @@
 from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.connectData import ConnectData
+from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.marketApi import MarketAPI
 from pathlib import Path
 import pandas as pd
 import numpy as np
-import ccxt, copy, datetime
+import ccxt, copy, datetime, pytz
+from cr_assis.draw import draw_ssh
+from bokeh.plotting import show
+from bokeh.models.widgets import Panel, Tabs
 
 class AccountOkex(AccountBase):
     """Account Information only in Okex
@@ -29,6 +33,7 @@ class AccountOkex(AccountBase):
         self.parameter_name = deploy_id.split("@")[0]
         self.client, self.username = self.parameter_name.split("_")
         self.database = ConnectData()
+        self.dataokex = ConnectOkex()
         self.markets = ccxt.okex().load_markets()
         self.market_api = MarketAPI()
         self.tickers : dict[str, dict]= {}
@@ -43,6 +48,9 @@ class AccountOkex(AccountBase):
         self.exchange_master, self.exchange_slave = "okex", "okex"
         self.path_orders = [f'{self.parameter_name}@okexv5_swap_usd', f'{self.parameter_name}@okexv5_swap_usdt', f'{self.parameter_name}@okexv5_spot']
         self.path_ledgers = [f'{self.parameter_name}@okexv5_swap_usd', f'{self.parameter_name}@okexv5_swap_usdt']
+        self.end: datetime.datetime = datetime.datetime.now().astimezone(pytz.timezone("Asia/Shanghai")).replace(tzinfo = None)
+        self.start: datetime.datetime = self.end + datetime.timedelta(days = -3)
+        self.datacenter = "/mnt/efs/fs1/data_center/orders"
     
     def get_contractsize(self, symbol: str) -> float:
         return self.markets[symbol]["contractSize"] if symbol in self.markets.keys() else np.nan
@@ -443,3 +451,75 @@ class AccountOkex(AccountBase):
         self.position = self.position.drop(self.position[(self.position["coin"] == self.ccy.lower()) & (self.position["combo"].isnull())].index).sort_values(by = "MV%", ascending= False)
         self.position.index = range(len(self.position))
         return self.position.copy()
+    
+    def select_orders(self) -> None:
+        ret = pd.concat(self.orders.values()).drop_duplicates(subset = ["market_oid"]).sort_values(by = "dt").reset_index(drop = True)
+        ret["coin"] = ret["pair"].apply(lambda x: x.split("-")[0].upper())
+        coin_pair = {coin: ret[ret["coin"] == coin]["pair"].unique() for coin in ret["coin"].unique()}
+        for coin, pair in coin_pair.items():
+            if len(pair) % 2 ==1 :
+                ret = ret[ret["pair"] != f"{coin.lower()}-usdt"].copy()
+        return ret
+    
+    def get_usd_number(self, side: str, number: float, avg_price: float, pnl: float) -> float:
+        if side.lower() in ["openlong", "closeshort"]:
+            ret = number / avg_price + pnl
+        elif side.lower() in ["openshort", "closelong"]:
+            ret =  number / avg_price - pnl
+        else:
+            ret = np.nan
+        return ret
+    
+    def get_order_turnover(self, side: str, number: float, avg_price: float) -> float:
+        if side.lower() in ["openlong", "closeshort"]:
+            ret = - number * avg_price
+        elif side.lower() in ["openshort", "closelong"]:
+            ret = number * avg_price
+        else:
+            ret = np.nan
+        return ret
+    
+    def handle_orders_data(self, play=False):
+        data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base", "side","turnover","status","exchange", "field", "market_oid"])
+        if not hasattr(self, "orders") or len(self.orders) == 0:
+            print(f"{self.parameter_name} doesn't have orders data between {self.start} and {self.end}")
+            self.trade_data = data.copy()
+            return 
+        raw = self.select_orders()
+        names = ["dt", "pair", "avg_price", "cum_deal_base","side", "exchange", "field",  "status", "settlement", "market_oid", "coin", "raw"]
+        data[names], data["UTC"] = raw[names], raw["update_iso"]
+        data["contractsize"] = data["pair"].apply(lambda x: self.dataokex.get_contractsize(x))
+        data["pnl"] = data["raw"].apply(lambda x: eval(eval(x)["pnl"]))
+        data["is_usd"] = data["pair"].apply(lambda x: True if x.lower().split("-")[1] == "usd" else False)
+        data["number"] = data["cum_deal_base"].abs() * data["contractsize"]
+        data["number"] = data.apply(lambda x: self.get_usd_number(x["side"], x["number"], x["avg_price"], x["pnl"]) if x["is_usd"] else x["number"], axis = 1)
+        data["turnover"] = data.apply(lambda x: self.get_order_turnover(x["side"], x["number"], x["avg_price"]), axis = 1)
+        data = data.sort_values(by = "dt").reset_index(drop=True)
+        if play:
+            result = pd.DataFrame(columns = ["turnover"], data = data["turnover"]).cumsum()
+            p0 = draw_ssh.line(result, x_axis_type = "linear", play = False, title = f"{self.parameter_name}: {self.start} to {self.end}", tips=[('x', '$x{0}'), ('value','$y{0.0000}'),('name','$name'), ('time', '@dt{%Y-%m-%d %H:%M:%S}')], formatters={"@x": "printf", "@dt": "datetime"}, tags = ["dt"])
+            tab0 = Panel(child=p0, title="Overview")
+            coins = list(data.coin.unique())
+            ps, ts = {}, {}
+            for i in range(len(coins)):
+                a = data[data["coin"] == coins[i]].copy()
+                result = pd.DataFrame(columns = ["turnover", "number"])
+                for j in a.index:
+                    if a.loc[j, "side"] in ["openlong", "closeshort"]:
+                        a.loc[j, "number"] = -a.loc[j, "number"]
+                result["turnover"] = a["turnover"]
+                result["number"] = a["number"]
+                result.index = range(len(result))
+                result = result.cumsum()
+                result = result.fillna(0)
+                result["dt"] = data["dt"]
+                ps[i] = draw_ssh.line_doubleY(result, right_columns = ["number"],x_axis_type = "linear", play = False, title =f"{self.parameter_name}: {self.start} to {self.end}", tips=[('x', '$x{0}'), ('value','$y{0.0000}'),('name','$name'), ('time', '@dt{%Y-%m-%d %H:%M:%S}')], formatters={"@x": "printf", "@dt": "datetime"}, tags = ["dt"])
+                ts[i] = Panel(child = ps[i], title=coins[i])
+            tabs = []
+            tabs.append(tab0)
+            for i in ts.keys():
+                tabs.append(ts[i])
+            t = Tabs(tabs= tabs)
+            show(t)
+        self.trade_data = data.copy()
+        return data
