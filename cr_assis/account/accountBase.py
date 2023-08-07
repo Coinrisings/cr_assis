@@ -457,7 +457,7 @@ class AccountBase(object):
                 return 
             a = f"""
             select mr from {dataname} where username = '{self.username}' and client = '{self.client}' and 
-            exchange = '{exchange_unified}' and time> now() - 3m LIMIT 1
+            exchange = '{exchange_unified}' and time> now() - 10m LIMIT 1
             """
             data = self.database._send_influx_query(a, database = "account_data")
             mr[exchange] = np.nan if len(data) == 0 else data.mr.values[0]
@@ -769,76 +769,89 @@ class AccountBase(object):
         self.klines = klines.copy()
         return klines
     
+    def get_contractsize_from_csv(self, coin: str, exchange: str, contract: str) -> float:
+        """
+        Args:
+            coin (str): str.upper()
+            exchange (str): should be in ["okex", "binance", "gate", "bybit", "kucoin"]
+            contract (str): should be in ["-usdt-swap", "-usd-swap", "-usdt-future", "-usd-future"]
+        """
+        coin, col = coin.upper(), self.unified_exchange_name(exchange) + contract
+        return self.contractsize.loc[coin, col] if coin in self.contractsize.index and col in self.contractsize.columns else np.nan
+    
+    def get_contractsize_uswap(self, coin: str, exchange: str) -> float:
+        return self.get_contractsize_from_csv(coin, exchange, contract="-usdt-swap")
+    
+    def get_contractsize_cswap(self, coin: str, exchange: str) -> float:
+        return self.get_contractsize_from_csv(coin, exchange, contract="-usd-swap")
+    
     def handle_orders_data(self, play = False):
-        orders = self.orders
-        contractsize = self.contractsize
-        raw = pd.DataFrame()
+        data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base", "side","turnover","status","exchange", "field", "market_oid"])
+        if not hasattr(self, "orders") or len(self.orders) == 0:
+            print(f"{self.parameter_name} doesn't have orders data between {self.start} and {self.end}")
+            self.trade_data = data.copy()
+            return 
+        raw = pd.concat(self.orders.values()).drop_duplicates(subset = ["market_oid"]).sort_values(by = "dt").reset_index(drop = True)
         names = ["dt", "pair", "avg_price", "cum_deal_base","side", "exchange", "field",  "status", "settlement", "market_oid"]
-        for contract in orders.keys():
-            raw = pd.concat([raw, orders[contract]])
-        raw = raw.drop_duplicates(subset = ["market_oid"])
-        raw.index = range(len(raw))
-        data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base",
-                                        "side","turnover","status","exchange", "field", "market_oid"])
-        if len(raw) != 0:
-            for i in raw.index:
-                data.loc[i, "UTC"] = raw.loc[i, "update_iso"]
-                for name in names:
-                    data.loc[i, name] = raw.loc[i, name]
-                    if name == "cum_deal_base":
-                        data.loc[i, name] = abs(raw.loc[i, name])
-                if type(data.loc[i, "side"]) != type("a"):
-                    if np.isnan(data.loc[i, "side"]):
-                        side = eval(raw.loc[i, "raw"])["side"]
-                        if side == "closeshort":
-                            side = "openlong"
-                        elif side == "closelong":
-                            side = "openshort"
-                        data.loc[i, "side"] = side
-                if data.loc[i, "field"] == "swap" and "ok" in data.loc[i, "exchange"]:
-                    coin = data.loc[i, "pair"].split("-")[0].upper()
-                    kind = data.loc[i, "pair"].split("-")[1]
-                    exchange = self.unified_exchange_name(data.loc[i, "exchange"])
-                    x = exchange + "-" + kind + "-swap"
-                    data.loc[i, "cum_deal_base"] = contractsize.loc[coin, x] * data.loc[i, "cum_deal_base"]
-                if self.combo != "okx_usdt_swap-okx_usd_swap":
-                    if data.loc[i, "side"] in ["openshort", "closelong"]:
-                        if data.loc[i, "field"] == "swap" and data.loc[i, "pair"].split("-")[1] == "usd":
-                            data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"]
-                        else:
-                            data.loc[i, "turnover"] = data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
-                    elif data.loc[i, "side"] in ["openlong", "closeshort"]:
-                        if data.loc[i, "field"] == "swap" and data.loc[i, "pair"].split("-")[1] == "usd":
-                            data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"]
-                        else:
-                            data.loc[i, "turnover"] = - data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
-                else:
-                    kind = data.loc[i, "pair"].split("-")[1]
-                    if kind in ["usd", "USD"]:
-                        if data.loc[i, "side"] == "openshort":
-                            data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"]
-                        else:
-                            data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"]
+        data[names] = raw[names]
+        data["coin"] = data["pair"].apply(lambda x: x.split("-")[0].upper())
+        data["UTC"] = data["update_iso"]
+        for i in raw.index:
+            data.loc[i, "UTC"] = raw.loc[i, "update_iso"]
+            for name in names:
+                data.loc[i, name] = raw.loc[i, name]
+                if name == "cum_deal_base":
+                    data.loc[i, name] = abs(raw.loc[i, name])
+            if type(data.loc[i, "side"]) != type("a"):
+                if np.isnan(data.loc[i, "side"]):
+                    side = eval(raw.loc[i, "raw"])["side"]
+                    if side == "closeshort":
+                        side = "openlong"
+                    elif side == "closelong":
+                        side = "openshort"
+                    data.loc[i, "side"] = side
+            if data.loc[i, "field"] == "swap" and "ok" in data.loc[i, "exchange"]:
+                coin = data.loc[i, "pair"].split("-")[0]
+                kind = data.loc[i, "pair"].split("-")[1].lower()
+                data.loc[i, "cum_deal_base"] *= self.get_contractsize_cswap(coin, "okex") if kind == "usd" else self.get_contractsize_uswap(coin, "okex")
+            if self.combo != "okx_usdt_swap-okx_usd_swap":
+                if data.loc[i, "side"] in ["openshort", "closelong"]:
+                    if data.loc[i, "field"] == "swap" and data.loc[i, "pair"].split("-")[1] == "usd":
+                        data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"]
                     else:
-                        if eval(eval(raw.loc[i, "raw"])["pnl"]) == 0:
-                            if data.loc[i, "side"] == "openshort":
-                                data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"] * data.loc[i, "avg_price"]
-                            else:
-                                data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"] * data.loc[i, "avg_price"]
+                        data.loc[i, "turnover"] = data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
+                elif data.loc[i, "side"] in ["openlong", "closeshort"]:
+                    if data.loc[i, "field"] == "swap" and data.loc[i, "pair"].split("-")[1] == "usd":
+                        data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"]
+                    else:
+                        data.loc[i, "turnover"] = - data.loc[i, "avg_price"] * data.loc[i, "cum_deal_base"]
+            else:
+                kind = data.loc[i, "pair"].split("-")[1]
+                if kind in ["usd", "USD"]:
+                    if data.loc[i, "side"] == "openshort":
+                        data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"]
+                    else:
+                        data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"]
+                else:
+                    if eval(eval(raw.loc[i, "raw"])["pnl"]) == 0:
+                        if data.loc[i, "side"] == "openshort":
+                            data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"] * data.loc[i, "avg_price"]
                         else:
-                            pair = data.loc[i, "pair"]
-                            timestamp = raw.loc[i, "update_iso"]
-                            a = f"""
-                            select long_open_price, short_open_price from position where client = '{self.client}' and 
-                            username = '{self.username}' and pair = '{pair}' and time <= '{timestamp}' order by time desc LIMIT 1
-                            """
-                            df = self.database._send_influx_query(a, database = "account_data", is_dataFrame=True)
-                            price = max([df.loc[0, "long_open_price"], df.loc[0, "short_open_price"]])
-                            if data.loc[i, "side"] == "openshort":
-                                data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"] * price
-                            else:
-                                data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"] * price
-            data["coin"] = data["pair"].apply(lambda x: x.split("-")[0].upper())
+                            data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"] * data.loc[i, "avg_price"]
+                    else:
+                        pair = data.loc[i, "pair"]
+                        timestamp = raw.loc[i, "update_iso"]
+                        a = f"""
+                        select long_open_price, short_open_price from position where client = '{self.client}' and 
+                        username = '{self.username}' and pair = '{pair}' and time <= '{timestamp}' order by time desc LIMIT 1
+                        """
+                        df = self.database._send_influx_query(a, database = "account_data", is_dataFrame=True)
+                        price = max([df.loc[0, "long_open_price"], df.loc[0, "short_open_price"]])
+                        if data.loc[i, "side"] == "openshort":
+                            data.loc[i, "turnover"] = data.loc[i, "cum_deal_base"] * price
+                        else:
+                            data.loc[i, "turnover"] = - data.loc[i, "cum_deal_base"] * price
+            
             data = data.sort_values(by = "dt")
             data.index = range(len(data))
             result = pd.DataFrame(columns = ["turnover"])
