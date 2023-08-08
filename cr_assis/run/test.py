@@ -8,8 +8,6 @@ from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
 
-acc = AccountBinance("1_1")
-ret = acc.get_tickers("SPOT")
 
 apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
 secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
@@ -20,14 +18,15 @@ headers = {
 }
 servertimeobject = json.loads(servertime.text)
 servertimeint = servertimeobject['serverTime']
-PATH = '/papi/v1/cm/userTrades'
+PATH = '/papi/v1/cm/allOrders'
 timestamp = int(time.time() * 1000)
-start_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,2,11,0,0)) * 1000)
-end_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,2,11,35,0)) * 1000)
+start_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,7,19,20,0)) * 1000)
+end_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,7,21,0,0)) * 1000)
 params = {
     "timestamp": timestamp,
     "startTime":start_time,
-    "endTime":end_time
+    "endTime":end_time,
+    "symbol": "EOSUSD_PERP"
 }
 query_string = urlencode(params)
 params['signature'] = hmac.new(secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()

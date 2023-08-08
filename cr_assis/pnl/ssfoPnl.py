@@ -28,16 +28,15 @@ class SsfoPnl(object):
         return rpnl
 
     def get_fpnl(self) -> dict:
-        fpnl,ipnl, day_fpnl, day_ipnl = ({}, {}, {}, {})
+        fpnl,ipnl,tpnl, day_fpnl, day_ipnl,day_tpnl = ({}, {}, {}, {}, {}, {})
         for account in self.accounts:
             account.get_equity() if not hasattr(account, "adjEq") else None
             account.end = self.end_time
             for day in [1, 3, 7]:
-                account.start = self.end_time + datetime.timedelta(days = -day)
-                account.get_ledgers()
-                account.fpnl = account.get_fpnl() if len(account.ledgers) > 0 else pd.DataFrame(columns = ["total"])
+                account.run_pnl(start = self.end_time + datetime.timedelta(days = -day), end = self.end_time, play = False)
+                day_tpnl[day] = account.tpnl["total"].sum() / account.adjEq if "total" in account.tpnl.columns else np.nan
                 day_fpnl[day] = account.fpnl["funding_fee"].sum() / account.adjEq if "funding_fee" in account.fpnl.columns else np.nan
                 day_ipnl[day] = account.fpnl["interest"].sum() / account.adjEq if "interest" in account.fpnl.columns else 0
-            fpnl[account.parameter_name], ipnl[account.parameter_name] = day_fpnl.copy(), day_ipnl.copy()
-        self.fpnl, self.ipnl = fpnl, ipnl
-        return fpnl, ipnl
+            fpnl[account.parameter_name], ipnl[account.parameter_name], tpnl[account.parameter_name] = day_fpnl.copy(), day_ipnl.copy(), day_tpnl.copy()
+        self.fpnl, self.ipnl, self.tpnl = fpnl, ipnl, tpnl
+        return fpnl, ipnl, tpnl
