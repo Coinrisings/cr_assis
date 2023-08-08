@@ -882,7 +882,7 @@ class AccountBase(object):
         data = pd.DataFrame(columns = ["spread", "fee","total"], index = coins)
         for coin in coins:
             data.loc[coin, "spread"],data.loc[coin, "fee"] = sum(trade_data[trade_data['coin'] == coin]["turnover"].values),sum(trade_data[trade_data['coin'] == coin]["fee_U"].values)
-            data.loc[coin, "spread"] -= trade_data.loc[trade_data["coin"] == coin, "real_number"].sum() * trade_data.loc[trade_data["coin"] == coin, "avg_price"].values[0]
+            data.loc[coin, "spread"] -= trade_data.loc[trade_data["coin"] == coin, "real_number"].sum() * trade_data.loc[trade_data["coin"] == coin, "avg_price"].values[-1]
         data = data.fillna(0)
         data["total"] = data["spread"] + data["fee"]
         self.tpnl = data.copy()
