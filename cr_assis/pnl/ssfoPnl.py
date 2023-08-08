@@ -1,4 +1,4 @@
-from cr_assis.account.accountBase import AccountBase
+from cr_assis.account.accountOkex import AccountOkex
 from cr_assis.connect.connectData import ConnectData
 import pandas as pd
 import numpy as np
@@ -7,7 +7,7 @@ import datetime
 class SsfoPnl(object):
     """pnl for ssf-o"""
     
-    def __init__(self, accounts: list[AccountBase]) -> None:
+    def __init__(self, accounts: list[AccountOkex]) -> None:
         """
         Args:
             accounts (list): list of AccountBase
@@ -32,8 +32,15 @@ class SsfoPnl(object):
         for account in self.accounts:
             account.get_equity() if not hasattr(account, "adjEq") else None
             account.end = self.end_time
+            account.start = self.end_time + datetime.timedelta(days = -7)
+            account.get_orders_data()
+            trade_data = account.handle_orders_data(play = False).copy()
+            ledgers = account.get_ledgers().sort_values(by = "dt")
             for day in [1, 3, 7]:
-                account.run_pnl(start = self.end_time + datetime.timedelta(days = -day), end = self.end_time, play = False)
+                account.trade_data = trade_data[(trade_data["dt"] >= self.end_time + datetime.timedelta(days = -day)) & (trade_data["dt"] <= self.end_time)].copy()
+                account.get_tpnl()
+                account.ledgers = ledgers[(ledgers["dt"] >= self.end_time + datetime.timedelta(days = -day)) & (ledgers["dt"] <= self.end_time)].copy()
+                account.get_fpnl()
                 day_tpnl[day] = account.tpnl["total"].sum() / account.adjEq if "total" in account.tpnl.columns else np.nan
                 day_fpnl[day] = account.fpnl["funding_fee"].sum() / account.adjEq if "funding_fee" in account.fpnl.columns else np.nan
                 day_ipnl[day] = account.fpnl["interest"].sum() / account.adjEq if "interest" in account.fpnl.columns else 0
