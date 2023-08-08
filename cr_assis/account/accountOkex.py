@@ -455,10 +455,10 @@ class AccountOkex(AccountBase):
     def select_orders(self) -> None:
         ret = pd.concat(self.orders.values()).drop_duplicates(subset = ["market_oid"]).sort_values(by = "dt").reset_index(drop = True)
         ret["coin"] = ret["pair"].apply(lambda x: x.split("-")[0].upper())
-        coin_pair = {coin: ret[ret["coin"] == coin]["pair"].unique() for coin in ret["coin"].unique()}
-        for coin, pair in coin_pair.items():
-            if len(pair) % 2 ==1 :
-                ret = ret[ret["pair"] != f"{coin.lower()}-usdt"].copy()
+        # coin_pair = {coin: ret[ret["coin"] == coin]["pair"].unique() for coin in ret["coin"].unique()}
+        # for coin, pair in coin_pair.items():
+        #     if len(pair) % 2 ==1 :
+        #         ret = ret[ret["pair"] != f"{coin.lower()}-usdt"].copy()
         return ret
     
     def get_usd_number(self, side: str, number: float, avg_price: float, pnl: float) -> float:

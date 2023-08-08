@@ -7,6 +7,18 @@ from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
+account = AccountOkex("test_hfok01@pt_okex_btc")
+account.datacenter = "/Users/chelseyshao/Downloads"
+# start = datetime.datetime(2023,8,1,0,0,0)
+# end = datetime.datetime(2023,8,3,0,0,0)
+# account.run_pnl(start, end, play = True)
+account.start = datetime.datetime(2023,7,31)
+account.end = datetime.datetime(2023,8,2)
+orders = account.get_orders_data()
+trade_data = account.handle_orders_data(play = True)
+tpnl = account.get_tpnl()
+account.get_equity()
+(account.tpnl / account.adjEq).style.format({col: "{0:.4%}" for col in account.tpnl.columns})
 
 
 apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"

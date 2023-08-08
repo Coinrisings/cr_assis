@@ -882,6 +882,7 @@ class AccountBase(object):
         data = pd.DataFrame(columns = ["spread", "fee","total"], index = coins)
         for coin in coins:
             data.loc[coin, "spread"],data.loc[coin, "fee"] = sum(trade_data[trade_data['coin'] == coin]["turnover"].values),sum(trade_data[trade_data['coin'] == coin]["fee_U"].values)
+            data.loc[coin, "spread"] -= trade_data.loc[trade_data["coin"] == coin, "real_number"].sum() * self.get_coin_price(coin)
         data = data.fillna(0)
         data["total"] = data["spread"] + data["fee"]
         self.tpnl = data.copy()
@@ -1024,7 +1025,7 @@ class AccountBase(object):
         self.start, self.end = start, end
         self.get_orders_data()
         trade_data = self.handle_orders_data(play = play)
-        tpnl = self.get_tpnl()
+        self.get_tpnl()
         ledgers = self.get_ledgers().sort_values(by = "dt")
         self.get_fpnl() if len(ledgers) > 0 else None
         self.get_pnl(play = play)
