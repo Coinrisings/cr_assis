@@ -6,37 +6,33 @@ from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
-import requests, json, time
+import requests, json, time, hmac, hashlib
 
-account = AccountOkex("test_hfok01@pt_okex_btc")
-account.datacenter = "/Users/chelseyshao/Downloads"
-account.start = datetime.datetime(2023,8,3)
-account.end = datetime.datetime(2023,8,4)
-orders = account.get_orders_data()
-trade_data = account.handle_orders_data(play = True)
-tpnl = account.get_tpnl()
-account.get_equity()
-print(tpnl / account.adjEq)
-# apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
-# secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
-# servertime = requests.get("https://api.binance.com/api/v1/time")
-BASE_URL = "https://api.binance.com"
+acc = AccountBinance("1_1")
+ret = acc.get_tickers("SPOT")
+
+apikey = "N4CcwMn3OsMvwmO19bSHsLNiv0FUQZw7KZoI04g4jk4ZK39RbYPDmfCKqwgiyEd4"
+secret = "RsccANTQgmNnY73ZTXIyV3jhr3lvlkEZwOJgf8ab0YgUuZ03zzYXEnCBVhsAMNOm"
+servertime = requests.get("https://api.binance.com/api/v1/time")
+BASE_URL = "https://papi.binance.com"
 headers = {
-    # 'X-MBX-APIKEY': apikey
+    'X-MBX-APIKEY': apikey
 }
-# servertimeobject = json.loads(servertime.text)
-# servertimeint = servertimeobject['serverTime']
-PATH = '/fapi/v1/klines'
-# timestamp = int(time.time() * 1000)
+servertimeobject = json.loads(servertime.text)
+servertimeint = servertimeobject['serverTime']
+PATH = '/papi/v1/cm/userTrades'
+timestamp = int(time.time() * 1000)
+start_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,2,11,0,0)) * 1000)
+end_time = int(datetime.datetime.timestamp(datetime.datetime(2023,8,2,11,35,0)) * 1000)
 params = {
-    "symbol": "BTCUSDT",
-    "interval": "1D", 
+    "timestamp": timestamp,
+    "startTime":start_time,
+    "endTime":end_time
 }
 query_string = urlencode(params)
-# params['signature'] = hmac.new(secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
+params['signature'] = hmac.new(secret.encode('utf-8'), query_string.encode('utf-8'), hashlib.sha256).hexdigest()
 url = urljoin(BASE_URL, PATH)
-
-# r = requests.get(url, headers=headers, params=params)
+r = requests.get(url, headers=headers, params=params)
 
 def get_okex_bills(name: str, start: datetime.datetime, end: datetime.datetime, adl = False) -> pd.DataFrame:
     api = AccountAPI()

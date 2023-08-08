@@ -75,16 +75,28 @@ class AccountBinance(AccountOkex):
                 "slave": result[0] if self.is_master[result[0]] >= self.is_master[result[1]] else result[1]}
         return ret
     
+    def get_api_tickers(self, url: str) -> list:
+        response = requests.get(url)
+        ret = response.json() if response.status_code == 200 else []
+        return ret
+    
     def get_tickers(self, instType = "SPOT") -> dict:
         """get market last tickers from binance api
         Args:
             instType (str, optional): It should be in SPOT, SWAP, FUTURES or OPTION. Defaults to "SPOT".
         """
-        response = requests.get("https://api.binance.com/api/v3/ticker/24hr")
-        ret = response.json() if response.status_code == 200 else {"data": []}
+        instType = instType.upper()
+        if instType == "SPOT":
+            ret = self.get_api_tickers("https://api.binance.com/api/v3/ticker/24hr")
+        elif instType in ["SWAP", "FUTURES"]:
+            ret = self.get_api_tickers("https://fapi.binance.com/fapi/v1/ticker/24hr") + self.get_api_tickers("https://dapi.binance.com/dapi/v1/ticker/24hr")
+        else:
+            print(f"instType {instType} is not support in AccountBinance")
+            ret = []
         data = {i["symbol"]: i for i in ret}
         self.tickers[instType] = data
         return data
+    
     
     def get_coin_price(self, coin: str) -> float:
         self.get_tickers() if "SPOT" not in self.tickers.keys() else None
