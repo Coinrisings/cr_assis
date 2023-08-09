@@ -148,12 +148,14 @@ def get_oss_funding_data(exchange, kind, start_date, end_date, funding = True, i
                 datas[currency].index = range(len(datas[currency]))
         if "BETH" in input_coins:
             datas["BETH"] = copy.deepcopy(datas["ETH"])
-            response = requests.get(f"https://www.okx.com/v2/asset/balance/projectEth2?t={int(time.time()*1000)}")
-            ret = response.json() if response.status_code == 200 else {"data": {"rate": "4%"}}
-            print(ret["data"]["rate"])
-            datas["BETH"].loc[:, "funding_rate"] += float(ret["data"]["rate"].replace('%', 'e-2')) / 365 /3
+            datas["BETH"].loc[:, "funding_rate"] += (get_eth2_staking()-0.01) / 365 /3
         datas.pop("ETH", None) if "ETH" not in input_coins and "ETH" in datas.keys() else None
     return datas
+
+def get_eth2_staking() -> float:
+    response = requests.get(f"https://www.okx.com/v2/asset/balance/projectEth2?t={int(time.time()*1000)}")
+    ret = response.json() if response.status_code == 200 else {"data": {"rate": "4%"}}
+    ret = float(ret["data"]["rate"].replace('%', 'e-2'))
 
 def get_dates(start_date, end_date):
     dates = []
@@ -165,7 +167,6 @@ def get_dates(start_date, end_date):
 
 
 def unify_funding_data(datas, exchange, funding_time):
-    a0 = datetime.datetime.now()
     datas_unified = {}
     for key in datas.keys():
         data = datas[key]
@@ -214,8 +215,6 @@ def unify_funding_data(datas, exchange, funding_time):
         else:
             df_ftx = df_ftx.drop_duplicates(subset = ["dt", "funding"])
             datas_unified[key] = df_ftx[((df_ftx["dt"] >= funding_time[0]) & (df_ftx["dt"] <= funding_time[-1]))].copy()
-    b0 = datetime.datetime.now()
-    #print(f"unify funding data: {b0-a0}")
     return datas_unified
 
 def get_funding_diff(data1_unified, data2_unified, funding_time, filled = False, log_out = False):
@@ -297,11 +296,9 @@ def get_funding_spot(data_unified, funding_time, filled = True, log_out = False)
                             break
                 elif na[0] == np.datetime64(funding_time[0]) or na[-1] == np.datetime64(funding_time[-1]):
                     print(f"{coin} funding NA: {na[0]} to {na[-1]}")
-    #             if jud:
-    #                 print(f"{coin} funding data NA at {funding_diff.loc[coin][np.isnan(a)].index.values}")
     b0 = datetime.datetime.now()
-    #print(f"funding spot: {b0-a0}")
     return funding_diff, na_filled
+
 def get_klines(exchange, coin, contract, start:datetime.datetime, end:datetime.datetime, dt = True, contractsize = pd.DataFrame(), log = True):
     # start and end are UTC+8
     #contract should in ["usdt-swap", "usd-swap", "spot", "busd-swap"]
@@ -416,7 +413,6 @@ def get_klines(exchange, coin, contract, start:datetime.datetime, end:datetime.d
     data.index = range(len(data))
     return data
 def get_funding_sum(funding_diff):
-    a0 = datetime.datetime.now()
     coins = list(funding_diff.index)
     funding_sum = pd.DataFrame(columns = ['last_dt', "1t", "1d", '3d', '7d', '15d', '30d'])
     for coin in coins:
@@ -425,8 +421,6 @@ def get_funding_sum(funding_diff):
             funding_sum.loc[coin, col] = sum(funding_diff.loc[coin][:num].values)
         funding_sum.loc[coin, "1t"] = sum(funding_diff.loc[coin][:1].values)
     funding_sum['last_dt'] = funding_diff.columns[0]
-    b0 = datetime.datetime.now()
-    #print(f"funding sum: {b0-a0}")
     return funding_sum.sort_values(by = "15d", ascending = False)
 
 def get_vol():
@@ -470,7 +464,7 @@ def run_funding(exchange1, kind1, exchange2, kind2, start_date, end_date,
     funding_sum = get_funding_sum(funding_diff)
     ret = get_vol()
     for coin in funding_sum.index:
-        coin.replace("BETH", "ETH")
+        coin = coin.replace("BETH", "ETH")
         vol = {kind1: np.nan, kind2: np.nan}
         for kind in [kind1, kind2]:
             k = f"{coin.upper()}-{kind.upper()}-SWAP" if kind != "spot" else coin.upper() + "-USDT"
@@ -610,24 +604,28 @@ def observe_dt_trend(start_date = datetime.date(2021,1,1),
             data.loc[location, "vol_24h"] = format(int(funding_sum.loc[coin, "volume_U_24h"]), ",") if not np.isnan(funding_sum.loc[coin, "volume_U_24h"]) else np.nan
             df = pd.DataFrame(columns = ["current", "next"])
             if kind1 != "spot" and kind2 != "spot":
-                pair_name = coin.lower() +"-"+ kind1 + "-swap"
+                pair_name = (coin.lower() +"-"+ kind1 + "-swap").replace("beth", "eth")
                 df1 = get_last_influx_funding(exchange_name = exchange1, pair_name = pair_name)
-                pair_name = coin.lower() +"-"+ kind2 + "-swap"
+                pair_name = (coin.lower() +"-"+ kind2 + "-swap").replace("beth", "eth")
                 df2 = get_last_influx_funding(exchange_name = exchange2, pair_name = pair_name)
                 df.loc[coin, "current"] = df1["rate"].values[-1] - df2["rate"].values[-1] 
                 df.loc[coin, "next"] = df1["next_fee"].values[-1] - df2["next_fee"].values[-1] 
             elif kind1 == "spot" and kind2 != "spot":
-                pair_name = coin.lower() +"-"+ kind2 + "-swap"
+                pair_name = (coin.lower() +"-"+ kind2 + "-swap").replace("beth", "eth")
                 df2 = get_last_influx_funding(exchange_name = exchange2, pair_name = pair_name)
                 df.loc[coin, "current"] = df2["rate"].values[-1] 
                 df.loc[coin, "next"] = df2["next_fee"].values[-1] 
             elif kind1 != "spot" and kind2 == "spot":
-                pair_name = coin.lower() +"-"+ kind1 + "-swap"
+                pair_name = (coin.lower() +"-"+ kind1 + "-swap").replace("beth", "eth")
                 df1 = get_last_influx_funding(exchange_name = exchange1, pair_name = pair_name)
                 df.loc[coin, "current"] = df1["rate"].values[-1] 
                 df.loc[coin, "next"] = df1["next_fee"].values[-1]
             data.loc[location, "current"] = df.loc[coin, "current"]
             data.loc[location, "next"] = df.loc[coin, "next"]
+            if coin.lower() == "beth":
+                staking = get_eth2_staking()
+                data.loc[location, "current"] += (staking-0.01) /365/3
+                data.loc[location, "next"] += (staking-0.01) /365/3
             result = pd.concat([result, data])
     exchange1="okex5"
     kind1 = 'usdt'
