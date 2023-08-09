@@ -7,6 +7,11 @@ from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
+
+response = requests.get(f"https://www.okx.com/v2/asset/balance/projectEth2?t={int(time.time()*1000)}")
+ret = response.json()
+print(ret["data"]["rate"])
+
 account = AccountOkex("test_hfok01@pt_okex_btc")
 ret = account.get_slip()
 account.datacenter = "/Users/chelseyshao/Downloads"

@@ -1,12 +1,10 @@
-import datetime, os
-import multiprocessing
+import datetime, os, copy, time, requests
 from concurrent.futures import as_completed,ThreadPoolExecutor
 from cr_assis.api.okex.marketApi import MarketAPI
 import numpy as np
 import pandas as pd
 from research.utils import draw_ssh, readData
 from bokeh.models.widgets import Panel, Tabs
-from bokeh.io import output_notebook
 from bokeh.plotting import figure,show
 
 def get_funding_time(start_date, end_date, string = False):
@@ -78,7 +76,6 @@ def get_15d_funding_time():
     return funding_time
 
 def get_oss_funding_data(exchange, kind, start_date, end_date, funding = True, input_coins = []):
-    a0 = datetime.datetime.now()
     kind = kind.upper()
     start_date = start_date + datetime.timedelta(days = -1)
     dates = get_dates(start_date, end_date)
@@ -134,7 +131,7 @@ def get_oss_funding_data(exchange, kind, start_date, end_date, funding = True, i
         for file in files:
             data = pd.DataFrame()
             currency = file.split("-")[0]
-            if currency in input_coins:
+            if currency in input_coins or (currency == "ETH" and "BETH" in input_coins):
                 datas[currency] = data.copy()
                 for date in dates:
                     path_file = object_dir + "/" + file + "/" + date + ".csv"
@@ -149,8 +146,13 @@ def get_oss_funding_data(exchange, kind, start_date, end_date, funding = True, i
                     datas[currency]["timestamp"] = datas[currency]["time"]
                 datas[currency] = datas[currency].drop_duplicates(subset = ["timestamp"])
                 datas[currency].index = range(len(datas[currency]))
-    b0 = datetime.datetime.now()
-    #print(f"get oss funding data: {b0-a0}")
+        if "BETH" in input_coins:
+            datas["BETH"] = copy.deepcopy(datas["ETH"])
+            response = requests.get(f"https://www.okx.com/v2/asset/balance/projectEth2?t={int(time.time()*1000)}")
+            ret = response.json() if response.status_code == 200 else {"data": {"rate": "4%"}}
+            print(ret["data"]["rate"])
+            datas["BETH"].loc[:, "funding_rate"] += float(ret["data"]["rate"].replace('%', 'e-2')) / 365 /3
+        datas.pop("ETH", None) if "ETH" not in input_coins and "ETH" in datas.keys() else None
     return datas
 
 def get_dates(start_date, end_date):
@@ -468,6 +470,7 @@ def run_funding(exchange1, kind1, exchange2, kind2, start_date, end_date,
     funding_sum = get_funding_sum(funding_diff)
     ret = get_vol()
     for coin in funding_sum.index:
+        coin.replace("BETH", "ETH")
         vol = {kind1: np.nan, kind2: np.nan}
         for kind in [kind1, kind2]:
             k = f"{coin.upper()}-{kind.upper()}-SWAP" if kind != "spot" else coin.upper() + "-USDT"
