@@ -8,6 +8,7 @@ from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
 account = AccountOkex("test_hfok01@pt_okex_btc")
+ret = account.get_slip()
 account.datacenter = "/Users/chelseyshao/Downloads"
 # start = datetime.datetime(2023,8,1,0,0,0)
 # end = datetime.datetime(2023,8,3,0,0,0)

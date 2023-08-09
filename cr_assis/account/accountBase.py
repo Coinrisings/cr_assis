@@ -888,6 +888,22 @@ class AccountBase(object):
         self.tpnl = data.copy()
         return data
     
+    def get_slip(self) -> pd.DataFrame:
+        start, end = self.start + datetime.timedelta(hours = -8), self.end + datetime.timedelta(hours = -8)
+        a = f"""
+        SELECT avg_price * cum_deal_base as turnover, slip_page, pair FROM "log_slip_page" WHERE time > '{start}' and time < '{end}'
+        and username = '{self.username}' and client = '{self.client}'
+        """
+        ret = self.database._send_influx_query(a, database = "account_data")
+        ret["dt"] = ret["time"].apply(lambda x: datetime.datetime.strptime(x.replace("T", " ")[:19], "%Y-%m-%d %H:%M:%S") + datetime.timedelta(hours = 8))
+        ret["coin"] = ret["pair"].apply(lambda x: x.split("-")[0].upper())
+        slip = pd.DataFrame(columns=["slip"])
+        for coin in ret["coin"].unique():
+            df = ret[ret["coin"] == coin].copy()
+            slip.loc[coin, "slip"] = (df["turnover"] * df["slip_page"]).sum() / df["turnover"].sum()
+        self.slip = slip
+        return slip.copy()
+    
     def get_ledgers(self):
         path = "/mnt/efs/fs1/data_center/ledgers/"
         kinds = []
