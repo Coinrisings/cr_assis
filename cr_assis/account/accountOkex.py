@@ -480,12 +480,12 @@ class AccountOkex(AccountBase):
         return ret
     
     def handle_orders_data(self, play=False):
-        data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base", "side","turnover","status","exchange", "field", "market_oid"])
-        if not hasattr(self, "orders") or len(self.orders) == 0:
+        data = pd.DataFrame(columns = ["UTC", "dt", "pair", "coin", "avg_price", "cum_deal_base", "side","turnover","status","exchange", "field", "market_oid", "settlement", "raw", "contractsize", "pnl", "is_usd", "number", "real_number", "fee", "feeCcy","fee_U"])
+        raw = self.select_orders()
+        if not hasattr(self, "orders") or len(raw) == 0:
             print(f"{self.parameter_name} doesn't have orders data between {self.start} and {self.end}")
             self.trade_data = data.copy()
-            return 
-        raw = self.select_orders()
+            return data
         names = ["dt", "pair", "avg_price", "cum_deal_base","side", "exchange", "field",  "status", "settlement", "market_oid", "coin", "raw"]
         data[names], data["UTC"] = raw[names], raw["update_iso"]
         data["contractsize"] = data["pair"].apply(lambda x: self.dataokex.get_contractsize(x))

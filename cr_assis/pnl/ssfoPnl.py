@@ -35,7 +35,7 @@ class SsfoPnl(object):
             account.start = self.end_time + datetime.timedelta(days = -7)
             account.get_orders_data()
             trade_data = account.handle_orders_data(play = False).copy()
-            ledgers = account.get_ledgers().sort_values(by = "dt")
+            ledgers = account.get_ledgers()
             for day in [1, 3, 7]:
                 account.trade_data = trade_data[(trade_data["dt"] >= self.end_time + datetime.timedelta(days = -day)) & (trade_data["dt"] <= self.end_time)].copy()
                 account.get_tpnl()

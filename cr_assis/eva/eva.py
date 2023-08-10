@@ -148,7 +148,7 @@ def get_oss_funding_data(exchange, kind, start_date, end_date, funding = True, i
                 datas[currency].index = range(len(datas[currency]))
         if "BETH" in input_coins:
             datas["BETH"] = copy.deepcopy(datas["ETH"])
-            datas["BETH"].loc[:, "funding_rate"] += (get_eth2_staking()-0.01) / 365 /3
+            datas["BETH"].loc[:, "funding_rate"] += get_eth2_staking() / 365 /3
         datas.pop("ETH", None) if "ETH" not in input_coins and "ETH" in datas.keys() else None
     return datas
 
@@ -623,8 +623,8 @@ def observe_dt_trend(start_date = datetime.date(2021,1,1),
             data.loc[location, "next"] = df.loc[coin, "next"]
             if coin.lower() == "beth":
                 staking = get_eth2_staking()
-                data.loc[location, "current"] += (staking-0.01) /365/3
-                data.loc[location, "next"] += (staking-0.01) /365/3
+                data.loc[location, "current"] += staking /365/3
+                data.loc[location, "next"] += staking /365/3
             result = pd.concat([result, data])
     exchange1="okex5"
     kind1 = 'usdt'

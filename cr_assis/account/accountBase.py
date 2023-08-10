@@ -669,7 +669,7 @@ class AccountBase(object):
         orders = {}
         for name in self.path_orders:
             contract = f"{self.datacenter}/{name}"
-            data = pd.DataFrame()
+            data = pd.DataFrame(columns = ['_id', 'pair', 'client_oid', 'market_oid', 'update_milli','creation_milli', 'side', 'type', 'tif', 'status', 'quantity','quantity_quote', 'price', 'avg_price', 'cum_deal_base', 'oc_version','secret_id', 'exchange', 'field', 'settlement', 'update_iso','creation_iso', 'raw', 'dt'])
             for date in dates:
                 file_path = contract + '/' + date + '.csv'
                 if os.path.exists(file_path):
@@ -921,6 +921,7 @@ class AccountBase(object):
                     data = pd.concat([data, df])
         data = data.drop_duplicates()
         if len(data) == 0:
+            data = pd.DataFrame(columns = ['_id', 'type', 'amount', 'id', 'pair', 'symbol', 'milli', 'raw', 'update_iso', 'dt', 'coin'])
             fpnl = pd.DataFrame(columns = ["total"])
             self.fpnl = fpnl.copy()
             self.ledgers = data.copy()
@@ -936,6 +937,7 @@ class AccountBase(object):
         else:
             fpnl = pd.DataFrame(columns = ["total"])
             self.fpnl = fpnl.copy()
+        data = data.sort_values(by = "dt") if "dt" in data.columns else pd.DataFrame(columns = ["dt"])
         self.ledgers = data.copy()
         return data
     
@@ -1042,7 +1044,7 @@ class AccountBase(object):
         self.get_orders_data()
         trade_data = self.handle_orders_data(play = play)
         self.get_tpnl()
-        ledgers = self.get_ledgers().sort_values(by = "dt")
+        ledgers = self.get_ledgers()
         self.get_fpnl() if len(ledgers) > 0 else None
         self.get_pnl(play = play)
         if log_time:
