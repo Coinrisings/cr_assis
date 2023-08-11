@@ -152,7 +152,7 @@ class AccountOkex(AccountBase):
     def get_influx_position(self, timestamp: str, the_time: str) -> pd.DataFrame:
         a = f"""
             select ex_field, secret_id,long, long_open_price, settlement, short, short_open_price, pair from position 
-            where client = '{self.client}' and username = '{self.username}' and pair != 'usdc-usdt' and
+            where client = '{self.client}' and username = '{self.username}' and pair != 'usdc-usdt' and pair != 'busd-usdt' and 
             time > {the_time} - {timestamp} and time < {the_time} and (long >0 or short >0) and secret_id != None
             and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC
             """
@@ -160,7 +160,7 @@ class AccountOkex(AccountBase):
         if len(data) == 0:
             a = f"""
             select ex_field, secret_id,long, long_open_price, settlement, short, short_open_price, pair from position 
-            where client = '{self.client}' and username = '{self.username}' and pair != 'usdc-usdt' and
+            where client = '{self.client}' and username = '{self.username}' and pair != 'usdc-usdt' and pair != 'busd-usdt'
             time > {the_time} - {timestamp} and time < {the_time} and secret_id != None
             and exchange = '{self.exchange_position}' group by pair, ex_field, exchange ORDER BY time DESC
             """
@@ -180,8 +180,8 @@ class AccountOkex(AccountBase):
     def gather_future_position(self, coin: str, raw_data: pd.DataFrame, col: str) -> float:
         """Gather different future contracts positions about this coin
         """
-        data = self.find_future_position(coin, raw_data, col)
-        data.drop_duplicates(subset = ["pair"], keep= "last", inplace= True)
+        self.future_position: pd.DataFrame = pd.DataFrame()
+        data = self.find_future_position(coin, raw_data, col).drop_duplicates(subset = ["pair"], keep= "last")
         if col.split("-")[0] != "usd":
             amount = data["long"].sum() - data["short"].sum()
         else:
@@ -189,8 +189,8 @@ class AccountOkex(AccountBase):
             amount = ((data["long"] - data["short"]) * contractsize / (data["long_open_price"] + data["short_open_price"])).sum()
         for i in data.index:
             coin = data.loc[i, "coin"]
-            # pair = data.loc[i, "pair"].replace(coin.lower(), "")[1:]
-            self.usd_position.loc[coin, col] = data.loc[i, "long"] - data.loc[i, "short"]
+            pair = data.loc[i, "pair"].replace(coin.lower(), "")[1:]
+            self.future_position.loc[coin, pair] = data.loc[i, "long"] - data.loc[i, "short"]
         return amount
     
     def gather_coin_position(self, coin: str, all_data: pd.DataFrame) -> pd.DataFrame:

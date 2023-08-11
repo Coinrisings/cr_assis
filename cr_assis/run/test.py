@@ -7,6 +7,17 @@ from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
+dataokex = ConnectOkex()
+api = AccountAPI()
+api.name = "wzok_001"
+api.load_account_api()
+response = api.get_positions()
+ret = response.json()
+df = pd.DataFrame(ret["data"])
+df[["avgPx", "pos"]] = df[["avgPx", "pos"]].astype(float)
+df["sz"] = df["instId"].apply(lambda x: dataokex.get_contractsize(x))
+df["value"] = df.apply(lambda x: x["avgPx"] * x["pos"] * x["sz"] if x["instId"].split("-")[1] != "USD" else x["pos"] * x["sz"], axis = 1)
+print(df.value.sum())
 
 response = requests.get(f"https://www.okx.com/v2/asset/balance/projectEth2?t={int(time.time()*1000)}")
 ret = response.json()
