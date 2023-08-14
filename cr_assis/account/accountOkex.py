@@ -2,6 +2,7 @@ from cr_assis.account.accountBase import AccountBase
 from cr_assis.connect.connectData import ConnectData
 from cr_assis.connect.connectOkex import ConnectOkex
 from cr_assis.api.okex.marketApi import MarketAPI
+from cr_assis.eva import eva
 from pathlib import Path
 import pandas as pd
 import numpy as np
@@ -526,3 +527,10 @@ class AccountOkex(AccountBase):
             show(t)
         self.trade_data = data.copy()
         return data
+    
+    def get_funding(self, combo: str, start: datetime.date, end: datetime.date) -> pd.DataFrame:
+        master, slave = combo.split("-")
+        exchange1, kind1 = master.split("_")[:2]
+        exchange2, kind2 = slave.split("_")[:2]
+        funding_summary, funding, _ = eva.run_funding(exchange1, kind1, exchange2, kind2, start, end)
+        return funding_summary, funding
