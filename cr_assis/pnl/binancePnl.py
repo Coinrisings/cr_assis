@@ -6,6 +6,8 @@ from cr_assis.connect.connectData import ConnectData
 from binance.cm_futures import CMFutures
 from cr_assis.draw import draw_ssh
 from cr_assis.account.accountBinance import AccountBinance
+from urllib.parse import urljoin, urlencode
+import requests, time, hmac, hashlib
 
 class BinancePnl(OkexPnl):
     
@@ -166,4 +168,4 @@ class BinancePnl(OkexPnl):
     def get_funding_income(self, name: str, start: datetime.datetime, end: datetime.datetime) -> pd.DataFrame:
         start_ts, end_ts = self.dt_to_ts(start_ts), self.dt_to_ts(end_ts)
         self.get_uswap_funding(name, start_ts, end_ts)
-        
+    

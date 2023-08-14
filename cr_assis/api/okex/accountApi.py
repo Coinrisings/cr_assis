@@ -56,7 +56,7 @@ class AccountAPI(Client):
         params = {'instId': instId, 'mgnMode': mgnMode}
         return self._requests(c.GET_LEVERAGE, params)
 
-    def get_max_load(self, instId, mgnMode, mgnCcy=None):
+    def get_max_loan(self, instId, mgnMode, mgnCcy=None):
         params = {'instId': instId, 'mgnMode': mgnMode, 'mgnCcy': mgnCcy}
         return self._requests(c.MAX_LOAN, params)
 
