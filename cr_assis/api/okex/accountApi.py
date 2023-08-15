@@ -29,6 +29,14 @@ class AccountAPI(Client):
         params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
         return self._requests(c.BILLS_ARCHIVE, params)
     
+    def get_order(self, instId:str, ordId=None, clOrdId=None):
+        params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
+        return self._requests(c.ORDER_INFO, params)
+    
+    def get_order_history(self, instType: str, uly= None, instFamily=None, instId=None, ordType=None, state=None, category=None, after=None, before=None, begin=None, end=None, limit=None):
+        params = {k:v  for k, v in locals().items() if k != 'self' and v is not None}
+        return self._requests(c.ORDERS_HISTORY, params)
+    
     def get_account_config(self):
         return self._requests(c.ACCOUNT_CONFIG)
 

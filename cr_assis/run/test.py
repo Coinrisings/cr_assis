@@ -7,31 +7,15 @@ from cr_assis.api.okex.accountApi import AccountAPI
 from cr_assis.account.accountBinance import AccountBinance
 from urllib.parse import urljoin, urlencode
 import requests, json, time, hmac, hashlib
-from cr_assis.pnl.binancePnl import get_all_trades
-
-account = AccountBinance("test_hf01@pt_binance_usdt_portfolio")
-all_trades = get_all_trades().sort_values("time").reset_index(drop=True)
-all_trades["side"] = all_trades["side"].astype(str)
-float_cols = ["price", "qty", "realizedPnl", "quoteQty", "commission", "time", "baseQty"]
-all_trades[float_cols] = all_trades[float_cols].astype(float)
-all_trades["coin"] = all_trades["coin"].str.upper()
-all_trades["avg_price"] = all_trades["price"]
-all_trades["turnover_side"] = all_trades.apply(lambda x: -1 if (x["side"].upper() == "BUY") or (x["isBuyer"] == True) else 1, axis = 1)
-all_trades["is_usd"] = all_trades["pair"].apply(lambda x: True if x.split("-")[1].lower() == "usd" else False)
-all_trades["real_number"] = all_trades.apply(lambda x: x["turnover_side"] * x["qty"] if not x["is_usd"] else (x["baseQty"] + x["turnover_side"] * x["realizedPnl"]) * x["turnover_side"], axis = 1)
-all_trades["turnover"] = all_trades["real_number"] * all_trades["avg_price"]
-all_trades["fee_U"] = all_trades.apply(lambda x: -x["commission"] if x["commissionAsset"].upper() in ["USDT", "USD", "BUSD", "USDC", "USDK", "BNB"] else -x["commission"] * x["avg_price"], axis =1)
-account.trade_data = all_trades.copy()
-account.get_tpnl()
-account.get_equity()
-print(account.tpnl / account.adjEq)
 
 api = AccountAPI()
-api.name = "wzok_001"
+api.name = "test_hfok01"
 api.load_account_api()
-response = api.get_max_loan(instId="SHIB-USDT", mgnMode="cross")
+response = api.get_order(instId = "LTC-USD-SWAP", ordId="609897802843852808")
+# response = api.get_order_history(instType="SWAP", instId="LTC-USDT-SWAP", before="609897802843852810")
 ret = response.json()
 print(ret)
+df = pd.DataFrame(ret["data"])
 
 apikey = ""
 secret = ""
