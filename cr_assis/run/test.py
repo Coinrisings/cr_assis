@@ -11,11 +11,28 @@ import requests, json, time, hmac, hashlib
 api = AccountAPI()
 api.name = "test_hfok01"
 api.load_account_api()
-response = api.get_order(instId = "LTC-USD-SWAP", ordId="609897802843852808")
-# response = api.get_order_history(instType="SWAP", instId="LTC-USDT-SWAP", before="609897802843852810")
-ret = response.json()
-print(ret)
-df = pd.DataFrame(ret["data"])
+# response = api.get_order(instId = "LTC-USDT-SWAP", ordId="611342988853678083")
+# response = api.get_order_history(instType="SWAP", instId="LTC-USDT-SWAP")
+begin = int(datetime.datetime.timestamp(datetime.datetime(2023,8,16,3,0,0)) * 1000)
+end = int(datetime.datetime.timestamp(datetime.datetime(2023,8,16,3,30,0)) * 1000)
+ts = end
+data = []
+while ts > begin:
+    response = api.get_bills_details(end = ts, limit=100)
+    if response.status_code == 200:
+        ret = response.json()["data"]
+        data = data + ret
+        ts = int(ret[-1]['ts'])
+    else:
+        break
+df = pd.DataFrame(data)
+cols = ["bal", "balChg", "fee", "pnl", "px", "sz", "ts"]
+df.loc[df["px"] == "", "px"] = "nan"
+df[cols] = df[cols].astype(float)
+df["dt"] = df["ts"].apply(lambda x: datetime.datetime.fromtimestamp(float(x) / 1000))
+df["balPx"] = df.apply(lambda x: x["px"] if x["ccy"] not in ["USDT", "USD", "USDC"] else 1, axis = 1)
+df["balChgU"] = df["balChg"] * df["balPx"]
+
 
 apikey = ""
 secret = ""

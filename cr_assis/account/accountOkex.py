@@ -319,7 +319,7 @@ class AccountOkex(AccountBase):
                     self.open_price.loc[coin, contract] = 0
             if self.now_position.loc[coin, "usdt"] != 0:
                 max_col = abs(self.now_position.loc[coin, self.open_price.columns.drop("usdt")]).sort_values().index[-1]
-                self.open_price.loc[coin, "usdt"] = self.open_price.loc[coin, max_col]
+                self.open_price.loc[coin, "usdt"] = self.open_price.loc[coin, max_col] if self.open_price.loc[coin, max_col] >0 else self.get_coin_price(coin)
         if "BETH" in self.now_position.index and self.now_position.loc["BETH", "usdt"] > 0 and "ETH" in self.now_position.index:
             max_col = abs(self.now_position.loc["ETH", self.open_price.columns.drop("usdt")]).sort_values().index[-1]
             self.open_price.loc["BETH", "usdt"] = self.open_price.loc["ETH", max_col]
